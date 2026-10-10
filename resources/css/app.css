@@ -1,0 +1,731 @@
+@import 'tailwindcss';
+
+@import 'tw-animate-css';
+
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+/* Scan the editor safelist file for Tailwind classes without executing it as JS */
+@source '../../Modules/Frontend/resources/js/lib/tailwind-safelist.tsx';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+   --font-sans:
+      'Inter', sans-serif, ui-sans-serif, system-ui, sans-serif,
+      'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+      'Noto Color Emoji';
+
+   --radius: 0.625rem;
+   --radius-lg: var(--radius);
+   --radius-md: calc(var(--radius) - 2px);
+   --radius-sm: calc(var(--radius) - 4px);
+
+   --color-background: var(--background);
+   --color-foreground: var(--foreground);
+
+   --color-card: var(--card);
+   --color-card-foreground: var(--card-foreground);
+
+   --color-popover: var(--popover);
+   --color-popover-foreground: var(--popover-foreground);
+
+   --color-primary: var(--primary);
+   --color-primary-foreground: var(--primary-foreground);
+   --color-primary-900: var(--primary-900);
+   --color-primary-800: var(--primary-800);
+   --color-primary-700: var(--primary-700);
+   --color-primary-600: var(--primary-600);
+   --color-primary-400: var(--primary-400);
+   --color-primary-300: var(--primary-300);
+   --color-primary-200: var(--primary-200);
+   --color-primary-100: var(--primary-100);
+   --color-primary-50: var(--primary-50);
+
+   --color-secondary: var(--secondary);
+   --color-secondary-foreground: var(--secondary-foreground);
+   --color-secondary-900: var(--secondary-900);
+   --color-secondary-800: var(--secondary-800);
+   --color-secondary-700: var(--secondary-700);
+   --color-secondary-600: var(--secondary-600);
+   --color-secondary-400: var(--secondary-400);
+   --color-secondary-300: var(--secondary-300);
+   --color-secondary-200: var(--secondary-200);
+   --color-secondary-100: var(--secondary-100);
+   --color-secondary-50: var(--secondary-50);
+
+   --color-muted: var(--muted);
+   --color-muted-light: var(--muted-light);
+   --color-muted-foreground: var(--muted-foreground);
+
+   --color-accent: var(--accent);
+   --color-accent-foreground: var(--accent-foreground);
+
+   --color-destructive: var(--destructive);
+   --color-destructive-foreground: var(--destructive-foreground);
+
+   --color-border: var(--border);
+   --color-input: var(--input);
+   --color-ring: var(--ring);
+
+   --color-chart-1: var(--chart-1);
+   --color-chart-2: var(--chart-2);
+   --color-chart-3: var(--chart-3);
+   --color-chart-4: var(--chart-4);
+   --color-chart-5: var(--chart-5);
+
+   --color-sidebar: var(--sidebar);
+   --color-sidebar-foreground: var(--sidebar-foreground);
+   --color-sidebar-primary: var(--sidebar-primary);
+   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+   --color-sidebar-accent: var(--sidebar-accent);
+   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+   --color-sidebar-border: var(--sidebar-border);
+   --color-sidebar-ring: var(--sidebar-ring);
+
+   --shadow-card: var(--card-shadow);
+   --shadow-card-md: var(--card-shadow-md);
+   --shadow-card-lg: var(--card-shadow-lg);
+   --shadow-card-hover: var(--card-shadow-hover);
+   --shadow-card-xs: var(--card-shadow-card-xs);
+}
+
+/*
+   The default border color has changed to `currentColor` in Tailwind CSS v4,
+   so we've added these compatibility styles to make sure everything still
+   looks the same as it did with Tailwind CSS v3.
+ 
+   If we ever want to remove these styles, we need to add an explicit border
+   color utility to any element that depends on these defaults.
+ */
+@layer base {
+   *,
+   ::after,
+   ::before,
+   ::backdrop,
+   ::file-selector-button {
+      border-color: var(--color-gray-200, currentColor);
+   }
+}
+
+:root {
+   --background: oklch(1 0 0);
+   --foreground: oklch(0.145 0 0);
+   --card: oklch(1 0 0);
+   --card-foreground: oklch(0.145 0 0);
+   --popover: oklch(1 0 0);
+   --popover-foreground: oklch(0.145 0 0);
+
+   --primary: oklch(0.265 0.0216 248.65);
+   --primary-foreground: oklch(0.985 0 0);
+   /* Auto-generated primary scale: 900-600 darker, 400-50 lighter */
+   --primary-900: color-mix(in oklch, var(--primary) 90%, black);
+   --primary-800: color-mix(in oklch, var(--primary) 80%, black);
+   --primary-700: color-mix(in oklch, var(--primary) 70%, black);
+   --primary-600: color-mix(in oklch, var(--primary) 60%, black);
+   --primary-400: color-mix(in oklch, var(--primary) 90%, white);
+   --primary-300: color-mix(in oklch, var(--primary) 80%, white);
+   --primary-200: color-mix(in oklch, var(--primary) 70%, white);
+   --primary-100: color-mix(in oklch, var(--primary) 60%, white);
+   --primary-50: color-mix(in oklch, var(--primary) 50%, white);
+
+   --secondary: oklch(0.643 0.144 160.62 / 10.2%);
+   --secondary-foreground: oklch(0.6468 0.144588 160.7462);
+   /* Auto-generated secondary scale based on the solid secondary-foreground color */
+   --secondary-900: color-mix(in oklch, var(--secondary-foreground) 90%, black);
+   --secondary-800: color-mix(in oklch, var(--secondary-foreground) 80%, black);
+   --secondary-700: color-mix(in oklch, var(--secondary-foreground) 70%, black);
+   --secondary-600: color-mix(in oklch, var(--secondary-foreground) 60%, black);
+   --secondary-400: color-mix(in oklch, var(--secondary-foreground) 80%, white);
+   --secondary-300: color-mix(in oklch, var(--secondary-foreground) 60%, white);
+   --secondary-200: color-mix(in oklch, var(--secondary-foreground) 40%, white);
+   --secondary-100: color-mix(in oklch, var(--secondary-foreground) 20%, white);
+   --secondary-50: color-mix(in oklch, var(--secondary-foreground) 10%, white);
+
+   --muted: oklch(0.97 0 0);
+   --muted-light: oklch(0.9722 0.0034 247.86);
+   --muted-foreground: oklch(0.556 0 0);
+
+   --accent: oklch(0.97 0 0);
+   --accent-foreground: oklch(0.205 0 0);
+
+   --destructive: oklch(0.577 0.245 27.325);
+   --destructive-foreground: oklch(0.985 0 0);
+
+   --border: oklch(0.922 0 0);
+   --input: oklch(0.922 0 0);
+   --ring: oklch(0.87 0 0);
+
+   --chart-1: oklch(0.646 0.222 41.116);
+   --chart-2: oklch(0.6 0.118 184.704);
+   --chart-3: oklch(0.398 0.07 227.392);
+   --chart-4: oklch(0.828 0.189 84.429);
+   --chart-5: oklch(0.769 0.188 70.08);
+
+   --radius: 0.625rem;
+
+   --sidebar: oklch(0.985 0 0);
+   --sidebar-foreground: oklch(0.145 0 0);
+   --sidebar-primary: oklch(0.205 0 0);
+   --sidebar-primary-foreground: oklch(0.985 0 0);
+   --sidebar-accent: oklch(0.97 0 0);
+   --sidebar-accent-foreground: oklch(0.205 0 0);
+   --sidebar-border: oklch(0.922 0 0);
+   --sidebar-ring: oklch(0.87 0 0);
+
+   --card-shadow:
+      0 0 2px 0 rgba(145 158 171 / 0.2),
+      0 12px 24px -4px rgba(145 158 171 / 0.12);
+   --card-shadow-hover: 0 24px 48px 0 rgba(145 158 171 / 16%);
+   --card-shadow-md:
+      0 3.75px 7.5px -2.25px rgba(107, 114, 128, 0.03),
+      0 6px 13.5px 0.75px rgba(107, 114, 128, 0.04),
+      0 2.25px 24.75px 1.5px rgba(107, 114, 128, 0.08);
+   --card-shadow-lg:
+      0 12px 24px -4px rgba(145, 158, 171, 0.12),
+      0 1px 2px 0 rgba(145, 158, 171, 0.2);
+   --card-shadow-card-xs:
+      0 0 2px 0 rgba(145 158 171 / 20%),
+      0 12px 24px -4px rgba(145 158 171 / 12%);
+}
+
+.dark {
+   --background: oklch(0.145 0 0);
+   --foreground: oklch(0.985 0 0);
+   --card: oklch(0.145 0 0);
+   --card-foreground: oklch(0.985 0 0);
+   --popover: oklch(0.145 0 0);
+   --popover-foreground: oklch(0.985 0 0);
+
+   --primary: oklch(0.985 0 0);
+   --primary-foreground: oklch(0.205 0 0);
+   /* Auto-generated primary scale: 500=base, lower=lighter, higher=darker */
+   --primary-900: color-mix(in oklch, var(--primary) 90%, black);
+   --primary-800: color-mix(in oklch, var(--primary) 80%, black);
+   --primary-700: color-mix(in oklch, var(--primary) 70%, black);
+   --primary-600: color-mix(in oklch, var(--primary) 60%, black);
+   --primary-400: color-mix(in oklch, var(--primary) 80%, white);
+   --primary-300: color-mix(in oklch, var(--primary) 60%, white);
+   --primary-200: color-mix(in oklch, var(--primary) 40%, white);
+   --primary-100: color-mix(in oklch, var(--primary) 20%, white);
+   --primary-50: color-mix(in oklch, var(--primary) 10%, white);
+
+   --secondary: oklch(0.643 0.144 160.62 / 10.2%);
+   --secondary-foreground: oklch(0.6468 0.144588 160.7462);
+   /* Auto-generated secondary scale: 500=base, lower=lighter, higher=darker */
+   --secondary-900: color-mix(in oklch, var(--secondary-foreground) 90%, black);
+   --secondary-800: color-mix(in oklch, var(--secondary-foreground) 80%, black);
+   --secondary-700: color-mix(in oklch, var(--secondary-foreground) 70%, black);
+   --secondary-600: color-mix(in oklch, var(--secondary-foreground) 60%, black);
+   --secondary-400: color-mix(in oklch, var(--secondary-foreground) 80%, white);
+   --secondary-300: color-mix(in oklch, var(--secondary-foreground) 60%, white);
+   --secondary-200: color-mix(in oklch, var(--secondary-foreground) 40%, white);
+   --secondary-100: color-mix(in oklch, var(--secondary-foreground) 20%, white);
+   --secondary-50: color-mix(in oklch, var(--secondary-foreground) 10%, white);
+
+   --muted: oklch(0.269 0 0);
+   --muted-light: oklch(0.22 0.005 247.86);
+   --muted-foreground: oklch(0.708 0 0);
+
+   --accent: oklch(0.269 0 0);
+   --accent-foreground: oklch(0.985 0 0);
+
+   --destructive: oklch(0.396 0.141 25.723);
+   --destructive-foreground: oklch(0.637 0.237 25.331);
+
+   --border: oklch(0.269 0 0);
+   --input: oklch(0.269 0 0);
+   --ring: oklch(0.439 0 0);
+
+   --chart-1: oklch(0.488 0.243 264.376);
+   --chart-2: oklch(0.696 0.17 162.48);
+   --chart-3: oklch(0.769 0.188 70.08);
+   --chart-4: oklch(0.627 0.265 303.9);
+   --chart-5: oklch(0.645 0.246 16.439);
+
+   --sidebar: oklch(0.205 0 0);
+   --sidebar-foreground: oklch(0.985 0 0);
+   --sidebar-primary: oklch(0.985 0 0);
+   --sidebar-primary-foreground: oklch(0.985 0 0);
+   --sidebar-accent: oklch(0.269 0 0);
+   --sidebar-accent-foreground: oklch(0.985 0 0);
+   --sidebar-border: oklch(0.269 0 0);
+   --sidebar-ring: oklch(0.439 0 0);
+
+   --card-shadow:
+      0 0 2px 0 rgba(0 0 0 / 0.3), 0 12px 24px -4px rgba(0 0 0 / 0.2);
+   --card-shadow-hover: 0 24px 48px 0 rgba(0 0 0 / 24%);
+   --card-shadow-md:
+      0 3.75px 7.5px -2.25px rgba(0, 0, 0, 0.08),
+      0 6px 13.5px 0.75px rgba(0, 0, 0, 0.1),
+      0 2.25px 24.75px 1.5px rgba(0, 0, 0, 0.14);
+   --card-shadow-lg:
+      0 12px 24px -4px rgba(0, 0, 0, 0.2), 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+   --card-shadow-card-xs:
+      0 0 2px 0 rgba(145 158 171 / 20%),
+      0 12px 24px -4px rgba(145 158 171 / 12%);
+}
+
+@layer base {
+   * {
+      @apply border-border;
+   }
+
+   body {
+      @apply bg-background text-foreground;
+   }
+
+   a,
+   button {
+      @apply !shadow-none;
+   }
+}
+
+@layer utilities {
+   .container {
+      @apply mx-auto max-w-[1280px] px-5;
+   }
+
+   .horizontal-tabs-list {
+      @apply grid h-auto grid-cols-1 gap-y-1 overflow-hidden rounded-2xl border border-border bg-card px-0 py-5 text-card-foreground shadow;
+   }
+
+   .horizontal-tabs-trigger {
+      @apply relative flex cursor-pointer items-center justify-start gap-3 rounded-none border-primary px-5 py-3 text-start !shadow-none before:absolute before:top-0 before:bottom-0 before:left-0 before:rounded-r-xl hover:!bg-muted data-[state=active]:!bg-muted data-[state=active]:before:w-1 data-[state=active]:before:bg-primary;
+   }
+
+   .vertical-tabs-list {
+      @apply rounded-none bg-transparent px-0 py-6;
+   }
+
+   .vertical-tabs-trigger {
+      @apply relative flex cursor-pointer items-center justify-start gap-3 rounded-none border-primary bg-transparent px-8 py-4 text-start !shadow-none before:absolute before:right-0 before:bottom-0 before:left-0 before:h-1 before:rounded-t-xl data-[state=active]:!bg-muted data-[state=active]:before:bg-primary data-[state=active]:before:content-['.'];
+   }
+
+   .bg-card {
+      @apply border-muted shadow-card;
+   }
+
+   /* Intro Style */
+   .section-edit {
+      @apply relative border border-dashed border-gray-500;
+   }
+
+   /* Apply styles to Plyr elements */
+   .lesson-container {
+      @apply w-full overflow-hidden rounded-none border-none md:max-h-[calc(100vh-60px)] md:min-h-[80vh];
+   }
+   .plyr {
+      --plyr-color-main: var(--secondary-foreground);
+   }
+   .lesson-container .plyr--video {
+      @apply h-full w-full md:max-h-[calc(100vh-60px)] md:min-h-[80vh];
+   }
+}
+
+[data-slot='dialog-content'] .ring-offset-background {
+   @apply cursor-pointer;
+}
+
+button[data-orientation='vertical'] {
+   @apply cursor-pointer;
+}
+
+/* Richtor editor overrides */
+/* Fix margin and width for editor buttons */
+input.rte-input.\!mt-2.\!border.\!border-border {
+   margin-top: 6px !important;
+}
+button.rte-button.rte-button--primary.\!mt-3.\!w-full.cursor-pointer {
+   width: 100% !important;
+   margin-top: 12px !important;
+}
+
+/* Ubi Learn's guest entry and login drawer. */
+.ubi-get-started {
+   border-radius: 999px;
+   background: #000;
+   color: #fff;
+   padding: 0 20px;
+   height: 44px;
+   box-shadow: 0 5px 16px #00000020;
+   transition:
+      background 200ms,
+      transform 200ms,
+      box-shadow 200ms;
+}
+.ubi-get-started:hover {
+   background: #202020;
+   transform: translateY(-1px);
+   box-shadow: 0 8px 20px #00000030;
+}
+.ubi-login-drawer[data-slot='sheet-content'] {
+   width: min(100%, 500px);
+   max-width: 500px;
+   gap: 0;
+   border: 0;
+   background: #fff;
+   color: #172d27;
+   overflow-y: auto;
+   box-shadow: -24px 0 80px #102e2429;
+   animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+.ubi-login-drawer [data-slot='sheet-description'] {
+   color: #68776f;
+}
+.ubi-login-drawer > button {
+   top: 28px;
+   right: 28px;
+   width: 36px;
+   height: 36px;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   background: #ecefe8;
+   border-radius: 50%;
+}
+.ubi-login-drawer > button svg {
+   width: 18px;
+   height: 18px;
+}
+.ubi-login-brand {
+   padding: 27px 40px;
+   border-bottom: 1px solid #e5e8df;
+}
+.ubi-login-brand img {
+   width: 174px !important;
+   height: 74px !important;
+}
+.ubi-login-body {
+   padding: 38px 40px 24px;
+   flex: 1;
+}
+.ubi-login-eyebrow {
+   display: inline-flex;
+   align-items: center;
+   gap: 8px;
+   color: #806c2c;
+   font-size: 10px;
+   font-weight: 650;
+   letter-spacing: 2px;
+}
+.ubi-login-title {
+   margin-top: 18px;
+   font-size: clamp(27px, 5vw, 34px);
+   font-weight: 550;
+   letter-spacing: -1.2px;
+   line-height: 1.22;
+   color: #173e31;
+}
+.ubi-login-title span {
+   color: #618b75;
+}
+.ubi-login-description {
+   margin: 16px 0 28px;
+   max-width: 340px;
+   line-height: 1.7;
+   font-size: 14px;
+}
+.ubi-google-button {
+   display: flex;
+   width: 100%;
+   align-items: center;
+   justify-content: center;
+   gap: 12px;
+   height: 50px;
+   background: #fff;
+   border: 1px solid #dbe1d7;
+   border-radius: 12px;
+   font-size: 14px;
+   font-weight: 550;
+   transition:
+      border-color 200ms,
+      box-shadow 200ms;
+}
+.ubi-google-button:hover {
+   border-color: #859e8d;
+   box-shadow: 0 3px 12px #193d3008;
+}
+.ubi-google-button:disabled {
+   opacity: 0.55;
+   cursor: not-allowed;
+}
+.ubi-google-status {
+   font-size: 11px;
+   margin-top: 8px;
+   text-align: center;
+   color: #68776f;
+}
+.ubi-login-divider {
+   display: flex;
+   align-items: center;
+   gap: 16px;
+   margin: 24px 0;
+   font-size: 11px;
+   color: #829086;
+}
+.ubi-login-divider span {
+   height: 1px;
+   background: #dfe4da;
+   flex: 1;
+}
+.ubi-login-form {
+   display: flex;
+   flex-direction: column;
+   gap: 20px;
+}
+.ubi-login-field {
+   display: flex;
+   flex-direction: column;
+   gap: 9px;
+}
+.ubi-login-field label {
+   font-size: 12px;
+   color: #334c41;
+}
+.ubi-login-input {
+   height: 50px;
+   border-radius: 10px;
+   background: #fff;
+   border: 1px solid #dbe1d7;
+   font-size: 14px;
+   box-shadow: none;
+   color: #172d27;
+}
+.ubi-login-input:focus-visible {
+   border-color: #2e8267;
+   --tw-ring-color: #2e826725;
+}
+.ubi-login-label-row {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   gap: 10px;
+}
+.ubi-login-label-row a {
+   font-size: 11px;
+   color: #35745b;
+}
+.ubi-login-remember {
+   display: flex;
+   align-items: center;
+   gap: 9px;
+   color: #68776f;
+   font-size: 12px;
+}
+.ubi-login-remember input {
+   width: 15px;
+   height: 15px;
+   accent-color: #075c48;
+}
+.ubi-login-submit {
+   height: 52px;
+   width: 100%;
+   border-radius: 12px;
+   background: #075c48;
+   color: white;
+   box-shadow: 0 6px 16px #075c481c;
+}
+.ubi-login-submit:hover {
+   background: #064b3c;
+}
+.ubi-login-submit > div {
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   gap: 12px;
+}
+.ubi-login-signup {
+   text-align: center;
+   font-size: 12px;
+   color: #7b867e;
+   margin-top: 2px;
+}
+.ubi-login-signup a {
+   display: inline-flex;
+   align-items: center;
+   gap: 4px;
+   color: #24684e;
+   font-weight: 600;
+   margin-left: 4px;
+}
+.ubi-login-footer {
+   padding: 22px 40px;
+   border-top: 1px solid #e5e8df;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   gap: 8px;
+   font-size: 11px;
+   color: #87938a;
+}
+.ubi-login-reveal {
+   animation: ubi-login-reveal 550ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes ubi-login-reveal {
+   from {
+      opacity: 0;
+      transform: translateY(14px);
+   }
+   to {
+      opacity: 1;
+      transform: translateY(0);
+   }
+}
+@media (max-width: 639px) {
+   .ubi-get-started {
+      height: 40px;
+      padding: 0 14px;
+      font-size: 12px;
+   }
+   .ubi-login-body {
+      padding: 30px 24px 22px;
+   }
+   .ubi-login-brand {
+      padding: 24px;
+   }
+   .ubi-login-footer {
+      padding: 20px 24px;
+   }
+}
+@media (prefers-reduced-motion: reduce) {
+   .ubi-login-reveal {
+      animation: none;
+   }
+   .ubi-login-drawer[data-slot='sheet-content'] {
+      animation-duration: 1ms !important;
+   }
+   .ubi-get-started {
+      transition: none;
+   }
+}
+
+/* Keep the black call to action distinct on a dark header. */
+.dark .ubi-get-started {
+   border: 1px solid #626262;
+   color: #fff;
+}
+.ubi-get-started:focus-visible {
+   outline: 2px solid #969696;
+   outline-offset: 3px;
+}
+/* The supplied logo has black lettering: a white surface preserves its contrast. */
+.dark img[src$='/assets/icons/ubi-learn-logo-v2.png'] {
+   background-color: #fff;
+   border-radius: 8px;
+}
+/* The login drawer stays white in either theme. */
+.ubi-login-drawer .ubi-login-input::placeholder {
+   color: #7b847f;
+   opacity: 1;
+}
+.ubi-login-drawer .ubi-login-field button {
+   color: #68776f;
+}
+.ubi-login-drawer a:focus-visible,
+.ubi-login-drawer button:focus-visible {
+   outline: 2px solid #35745b;
+   outline-offset: 3px;
+}
+.ubi-login-drawer input[type='checkbox'] {
+   color-scheme: light;
+}
+
+/* Compact authentication views, all inside the same drawer. */
+.ubi-login-body {
+   padding-top: 24px;
+}
+.ubi-login-title {
+   margin: 0 0 28px;
+   color: #111;
+   font-size: 30px;
+   letter-spacing: -1px;
+}
+.ubi-login-form {
+   gap: 18px;
+}
+.ubi-login-options {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   gap: 8px;
+}
+.ubi-login-signup {
+   margin-top: 18px;
+}
+.ubi-login-divider {
+   margin: 20px 0;
+}
+.ubi-input-icon {
+   position: relative;
+}
+.ubi-input-icon > svg {
+   position: absolute;
+   left: 14px;
+   top: 16px;
+   z-index: 1;
+   color: #64706a;
+   pointer-events: none;
+}
+.ubi-input-icon .ubi-login-input {
+   padding-left: 42px;
+}
+.ubi-login-drawer .ubi-login-submit,
+.ubi-login-drawer .ubi-create-account {
+   background: #000;
+   border: 1px solid #000;
+   color: #fff;
+   font-size: 16px;
+   font-weight: 700;
+}
+.ubi-login-drawer .ubi-login-submit:hover,
+.ubi-login-drawer .ubi-create-account:hover {
+   background: #202020;
+   border-color: #000;
+}
+.ubi-login-drawer .ubi-login-field button {
+   color: #68776f;
+   background: transparent;
+   border: 0;
+}
+.ubi-login-drawer .ubi-drawer-link {
+   padding: 7px 11px;
+   border-radius: 8px;
+   font-size: 14px;
+   font-weight: 700;
+   line-height: 1.4;
+   cursor: pointer;
+}
+.ubi-login-drawer .ubi-drawer-link:not(.ubi-create-account) {
+   background: transparent;
+   border: 0;
+   color: #35745b;
+}
+.ubi-login-drawer .ubi-create-account {
+   padding: 11px 18px;
+   font-size: 16px;
+}
+.ubi-login-drawer .ubi-google-button {
+   background: #fff;
+   border: 1px solid #dbe1d7;
+   color: #172d27;
+   font-size: 16px;
+   font-weight: 700;
+}
+.ubi-login-drawer .ubi-google-button:hover {
+   background: #f8faf7;
+   border-color: #859e8d;
+}
+.ubi-login-drawer .ubi-google-button:disabled {
+   opacity: 0.55;
+   cursor: not-allowed;
+}
+.ubi-auth-status {
+   color: #24684e;
+   font-size: 12px;
+   line-height: 1.6;
+}
+.ubi-auth-error {
+   color: #b42318;
+   font-size: 12px;
+   line-height: 1.6;
+}

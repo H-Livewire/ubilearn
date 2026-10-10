@@ -187,7 +187,7 @@ class FrontendPageSeeder extends Seeder
 
             // Load JSON content from file if it exists
             $content = null;
-            $jsonFilePath = storage_path('app/page-data/' . $slug . '.json');
+            $jsonFilePath = resource_path('page-data/' . $slug . '.json');
 
             if (file_exists($jsonFilePath)) {
                 $jsonContent = file_get_contents($jsonFilePath);

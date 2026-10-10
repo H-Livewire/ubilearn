@@ -7,7 +7,7 @@ use Modules\Installer\Http\Controllers\InstallerDBController;
 use Modules\Installer\Http\Middleware\InstallerRoutes;
 
 // Only override session driver if application is not installed
-if (! Storage::disk('public')->exists('installed') || ! env('MENTOR_INSTALLED')) {
+if (! applicationInstalled()) {
     config(['session.driver' => 'file']);
 }
 

@@ -65,7 +65,7 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        if (! Storage::disk('public')->exists('installed')) {
+        if (! applicationInstalled()) {
             return [];
         }
 

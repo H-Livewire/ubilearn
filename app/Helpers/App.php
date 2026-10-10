@@ -18,7 +18,7 @@ function isDBConnected(): bool
 
 function applicationInstalled(): bool
 {
-    return Storage::disk('public')->exists('installed') || env('MENTOR_INSTALLED');
+    return (bool) config('app.installed', false) || Storage::disk('public')->exists('installed');
 }
 
 function isInstallerRequest(Request $request): bool

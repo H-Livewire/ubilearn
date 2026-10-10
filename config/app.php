@@ -2,6 +2,8 @@
 
 return [
 
+    'installed' => env('MENTOR_INSTALLED', false),
+
     /*
     |--------------------------------------------------------------------------
     | Application Name

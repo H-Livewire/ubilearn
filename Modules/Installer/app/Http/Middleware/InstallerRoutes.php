@@ -14,7 +14,7 @@ class InstallerRoutes
      */
     public function handle(Request $request, Closure $next)
     {
-        $installed = Storage::disk('public')->exists('installed') || env('MENTOR_INSTALLED');
+        $installed = applicationInstalled();
 
         if ($installed && isDBConnected()) {
             return redirect('/');

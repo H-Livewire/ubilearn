@@ -17,7 +17,7 @@ class InstalledRoutes
             config(['session.driver' => 'file']);
         }
 
-        $installed = Storage::disk('public')->exists('installed') || env('MENTOR_INSTALLED');
+        $installed = applicationInstalled();
 
         if ($installed) {
             return $next($request);

@@ -32,6 +32,12 @@ class AppConfig
         config(['app.name' => $system['name'] ?? config('app.name')]);
 
         $storageDriver = $storage['storage_driver'] ?? 'local';
+        $environmentDisk = config('filesystems.default', 'local');
+        $mediaDisk = config('media-library.disk_name', 'public');
+        if ($storageDriver === 'local' && !in_array($environmentDisk, ['local', 'public'], true)) {
+            $storageDriver = $environmentDisk;
+            $mediaDisk = $environmentDisk;
+        }
 
         // Every configured driver's credentials are loaded regardless of
         // which one is currently active. A lesson/file already stored on
@@ -40,19 +46,19 @@ class AppConfig
         // elsewhere — only filesystems.default/media-library.disk_name
         // below decide where *new* uploads go.
         config([
-            'filesystems.disks.s3.key' => $storage['aws_access_key_id'] ?? '',
-            'filesystems.disks.s3.secret' => $storage['aws_secret_access_key'] ?? '',
-            'filesystems.disks.s3.region' => $storage['aws_default_region'] ?? '',
-            'filesystems.disks.s3.bucket' => $storage['aws_bucket'] ?? '',
+            'filesystems.disks.s3.key' => ($storage['aws_access_key_id'] ?? '') ?: config('filesystems.disks.s3.key', ''),
+            'filesystems.disks.s3.secret' => ($storage['aws_secret_access_key'] ?? '') ?: config('filesystems.disks.s3.secret', ''),
+            'filesystems.disks.s3.region' => ($storage['aws_default_region'] ?? '') ?: config('filesystems.disks.s3.region', ''),
+            'filesystems.disks.s3.bucket' => ($storage['aws_bucket'] ?? '') ?: config('filesystems.disks.s3.bucket', ''),
         ]);
 
         config([
-            'filesystems.disks.r2.key' => $storage['r2_access_key_id'] ?? '',
-            'filesystems.disks.r2.secret' => $storage['r2_secret_access_key'] ?? '',
-            'filesystems.disks.r2.region' => $storage['r2_region'] ?? 'auto',
-            'filesystems.disks.r2.bucket' => $storage['r2_bucket'] ?? '',
-            'filesystems.disks.r2.url' => $storage['r2_public_url'] ?? '',
-            'filesystems.disks.r2.endpoint' => $storage['r2_endpoint'] ?? '',
+            'filesystems.disks.r2.key' => ($storage['r2_access_key_id'] ?? '') ?: config('filesystems.disks.r2.key', ''),
+            'filesystems.disks.r2.secret' => ($storage['r2_secret_access_key'] ?? '') ?: config('filesystems.disks.r2.secret', ''),
+            'filesystems.disks.r2.region' => ($storage['r2_region'] ?? '') ?: config('filesystems.disks.r2.region', 'auto'),
+            'filesystems.disks.r2.bucket' => ($storage['r2_bucket'] ?? '') ?: config('filesystems.disks.r2.bucket', ''),
+            'filesystems.disks.r2.url' => ($storage['r2_public_url'] ?? '') ?: config('filesystems.disks.r2.url', ''),
+            'filesystems.disks.r2.endpoint' => ($storage['r2_endpoint'] ?? '') ?: config('filesystems.disks.r2.endpoint', ''),
         ]);
 
         config([
@@ -68,7 +74,7 @@ class AppConfig
         match ($storageDriver) {
             's3' => config(['filesystems.default' => 's3', 'media-library.disk_name' => 's3']),
             'r2' => config(['filesystems.default' => 'r2', 'media-library.disk_name' => 'r2']),
-            default => config(['filesystems.default' => 'local', 'media-library.disk_name' => 'public']),
+            default => config(['filesystems.default' => $environmentDisk, 'media-library.disk_name' => $mediaDisk]),
         };
 
         // Check S3 configuration from config

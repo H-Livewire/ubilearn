@@ -26,21 +26,21 @@ class LanguageService extends MediaService
     {
         $langPath = base_path('lang');
         $langDir = $langPath.'/'.$data['code'];
-        $appLangPath = storage_path('app/lang/default');
+        $appLangPath = resource_path('language/default');
 
         if (is_dir($langDir)) {
             throw new Exception('Language already exist');
         }
 
         $groups = [
-            'auth' => require storage_path('app/lang/groups/auth.php'),
-            'button' => require storage_path('app/lang/groups/button.php'),
-            'common' => require storage_path('app/lang/groups/common.php'),
-            'dashboard' => require storage_path('app/lang/groups/dashboard.php'),
-            'frontend' => require storage_path('app/lang/groups/frontend.php'),
-            'input' => require storage_path('app/lang/groups/input.php'),
-            'settings' => require storage_path('app/lang/groups/settings.php'),
-            'table' => require storage_path('app/lang/groups/table.php'),
+            'auth' => require resource_path('language/groups/auth.php'),
+            'button' => require resource_path('language/groups/button.php'),
+            'common' => require resource_path('language/groups/common.php'),
+            'dashboard' => require resource_path('language/groups/dashboard.php'),
+            'frontend' => require resource_path('language/groups/frontend.php'),
+            'input' => require resource_path('language/groups/input.php'),
+            'settings' => require resource_path('language/groups/settings.php'),
+            'table' => require resource_path('language/groups/table.php'),
         ];
 
         $languages = Language::create($data);
@@ -99,7 +99,17 @@ class LanguageService extends MediaService
             return $translations;
         });
 
-        Lang::addLines($cached, $locale);
+        $defaults = [];
+        foreach (glob(resource_path('language/default/*.php')) as $path) {
+            $group = pathinfo($path, PATHINFO_FILENAME);
+            foreach (require $path as $key => $value) {
+                $defaults[$group.'.'.$key] = $value;
+            }
+        }
+
+        // Empty saved values must not erase the bundled form labels.
+        $overrides = array_filter($cached, fn ($value) => is_string($value) && trim($value) !== '');
+        Lang::addLines(array_replace($defaults, $overrides), $locale);
     }
 
     public function deleteLanguage($id)

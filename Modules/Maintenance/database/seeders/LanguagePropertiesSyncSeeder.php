@@ -23,14 +23,14 @@ class LanguagePropertiesSyncSeeder extends Seeder
     protected function removeUnusedProperties(): void
     {
         $groups = [
-            'auth' => require storage_path('app/lang/groups/auth.php'),
-            'button' => require storage_path('app/lang/groups/button.php'),
-            'common' => require storage_path('app/lang/groups/common.php'),
-            'dashboard' => require storage_path('app/lang/groups/dashboard.php'),
-            'frontend' => require storage_path('app/lang/groups/frontend.php'),
-            'input' => require storage_path('app/lang/groups/input.php'),
-            'table' => require storage_path('app/lang/groups/table.php'),
-            'settings' => require storage_path('app/lang/groups/settings.php'),
+            'auth' => require resource_path('language/groups/auth.php'),
+            'button' => require resource_path('language/groups/button.php'),
+            'common' => require resource_path('language/groups/common.php'),
+            'dashboard' => require resource_path('language/groups/dashboard.php'),
+            'frontend' => require resource_path('language/groups/frontend.php'),
+            'input' => require resource_path('language/groups/input.php'),
+            'table' => require resource_path('language/groups/table.php'),
+            'settings' => require resource_path('language/groups/settings.php'),
         ];
 
         // Build a list of all valid property keys from the current language files
@@ -89,14 +89,14 @@ class LanguagePropertiesSyncSeeder extends Seeder
     protected function addNewProperties(): void
     {
         $groups = [
-            'auth' => require storage_path('app/lang/groups/auth.php'),
-            'button' => require storage_path('app/lang/groups/button.php'),
-            'common' => require storage_path('app/lang/groups/common.php'),
-            'dashboard' => require storage_path('app/lang/groups/dashboard.php'),
-            'frontend' => require storage_path('app/lang/groups/frontend.php'),
-            'input' => require storage_path('app/lang/groups/input.php'),
-            'table' => require storage_path('app/lang/groups/table.php'),
-            'settings' => require storage_path('app/lang/groups/settings.php'),
+            'auth' => require resource_path('language/groups/auth.php'),
+            'button' => require resource_path('language/groups/button.php'),
+            'common' => require resource_path('language/groups/common.php'),
+            'dashboard' => require resource_path('language/groups/dashboard.php'),
+            'frontend' => require resource_path('language/groups/frontend.php'),
+            'input' => require resource_path('language/groups/input.php'),
+            'table' => require resource_path('language/groups/table.php'),
+            'settings' => require resource_path('language/groups/settings.php'),
         ];
 
         // Get all languages

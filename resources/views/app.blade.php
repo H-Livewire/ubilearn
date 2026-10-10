@@ -222,8 +222,12 @@
                 flex-shrink: 0;
             }
             html.dark img[src$="/assets/icons/ubi-learn-logo-v2.png"] {
-                background: #fff;
-                border-radius: 10px;
+                background: transparent;
+                border-radius: 0;
+                filter: invert(1) hue-rotate(180deg);
+            }
+            html.dark .ubi-login-brand img[src$="/assets/icons/ubi-learn-logo-v2.png"] {
+                filter: none;
             }
             @media (max-width: 767px) {
                 img[src$="/assets/icons/ubi-learn-logo-v2.png"] {

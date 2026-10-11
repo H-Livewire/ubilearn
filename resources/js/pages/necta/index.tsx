@@ -11,6 +11,11 @@ interface Candidate {
    index: string;
    cells: string[];
    grades: Record<string, string>;
+   summary: {
+      division: string | null;
+      points: number | null;
+      status: 'Passed' | 'Failed' | 'Absent' | 'Withheld' | 'Not available';
+   };
 }
 interface Programme {
    institution: string;
@@ -67,11 +72,9 @@ function Necta({ levels }: { levels: Record<string, string> }) {
          const response = await fetch(`/necta-result/lookup?${query}`, {
             headers: { Accept: 'application/json' },
          });
-         const data = await response
-            .json()
-            .catch(() => ({
-               message: 'Seva haijarudisha taarifa. Jaribu tena.',
-            }));
+         const data = await response.json().catch(() => ({
+            message: 'Seva haijarudisha taarifa. Jaribu tena.',
+         }));
 
          if (!response.ok) {
             throw new Error(
@@ -227,6 +230,36 @@ function Necta({ levels }: { levels: Record<string, string> }) {
                   <h2 className="text-xl font-bold">
                      Matokeo: {selected.index}
                   </h2>
+                  {selected.summary && (
+                     <dl className="grid grid-cols-3 gap-3 rounded-md border bg-muted/30 p-4">
+                        <div>
+                           <dt className="text-sm text-muted-foreground">
+                              Division
+                           </dt>
+                           <dd className="mt-1 text-xl font-bold">
+                              {selected.summary.division ?? '—'}
+                           </dd>
+                        </div>
+                        <div>
+                           <dt className="text-sm text-muted-foreground">
+                              Points
+                           </dt>
+                           <dd className="mt-1 text-xl font-bold">
+                              {selected.summary.points ?? '—'}
+                           </dd>
+                        </div>
+                        <div>
+                           <dt className="text-sm text-muted-foreground">
+                              Status
+                           </dt>
+                           <dd
+                              className={`mt-1 font-bold ${selected.summary.status === 'Failed' ? 'text-red-600 dark:text-red-400' : selected.summary.status === 'Passed' ? 'text-emerald-700 dark:text-emerald-400' : 'text-muted-foreground'}`}
+                           >
+                              {selected.summary.status}
+                           </dd>
+                        </div>
+                     </dl>
+                  )}
                   <p className="text-sm break-words">
                      {selected.cells.join(' · ')}
                   </p>

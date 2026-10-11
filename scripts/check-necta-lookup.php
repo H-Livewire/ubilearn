@@ -20,3 +20,14 @@ if (count(Http::recorded()) !== $count) { fwrite(STDERR, 'Cache missed'); exit(1
 try { $s->lookup('ftna', 2025, 'P1234/9999'); fwrite(STDERR, 'Missing candidate accepted'); exit(1); }
 catch (Illuminate\Validation\ValidationException $e) {}
 echo "PASS: malformed rows, number normalization, exact candidate, cache and missing result.\n";
+
+foreach ([
+    [['S1234/0001','F','20','II','HIST-A'], 'II', 20, 'Passed'],
+    [['P1234/0001','','M','35','0','ABS'], '0', 35, 'Failed'],
+    [['P1234/0001','','M','','','ABS'], null, null, 'Absent'],
+    [['S1234/0001','F','', '', 'W/H'], null, null, 'Withheld'],
+] as [$cells, $division, $points, $status]) {
+    $summary = $s->resultSummary($cells);
+    if ($summary['division'] !== $division || $summary['points'] != $points || $summary['status'] !== $status) { fwrite(STDERR, 'Summary failed'); exit(1); }
+}
+echo "PASS: source division, aggregate points, pass/fail and unavailable results.\n";

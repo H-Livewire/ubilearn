@@ -55,7 +55,7 @@ class NectaResultsService
         }
         $entry = collect($this->years($level))->firstWhere('year', $year);
         if (!$entry) throw ValidationException::withMessages(['year' => 'Matokeo ya mwaka huu hayajaonekana kwenye orodha rasmi ya NECTA.']);
-        $key = 'necta:lookup:v2:'.$level.':'.$year.':'.$index;
+        $key = 'necta:lookup:v3:'.$level.':'.$year.':'.$index;
         return Cache::remember($key, 3600, function () use ($entry, $match, $index) {
             $directory = $this->browse($entry['key']);
             $centre = collect($directory['children'])->first(fn ($child) => preg_match('~^'.preg_quote($match[1], '~').'\b~i', ($child['centre'] ?? '').' '.$child['label']));
@@ -93,6 +93,28 @@ class NectaResultsService
         return $key;
     }
 
+    public function resultSummary(array $cells): array
+    {
+        $division = null; $points = null; $status = 'Not available';
+        foreach ($cells as $position => $cell) {
+            if (!in_array(strtoupper(trim($cell)), ['M', 'F'], true)) continue;
+            $aggregate = trim($cells[$position + 1] ?? '');
+            $reportedDivision = strtoupper(trim($cells[$position + 2] ?? ''));
+            if (!in_array($reportedDivision, ['I', 'II', 'III', 'IV', '0'], true)) continue;
+            $division = $reportedDivision;
+            $points = is_numeric($aggregate) ? (float) $aggregate : null;
+            $status = $division === '0' ? 'Failed' : 'Passed';
+            break;
+        }
+        if ($division === null) {
+            foreach ($cells as $cell) {
+                if (preg_match('/^ABS(?:ENT)?$/i', trim($cell))) $status = 'Absent';
+                elseif (preg_match('/^(W[\/ -]?H|WITHHELD)$/i', trim($cell))) $status = 'Withheld';
+            }
+        }
+        return ['division' => $division, 'points' => $points, 'status' => $status];
+    }
+
     public function browse(string $key): array
     {
         $url = Cache::get('necta:url:'.$key);
@@ -115,7 +137,7 @@ class NectaResultsService
                 $grades = [];
                 preg_match_all("/([A-Z][A-Z\/._]{1,30}(?:\s+(?:STUD|SCIENCE|KNOW))?)\s*[-:]\s*['’]?([A-FS]\+?)['’]?/", implode(' ', $cells), $matches, PREG_SET_ORDER);
                 foreach ($matches as $grade) $grades[trim($grade[1])] = $grade[2];
-                $candidates[] = ['index' => $cells[0], 'cells' => $cells, 'grades' => $grades];
+                $candidates[] = ['index' => $cells[0], 'cells' => $cells, 'grades' => $grades, 'summary' => $this->resultSummary($cells)];
             }
         }
         $links = [];

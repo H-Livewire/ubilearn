@@ -111,14 +111,22 @@ export const secondsToDuration = (totalSeconds: number | null): string => {
 
 // Get completed content like lessons or quizzes
 export const getCompletedContents = (
-   watchHistory: WatchHistory,
+   watchHistory: WatchHistory | null | undefined,
 ): CompletedContent[] => {
-   const completed =
-      typeof watchHistory.completed_watching === 'string'
-         ? JSON.parse(watchHistory.completed_watching)
-         : watchHistory.completed_watching || [];
+   const completed = watchHistory?.completed_watching;
 
-   return completed;
+   if (!completed) {
+      return [];
+   }
+
+   try {
+      const contents =
+         typeof completed === 'string' ? JSON.parse(completed) : completed;
+
+      return Array.isArray(contents) ? contents : [];
+   } catch {
+      return [];
+   }
 };
 
 // Add completion calculation

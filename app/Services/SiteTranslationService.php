@@ -168,7 +168,7 @@ class SiteTranslationService
                 $item->title = $translations['title'];
             }
 
-            if (is_array($item->items) && $item->items !== []) {
+            if ($item->slug !== 'address' && is_array($item->items) && $item->items !== []) {
                 $subItems = $item->items;
 
                 foreach ($subItems as $index => $subItem) {

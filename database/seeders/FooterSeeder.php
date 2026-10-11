@@ -51,9 +51,8 @@ class FooterSeeder extends Seeder
                 'slug' => 'address',
                 'title' => 'Address',
                 'items' => [
-                    ['title' => 'Corner view Subudbazar, Sylhet, Bangladesh.'],
-                    ['title' => 'Email: uilib@gmail.com'],
-                    ['title' => 'Phone: +880 1123 456 780'],
+                    ['title' => 'Kigamboni, Dar es Salaam'],
+                    ['title' => 'Phone: 0754454705'],
                 ],
             ],
             [

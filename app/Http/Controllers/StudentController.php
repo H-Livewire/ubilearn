@@ -50,7 +50,7 @@ class StudentController extends Controller
         $course = $this->studentService->getEnrolledCourse($id, $user);
         $props = $this->studentService->getEnrolledCourseOverview($id, $tab, $user);
         $zoomConfig = $tab === 'live_classes' ? $this->zoomLiveService->zoomConfig : null;
-        $watchHistory = $this->coursePlayerService->getWatchHistory(['course_id' => $id]);
+        $watchHistory = $this->coursePlayerService->ensureWatchHistory($course, (string) $user->id);
         $completion = $course ? $this->coursePlayerService->calculateCompletion($course, $watchHistory) : null;
 
         return Inertia::render('student/course', [

@@ -11,7 +11,8 @@ import Quiz from '../partials/quiz';
 
 const CourseModules = () => {
    const { props } = usePage<StudentCourseProps>();
-   const { modules, watchHistory } = props;
+   const { watchHistory } = props;
+   const modules = props.modules ?? [];
    const completed = getCompletedContents(watchHistory);
    // const completion = getCourseCompletion(props.course, completed);
 
@@ -34,9 +35,11 @@ const CourseModules = () => {
                         {ind + 1}. {section.title}
                      </AccordionTrigger>
                      <AccordionContent className="space-y-2 p-2">
-                        {section.section_lessons.length > 0 ? (
+                        {(section.section_lessons?.length ?? 0) +
+                           (section.section_quizzes?.length ?? 0) >
+                        0 ? (
                            <>
-                              {section.section_lessons.map((lesson) => (
+                              {(section.section_lessons ?? []).map((lesson) => (
                                  <Lesson
                                     key={lesson.id}
                                     lesson={lesson}
@@ -44,7 +47,7 @@ const CourseModules = () => {
                                  />
                               ))}
 
-                              {section.section_quizzes.map((quiz) => (
+                              {(section.section_quizzes ?? []).map((quiz) => (
                                  <Quiz
                                     key={quiz.id}
                                     quiz={quiz}
@@ -54,7 +57,10 @@ const CourseModules = () => {
                            </>
                         ) : (
                            <div className="px-4 py-3 text-center">
-                              <p>There is no lesson added</p>
+                              <p>
+                                 Hakuna lesson au quiz iliyowekwa kwenye module
+                                 hii bado.
+                              </p>
                            </div>
                         )}
                      </AccordionContent>
@@ -63,7 +69,10 @@ const CourseModules = () => {
             </Accordion>
          ) : (
             <div className="p-6 text-center">
-               <p>There is no section added</p>
+               <p>
+                  Kozi hii bado haina modules. Tafadhali wasiliana na
+                  instructor.
+               </p>
             </div>
          )}
       </>

@@ -73,6 +73,20 @@ class CoursePlayerService
         }
     }
 
+    public function ensureWatchHistory(Course $course, string $user_id): ?WatchHistory
+    {
+        $history = $this->getWatchHistory(['course_id' => $course->id]);
+        if ($history) return $history;
+        $course->loadMissing(['sections.section_lessons', 'sections.section_quizzes']);
+        foreach ($course->sections as $section) {
+            $lesson = $section->section_lessons->sortBy('lesson_number')->first();
+            if ($lesson) return $this->watchHistory($course, (string) $lesson->id, 'lesson', $user_id);
+            $quiz = $section->section_quizzes->first();
+            if ($quiz) return $this->watchHistory($course, (string) $quiz->id, 'quiz', $user_id);
+        }
+        return null;
+    }
+
     public function watchHistory(Course $course, string $watching_id, string $watching_type, string $user_id): WatchHistory
     {
         // Get or create watch history

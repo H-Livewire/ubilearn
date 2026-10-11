@@ -48,15 +48,15 @@ const CourseCard7 = ({
                   <div className="flex items-center gap-2">
                      <Avatar className="h-8 w-8">
                         <AvatarImage
-                           src={course.instructor.user.photo || ''}
-                           alt={course.instructor.user.name}
+                           src={course.instructor?.user?.photo || ''}
+                           alt={course.instructor?.user?.name}
                            className="object-cover"
                         />
                         <AvatarFallback>IM</AvatarFallback>
                      </Avatar>
 
                      <p className="text-sm font-medium">
-                        {course.instructor.user.name}
+                        {course.instructor?.user?.name}
                      </p>
                   </div>
                </div>

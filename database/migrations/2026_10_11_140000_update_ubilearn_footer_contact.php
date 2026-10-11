@@ -13,6 +13,7 @@ return new class extends Migration
         DB::table('footer_items')->where('slug', 'address')->update([
             'items' => json_encode([
                 ['title' => 'Kigamboni, Dar es Salaam'],
+                ['title' => 'Email: ubilearn@gmail.com'],
                 ['title' => 'Phone: 0754454705'],
             ], JSON_THROW_ON_ERROR),
         ]);

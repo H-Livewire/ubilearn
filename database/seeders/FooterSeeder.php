@@ -52,6 +52,7 @@ class FooterSeeder extends Seeder
                 'title' => 'Address',
                 'items' => [
                     ['title' => 'Kigamboni, Dar es Salaam'],
+                    ['title' => 'Email: ubilearn@gmail.com'],
                     ['title' => 'Phone: 0754454705'],
                 ],
             ],

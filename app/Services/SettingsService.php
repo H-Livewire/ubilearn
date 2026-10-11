@@ -173,6 +173,20 @@ class SettingsService extends MediaService
 
             if ($navbar) {
                 $this->siteTranslationService->applyToNavbarItems($navbar->navbarItems);
+                foreach ($navbar->navbarItems as $item) {
+                    if ($item->value === '/courses/all') {
+                        $courses = \Modules\Course\Models\Course::where('status', 'approved')
+                            ->where('mode', 'public')->orderBy('title')->get(['id', 'title', 'slug']);
+                        $item->type = 'dropdown';
+                        $item->items = [
+                            ['title' => 'All Courses', 'url' => '/courses/all'],
+                            ...$courses->map(fn ($course) => [
+                                'title' => $course->title,
+                                'url' => route('course.details', ['slug' => $course->slug, 'id' => $course->id], false),
+                            ])->all(),
+                        ];
+                    }
+                }
             }
 
             return $navbar;

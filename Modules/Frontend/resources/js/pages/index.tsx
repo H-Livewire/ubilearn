@@ -1,3 +1,4 @@
+import TeamInstructors from '../page-jsx/our-team/team-instructors';
 import LandingLayout from '@/layouts/landing';
 import { Head, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
@@ -50,7 +51,7 @@ const Index = (props: FrontendPageProps) => {
             {ogImage && <meta name="twitter:image" content={ogImage} />}
          </Head>
 
-         {pageData ? (
+         {page?.slug === 'our-team' ? <TeamInstructors /> : pageData ? (
             <>
                {/* Hidden off-screen portal — background HTML capture only.
                    Inherits Inertia context so usePage/Link/API calls all work. */}

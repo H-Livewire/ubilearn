@@ -130,6 +130,15 @@ class HandleInertiaRequests extends Middleware
                 'customize' => $request->query('customize', false),
                 'appearance' => $request->cookie('appearance') ?? 'system',
                 'navbar' => $this->settingsService->getNavbar('navbar_1'),
+                'teamInstructors' => $request->is('our-team', 'frontend/pages/*')
+                    ? \App\Models\Instructor::where('status', 'approved')->with('user:id,name,photo')
+                        ->get(['id', 'user_id', 'designation'])->map(fn ($instructor) => [
+                            'id' => $instructor->id,
+                            'name' => $instructor->user?->name,
+                            'photo' => $instructor->user?->photo,
+                            'designation' => $instructor->designation,
+                        ])->filter(fn ($instructor) => !empty($instructor['name']))->values()
+                    : [],
                 'footer' => $this->settingsService->getFooter('footer_1'),
                 'notifications' => $user ? $this->notificationService->notifications(['unread' => true]) : [],
                 'langs' => $langs,

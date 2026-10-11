@@ -20,6 +20,10 @@ class GoogleAuthController extends Controller
      */
     public function show(Request $request)
     {
+        if (! $this->authService->googleAuthStatus()['authStatus']) {
+            return redirect()->route('login.index')->with('error', 'Google login is not configured yet.');
+        }
+
         session()->put('from', $request->from);
 
         return Socialite::driver('google')->redirect();
@@ -30,7 +34,10 @@ class GoogleAuthController extends Controller
      */
     public function callback(Request $request)
     {
-        $from = session()->get('from');
+        $from = session()->pull('from');
+        if ($request->has('error')) {
+            return redirect()->route('login.index')->with('error', 'Google sign-in was cancelled. Please try again.');
+        }
 
         try {
             $user = Socialite::driver('google')->user();
@@ -50,6 +57,8 @@ class GoogleAuthController extends Controller
                 Auth::login($registered, true);
             }
 
+            $request->session()->regenerate();
+
             if ($registered->role === UserType::STUDENT->value) {
                 if ($from && $from == 'api') {
                     session()->forget('from');
@@ -68,12 +77,13 @@ class GoogleAuthController extends Controller
                 }
             }
         } catch (\Throwable $th) {
+            report($th);
             if ($from && $from == 'api') {
                 session()->forget('from');
 
                 return redirectIntended(config('app.frontend_url').'/login');
             } else {
-                return redirect()->route('login.index')->with('error', $th->getMessage());
+                return redirect()->route('login.index')->with('error', 'Google sign-in failed. Please try again or use email login.');
             }
         }
     }

@@ -62,7 +62,7 @@ class AuthService
                 'role' => UserType::STUDENT->value,
                 'email_verified_at' => now(),
                 'google_id' => $user->id,
-                'password' => Hash::make('googleauth'),
+                'password' => Hash::make(\Illuminate\Support\Str::random(64)),
             ];
 
             // Add OAuth tokens if available

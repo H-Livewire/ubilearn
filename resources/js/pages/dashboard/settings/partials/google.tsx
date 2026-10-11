@@ -65,6 +65,7 @@ const Google = (props: Props) => {
                         <Label>{input.google_client_secret}</Label>
                         <Input
                            name="client_secret"
+                           type="password"
                            defaultValue={fields.client_secret || ''}
                            placeholder={input.google_client_secret_placeholder}
                         />

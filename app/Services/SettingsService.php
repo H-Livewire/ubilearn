@@ -173,6 +173,12 @@ class SettingsService extends MediaService
 
             if ($navbar) {
                 $this->siteTranslationService->applyToNavbarItems($navbar->navbarItems);
+                if (!$navbar->navbarItems->contains('slug', 'necta-result')) {
+                    $navbar->navbarItems->push(new \App\Models\NavbarItem([
+                        'id' => -1, 'slug' => 'necta-result', 'type' => 'url',
+                        'title' => 'NECTA result', 'value' => '/necta-result', 'active' => true, 'sort' => 3,
+                    ]));
+                }
                 foreach ($navbar->navbarItems as $item) {
                     if ($item->value === '/courses/all') {
                         $courses = \Modules\Course\Models\Course::where('status', 'approved')

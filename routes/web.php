@@ -55,6 +55,11 @@ Route::middleware(['web'])->group(function () {
         }
     });
 
+    Route::get('necta-result', [\App\Http\Controllers\NectaController::class, 'index'])->name('necta.index');
+    Route::get('necta-result/years', [\App\Http\Controllers\NectaController::class, 'years'])->middleware('throttle:30,1');
+    Route::post('necta-result/guidance', [\App\Http\Controllers\NectaController::class, 'guidance'])->middleware('throttle:30,1');
+    Route::get('necta-result/browse', [\App\Http\Controllers\NectaController::class, 'browse'])->middleware('throttle:30,1');
+
     // Catch-all route for inner pages
     Route::get('/{slug}', [HomeController::class, 'inner_page'])->name('inner.page');
 });

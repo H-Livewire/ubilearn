@@ -91,6 +91,11 @@ class AuthService
     {
         $updateData = [];
 
+        if (!empty($googleUser->avatar) && filter_var($googleUser->avatar, FILTER_VALIDATE_URL)
+            && parse_url($googleUser->avatar, PHP_URL_SCHEME) === 'https') {
+            $updateData['photo'] = $googleUser->avatar;
+        }
+
         if (isset($googleUser->token)) {
             $updateData['google_access_token'] = $googleUser->token;
         }

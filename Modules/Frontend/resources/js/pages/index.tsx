@@ -1,9 +1,9 @@
-import TeamInstructors from '../page-jsx/our-team/team-instructors';
 import LandingLayout from '@/layouts/landing';
 import { Head, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import PageRenderer from '@/frontend/page-jsx/page-renderer';
 import { useGeneratePageHtml } from '../lib/generate-page-html';
+import TeamInstructors from '../page-jsx/our-team/team-instructors';
 
 const Index = (props: FrontendPageProps) => {
    const { page } = props;

@@ -20,6 +20,18 @@ class NectaController extends Controller
         catch (\Throwable $e) { report($e); return response()->json(['message' => 'NECTA haipatikani kwa sasa. Jaribu tena au fungua chanzo rasmi.'], 503); }
     }
 
+    public function lookup(Request $request, NectaResultsService $service)
+    {
+        $data = $request->validate([
+            'level' => 'required|in:'.implode(',', array_keys(NectaResultsService::LEVELS)),
+            'year' => 'required|integer|between:2000,'.date('Y'),
+            'index' => 'required|string|max:40',
+        ]);
+        try { return response()->json($service->lookup($data['level'], $data['year'], $data['index'])); }
+        catch (\Illuminate\Validation\ValidationException $e) { throw $e; }
+        catch (\Throwable $e) { report($e); return response()->json(['message' => 'NECTA haijajibu kwa wakati. Jaribu tena au fungua matokeo rasmi.'], 503); }
+    }
+
     public function guidance(Request $request, \App\Services\EducationPathwaysService $service)
     {
         $data = $request->validate([

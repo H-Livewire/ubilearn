@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -7,15 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import LandingLayout from '@/layouts/landing';
 
-interface Choice {
-   label: string;
-   key: string;
-}
-interface Year {
-   year: number;
-   key: string;
-   url: string;
-}
 interface Candidate {
    index: string;
    cells: string[];
@@ -32,35 +23,15 @@ interface Programme {
    assessment: string;
    careers: string[];
 }
-interface Browse {
-   source: string;
-   children: Choice[];
-   candidates: Candidate[];
-}
 const selectClass =
    'h-11 w-full rounded-md border border-input bg-background px-3 text-sm';
-async function read<T>(url: string): Promise<T> {
-   const response = await fetch(url, {
-      headers: { Accept: 'application/json' },
-   });
-   const data = await response.json();
-
-   if (!response.ok) {
-      throw new Error(data.message || 'Imeshindikana kupata taarifa.');
-   }
-
-   return data;
-}
-
 function Necta({ levels }: { levels: Record<string, string> }) {
    const [level, setLevel] = useState('csee');
-   const [years, setYears] = useState<Year[]>([]);
-   const [year, setYear] = useState('');
-   const [browse, setBrowse] = useState<Browse | null>(null);
-   const [schoolSearch, setSchoolSearch] = useState('');
-   const [search, setSearch] = useState('');
+   const [year, setYear] = useState(String(new Date().getFullYear() - 1));
+   const [index, setIndex] = useState('');
+   const [source, setSource] = useState('');
    const [selected, setSelected] = useState<Candidate | null>(null);
-   const [busy, setBusy] = useState(true);
+   const [busy, setBusy] = useState(false);
    const [error, setError] = useState('');
    const [programmes, setProgrammes] = useState<Programme[]>([]);
    const [programme, setProgramme] = useState('');
@@ -72,50 +43,10 @@ function Necta({ levels }: { levels: Record<string, string> }) {
       message: string;
    } | null>(null);
 
-   function changeLevel(value: string) {
-      setLevel(value);
-      setYears([]);
-      setYear('');
-      setBrowse(null);
-      setSelected(null);
-      setGuidance(null);
-      setProgrammes([]);
-      setError('');
-      setBusy(true);
-   }
+   async function lookup(event: React.FormEvent) {
+      event.preventDefault();
 
-   useEffect(() => {
-      const controller = new AbortController();
-      fetch(`/necta-result/years?level=${level}`, {
-         signal: controller.signal,
-         headers: { Accept: 'application/json' },
-      })
-         .then(async (response) => {
-            const data = await response.json();
-
-            if (!response.ok) {
-               throw new Error(data.message);
-            }
-
-            return data;
-         })
-         .then(setYears)
-         .catch((e) => {
-            if (e.name !== 'AbortError') {
-               setError(e.message);
-            }
-         })
-         .finally(() => {
-            if (!controller.signal.aborted) {
-               setBusy(false);
-            }
-         });
-
-      return () => controller.abort();
-   }, [level]);
-
-   async function open(key: string) {
-      if (!key) {
+      if (busy) {
          return;
       }
 
@@ -124,14 +55,37 @@ function Necta({ levels }: { levels: Record<string, string> }) {
       setSelected(null);
       setGuidance(null);
       setProgrammes([]);
-      setSearch('');
-      setSchoolSearch('');
+      setProgramme('');
+      setSource('');
 
       try {
-         setBrowse(await read<Browse>(`/necta-result/browse?key=${key}`));
+         const query = new URLSearchParams({
+            level,
+            year,
+            index: index.trim(),
+         });
+         const response = await fetch(`/necta-result/lookup?${query}`, {
+            headers: { Accept: 'application/json' },
+         });
+         const data = await response
+            .json()
+            .catch(() => ({
+               message: 'Seva haijarudisha taarifa. Jaribu tena.',
+            }));
+
+         if (!response.ok) {
+            throw new Error(
+               (Object.values(data.errors || {}).flat()[0] as string) ||
+                  data.message,
+            );
+         }
+
+         setSource(data.source);
+         setSelected(data.candidate);
+         setBusy(false);
+         await choose(data.candidate);
       } catch (e) {
          setError(e instanceof Error ? e.message : 'Jaribu tena.');
-      } finally {
          setBusy(false);
       }
    }
@@ -180,10 +134,6 @@ function Necta({ levels }: { levels: Record<string, string> }) {
       }
    }
 
-   const matches =
-      browse?.candidates.filter((c) =>
-         c.cells.join(' ').toLowerCase().includes(search.toLowerCase()),
-      ) || [];
    const choice = programmes.find((p) => p.code === programme);
 
    return (
@@ -193,176 +143,84 @@ function Necta({ levels }: { levels: Record<string, string> }) {
             <div>
                <h1 className="text-3xl font-bold">NECTA result</h1>
                <p className="mt-2 text-sm text-muted-foreground">
-                  Chagua mwaka, kiwango cha elimu na shule/kituo.
+                  Weka mwaka, namba ya mtihani na kiwango cha elimu.
                </p>
             </div>
-            <Card className="space-y-5 p-5 sm:p-6">
-               <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                     <Label htmlFor="level">Kiwango cha elimu</Label>
-                     <select
-                        disabled={busy}
-                        id="level"
-                        className={selectClass}
-                        value={level}
-                        onChange={(e) => changeLevel(e.target.value)}
-                     >
-                        {Object.entries(levels).map(([key, name]) => (
-                           <option key={key} value={key}>
-                              {name}
-                           </option>
-                        ))}
-                        <option disabled>
-                           Darasa la 2 — chanzo hakijathibitishwa
-                        </option>
-                     </select>
-                  </div>
-                  <div className="space-y-2">
-                     <Label htmlFor="year">Mwaka</Label>
-                     <select
-                        id="year"
-                        className={selectClass}
-                        disabled={busy}
-                        value={year}
-                        onChange={(e) => {
-                           setYear(e.target.value);
-                           const item = years.find(
-                              (y) => y.year.toString() === e.target.value,
-                           );
-
-                           if (item) {
-                              void open(item.key);
-                           }
-                        }}
-                     >
-                        <option value="">Chagua mwaka</option>
-                        {years.map((y) => (
-                           <option key={y.year} value={y.year}>
-                              {y.year}
-                           </option>
-                        ))}
-                     </select>
-                  </div>
-               </div>
-               {!!browse?.children.length && (
-                  <div className="space-y-3">
-                     <Label htmlFor="school-search">
-                        Herufi / jina la shule au eneo
-                     </Label>
-                     <Input
-                        id="school-search"
-                        value={schoolSearch}
-                        onChange={(e) => setSchoolSearch(e.target.value)}
-                        placeholder="Mfano: K"
-                     />
-                     <select
-                        aria-label="Shule au eneo"
-                        className={selectClass}
-                        disabled={busy}
-                        value=""
-                        onChange={(e) => void open(e.target.value)}
-                     >
-                        <option value="">Chagua shule / eneo</option>
-                        {browse.children
-                           .filter((c) =>
-                              c.label
-                                 .toLowerCase()
-                                 .includes(schoolSearch.toLowerCase()),
-                           )
-                           .map((c) => (
-                              <option key={c.key} value={c.key}>
-                                 {c.label}
+            <Card className="p-5 sm:p-6">
+               <form onSubmit={lookup} className="space-y-5">
+                  <div className="grid gap-4 sm:grid-cols-3">
+                     <div className="space-y-2">
+                        <Label htmlFor="year">Mwaka</Label>
+                        <Input
+                           id="year"
+                           type="number"
+                           min="2000"
+                           max={new Date().getFullYear()}
+                           required
+                           value={year}
+                           disabled={busy}
+                           onChange={(e) => setYear(e.target.value)}
+                        />
+                     </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="index">Namba ya mtihani</Label>
+                        <Input
+                           id="index"
+                           required
+                           maxLength={40}
+                           placeholder="S0156/0001"
+                           value={index}
+                           disabled={busy}
+                           onChange={(e) => setIndex(e.target.value)}
+                        />
+                     </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="level">Kiwango cha elimu</Label>
+                        <select
+                           id="level"
+                           className={selectClass}
+                           value={level}
+                           disabled={busy}
+                           onChange={(e) => setLevel(e.target.value)}
+                        >
+                           {Object.entries(levels).map(([key, name]) => (
+                              <option key={key} value={key}>
+                                 {name}
                               </option>
                            ))}
-                     </select>
-                  </div>
-               )}
-               {!!browse?.candidates.length && (
-                  <div className="space-y-3">
-                     <Label htmlFor="candidate-search">
-                        Jina au namba ya mtahiniwa
-                     </Label>
-                     <Input
-                        id="candidate-search"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Mfano: S0000/0001"
-                     />
-                     <select
-                        aria-label="Mtahiniwa"
-                        className={selectClass}
-                        disabled={busy}
-                        value={selected?.index || ''}
-                        onChange={(e) => {
-                           const candidate = matches.find(
-                              (c) => c.index === e.target.value,
-                           );
-
-                           if (candidate) {
-                              void choose(candidate);
-                           }
-                        }}
-                     >
-                        <option value="">
-                           Chagua mtahiniwa ({matches.length})
-                        </option>
-                        {matches.map((c) => (
-                           <option key={c.index} value={c.index}>
-                              {c.cells.slice(0, 4).join(' · ')}
+                           <option disabled>
+                              Darasa la 2 — chanzo hakijathibitishwa
                            </option>
-                        ))}
-                     </select>
+                        </select>
+                     </div>
                   </div>
-               )}
-               {busy && (
-                  <p role="status" className="text-sm text-muted-foreground">
-                     Inatafuta…
-                  </p>
-               )}
-               {error && (
-                  <p role="alert" className="text-sm text-destructive">
-                     {error}
-                  </p>
-               )}
-               {!busy &&
-                  year &&
-                  browse &&
-                  !browse.candidates.length &&
-                  !browse.children.length && (
-                     <p className="text-sm text-muted-foreground">
-                        Muundo huu wa matokeo haujasomwa. Fungua matokeo rasmi
-                        hapa chini.
+                  {error && (
+                     <p role="alert" className="text-sm text-destructive">
+                        {error}
                      </p>
                   )}
-               {year && browse && (
-                  <Button
-                     variant="outline"
-                     disabled={busy}
-                     onClick={() => {
-                        const item = years.find(
-                           (y) => y.year.toString() === year,
-                        );
-
-                        if (item) {
-                           void open(item.key);
-                        }
-                     }}
-                  >
-                     Chagua shule nyingine
-                  </Button>
-               )}
-               <Button asChild variant="outline">
-                  <a
-                     href={
-                        browse?.source ||
-                        `https://www.necta.go.tz/results/view/${level}`
-                     }
-                     target="_blank"
-                     rel="noopener noreferrer"
-                  >
-                     Fungua NECTA ↗
-                  </a>
-               </Button>
+                  <div className="flex flex-wrap gap-3">
+                     <Button
+                        type="submit"
+                        disabled={busy}
+                        className="border-black bg-black font-semibold text-white hover:bg-black/85"
+                     >
+                        {busy ? 'Inatafuta…' : 'Tafuta matokeo'}
+                     </Button>
+                     <Button asChild variant="outline">
+                        <a
+                           href={
+                              source ||
+                              `https://www.necta.go.tz/results/view/${level}`
+                           }
+                           target="_blank"
+                           rel="noopener noreferrer"
+                        >
+                           Fungua NECTA ↗
+                        </a>
+                     </Button>
+                  </div>
+               </form>
             </Card>
             {selected && (
                <Card className="space-y-4 p-5 sm:p-6">

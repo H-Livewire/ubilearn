@@ -11,7 +11,7 @@ class EducationPathwaysService
         'B/MATH' => 'Basic Mathematics', 'HIST' => 'History', 'HISTORY' => 'History', 'GEO' => 'Geography', 'GEOGR' => 'Geography',
         'ENGL' => 'English', 'ENG' => 'English', 'KISW' => 'Kiswahili', 'KISW/K' => 'Kiswahili',
         'ECON' => 'Economics', 'COMM' => 'Commerce', 'ACCT' => 'Accountancy', 'ACC' => 'Accountancy', 'B/KEEPING' => 'Accountancy',
-        'COMP' => 'Computer Science', 'COMPUTER' => 'Computer Science', 'AGRI' => 'Agriculture', 'NUTR' => 'Nutrition',
+        'COMP STUD' => 'Computer Science', 'COMP' => 'Computer Science', 'COMPUTER' => 'Computer Science', 'AGRI' => 'Agriculture', 'NUTR' => 'Nutrition',
         'LIT' => 'Literature in English', 'FREN' => 'French', 'ARAB' => 'Arabic', 'ISLAM' => 'Elimu ya Dini ya Kiislam',
     ];
 

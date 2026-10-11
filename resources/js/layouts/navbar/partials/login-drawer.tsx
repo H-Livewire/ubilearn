@@ -227,7 +227,6 @@ export default function LoginDrawer() {
                            </p>
                         )}
                         <LoadingButton
-                           brandAnimation={mode !== 'recover'}
                            loading={processing}
                            className="ubi-login-submit"
                         >

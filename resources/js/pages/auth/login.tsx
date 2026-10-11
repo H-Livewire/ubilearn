@@ -111,7 +111,6 @@ export default function Login({ status, recaptcha, googleLogIn }: LoginProps) {
                      </div>
 
                      <LoadingButton
-                        brandAnimation
                         loading={processing}
                         type="submit"
                         className="w-full"

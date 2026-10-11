@@ -18,9 +18,7 @@ const Index = () => {
    const socialMediaItem = sortedItems.find(
       (item) => item.type === 'social_media' && item.active,
    );
-   const paymentMethodsItem = sortedItems.find(
-      (item) => item.type === 'payment_methods' && item.active,
-   );
+
 
    return (
       <div className="overflow-hidden bg-[rgba(255,222,99,0.06)]">
@@ -88,33 +86,7 @@ const Index = () => {
                </div>
             </div>
 
-            {paymentMethodsItem && (
-               <div className="space-y-3">
-                  <h3 className="text-base font-medium">
-                     {paymentMethodsItem.title}
-                  </h3>
-                  <div className="flex flex-wrap gap-3">
-                     {paymentMethodsItem.items &&
-                        Array.isArray(paymentMethodsItem.items) &&
-                        paymentMethodsItem.items.map(
-                           (paymentItem: any, idx: number) => (
-                              <div
-                                 key={idx}
-                                 className="flex h-7 items-center justify-center gap-5 md:justify-start"
-                              >
-                                 {paymentItem.image && (
-                                    <img
-                                       src={paymentItem.image}
-                                       alt={`Payment method ${idx + 1}`}
-                                       className="h-full w-auto object-contain"
-                                    />
-                                 )}
-                              </div>
-                           ),
-                        )}
-                  </div>
-               </div>
-            )}
+
          </div>
 
          {/* Copyright Section */}

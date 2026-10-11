@@ -238,7 +238,7 @@ class HandleInertiaRequests extends Middleware
         $captcha = $this->settingsService->getSetting(['type' => 'auth', 'sub_type' => 'recaptcha'])?->fields ?? [];
 
         return [
-            'google' => !empty($google['active']) && !empty($google['client_id']) && !empty($google['client_secret']) && !empty($google['redirect']),
+            'google' => \App\Services\GoogleLoginConfig::enabled(\App\Services\GoogleLoginConfig::resolve($google)),
             'recaptcha' => [
                 'status' => !empty($captcha['active']) && !empty($captcha['site_key']) && !empty($captcha['secret_key']),
                 'siteKey' => $captcha['site_key'] ?? '',

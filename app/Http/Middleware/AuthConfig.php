@@ -21,26 +21,20 @@ class AuthConfig
         $auth = $this->settingsService->getSetting([
             'type' => 'auth',
             'sub_type' => 'google',
-        ])['fields'];
+        ])?->fields ?? [];
 
         $recaptcha = $this->settingsService->getSetting([
             'type' => 'auth',
             'sub_type' => 'recaptcha',
-        ])['fields'];
+        ])?->fields ?? [];
 
-        // Google Auth configuration
-        config([
-            'services.google.status' => $auth['active'],
-            'services.google.client_id' => $auth['client_id'],
-            'services.google.client_secret' => $auth['client_secret'],
-            'services.google.redirect' => $auth['redirect'],
-        ]);
+        config(['services.google' => \App\Services\GoogleLoginConfig::resolve($auth)]);
 
         // Recaptcha configuration
         config([
-            'captcha.status' => $recaptcha['active'],
-            'captcha.secret' => $recaptcha['secret_key'],
-            'captcha.sitekey' => $recaptcha['site_key'],
+            'captcha.status' => ($recaptcha['active'] ?? false),
+            'captcha.secret' => ($recaptcha['secret_key'] ?? ''),
+            'captcha.sitekey' => ($recaptcha['site_key'] ?? ''),
         ]);
 
         return $next($request);

@@ -124,6 +124,7 @@ export default function Register({ googleLogIn, recaptcha }: RegisterProps) {
                      )}
 
                      <LoadingButton
+                        brandAnimation
                         className="mt-2 w-full"
                         tabIndex={5}
                         loading={processing}

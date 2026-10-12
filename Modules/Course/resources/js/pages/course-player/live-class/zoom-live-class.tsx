@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 
 interface Props {
    live_class: CourseLiveClass;
+   is_host?: boolean;
    watchHistory: WatchHistory | null;
    zoom_sdk_client_id?: string;
 }
@@ -13,6 +14,7 @@ interface MeetingConfig {
    role: number;
    password: string;
    signature: string;
+   zak?: string;
    meetingNumber: string;
 }
 
@@ -38,6 +40,8 @@ declare global {
             meetingNumber: string;
             userName: string;
             signature: string;
+            sdkKey: string;
+            zak?: string;
             userEmail?: string;
             passWord?: string;
             success: (res: any) => void;
@@ -56,6 +60,7 @@ declare global {
 
 const ZoomLiveClass = ({
    live_class,
+   is_host = false,
    watchHistory,
    zoom_sdk_client_id,
 }: Props) => {
@@ -68,7 +73,7 @@ const ZoomLiveClass = ({
    const [sdkLoaded, setSdkLoaded] = useState(false);
    const initializationRef = useRef(false);
 
-   const redirectUrl = isAdmin
+   const redirectUrl = is_host
       ? `/dashboard/courses`
       : `/student/courses/${live_class.course_id}/live_classes`;
 
@@ -151,11 +156,13 @@ const ZoomLiveClass = ({
             },
          });
 
-         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-         }
-
          const data = await response.json();
+
+         if (!response.ok) {
+            throw new Error(
+               data.error || data.message || `HTTP ${response.status}`,
+            );
+         }
 
          if (data.error) {
             throw new Error(data.error);
@@ -168,6 +175,8 @@ const ZoomLiveClass = ({
                ? error.message
                : frontend.failed_to_get_meeting_configuration,
          );
+
+         setLoading(false);
 
          return null;
       }
@@ -183,23 +192,16 @@ const ZoomLiveClass = ({
          // Check system requirements
          window.ZoomMtg.checkSystemRequirements();
 
-         // Clear the React root to avoid conflicts with Zoom's DOM manipulation
-         const appElement = document.getElementById('app') || document.body;
-         appElement.innerHTML = '';
-
-         // Prepare body for Zoom to take over
-         document.body.style.setProperty('margin', '0');
-         document.body.style.setProperty('padding', '0');
-         document.body.style.setProperty('overflow', 'hidden');
-         document.body.style.setProperty('height', '100vh');
-         document.body.style.setProperty('width', '100vw');
-
          // Pre-load WASM and prepare SDK
          window.ZoomMtg.preLoadWasm();
          window.ZoomMtg.prepareWebSDK();
+         const zoomRoot = document.getElementById('zmmtg-root');
+
+         if (zoomRoot) {
+            zoomRoot.style.display = 'block';
+         }
 
          // Load language (default to English)
-         window.ZoomMtg.i18n.load('en-US');
 
          // Initialize SDK when language is loaded
          window.ZoomMtg.i18n.onLoad(() => {
@@ -213,12 +215,16 @@ const ZoomLiveClass = ({
                   setError(
                      frontend.failed_to_initialize_meeting +
                         ': ' +
-                        (error.message || error),
+                        (error.errorMessage ||
+                           error.message ||
+                           JSON.stringify(error)),
                   );
                   setLoading(false);
                },
             });
          });
+
+         window.ZoomMtg.i18n.load('en-US');
 
          // Set up meeting event listeners
          setupMeetingListeners();
@@ -236,6 +242,8 @@ const ZoomLiveClass = ({
    const joinMeeting = (config: MeetingConfig) => {
       window.ZoomMtg.join({
          meetingNumber: config.meetingNumber,
+         sdkKey: zoom_sdk_client_id || '',
+         zak: config.zak,
          userName: auth.user.name,
          signature: config.signature,
          userEmail: auth.user.email || '',
@@ -259,7 +267,9 @@ const ZoomLiveClass = ({
             setError(
                frontend.failed_to_join_meeting +
                   ': ' +
-                  (error.message || error),
+                  (error.errorMessage ||
+                     error.message ||
+                     JSON.stringify(error)),
             );
             setLoading(false);
          },
@@ -297,6 +307,12 @@ const ZoomLiveClass = ({
 
    // Cleanup function
    const cleanup = () => {
+      const root = document.getElementById('zmmtg-root');
+
+      if (root) {
+         root.style.display = 'none';
+      }
+
       if (window.ZoomMtg) {
          try {
             window.ZoomMtg.leave();
@@ -361,6 +377,31 @@ const ZoomLiveClass = ({
       return cleanup;
    }, []); // eslint-disable-line react-hooks/exhaustive-deps -- Mount-only Zoom SDK init
 
+   useEffect(() => {
+      if (!loading) {
+         return;
+      }
+
+      const timeout = window.setTimeout(() => {
+         setError(
+            'Zoom haijajibu kwa wakati. Hakiki Meeting SDK credentials au fungua Zoom moja kwa moja.',
+         );
+         setLoading(false);
+      }, 30000);
+
+      return () => window.clearTimeout(timeout);
+   }, [loading]);
+
+   useEffect(() => {
+      if (error) {
+         const root = document.getElementById('zmmtg-root');
+
+         if (root) {
+            root.style.display = 'none';
+         }
+      }
+   }, [error]);
+
    // Render loading state
    if (loading) {
       return (
@@ -375,6 +416,20 @@ const ZoomLiveClass = ({
                      ? frontend.loading_zoom_sdk
                      : frontend.joining_meeting}
                </p>
+               {meetingInfo?.join_url && (
+                  <a
+                     className="mt-4 block font-semibold text-white underline"
+                     href={
+                        is_host
+                           ? meetingInfo.start_url || meetingInfo.join_url
+                           : meetingInfo.join_url
+                     }
+                     target="_blank"
+                     rel="noopener noreferrer"
+                  >
+                     Fungua Zoom moja kwa moja ↗
+                  </a>
+               )}
             </div>
          </div>
       );

@@ -3,6 +3,7 @@
 namespace Modules\Course\Services;
 
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 
 class ZoomLiveService
 {
@@ -133,6 +134,8 @@ class ZoomLiveService
 
             $ch = curl_init($oauthUrl);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 15);
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_HTTPHEADER, ['Authorization: '.$authHeader]);
 
@@ -162,6 +165,16 @@ class ZoomLiveService
         }
     }
 
+    public function hostZak(string $hostId): string
+    {
+        $response = Http::withToken($this->createZoomToken())->connectTimeout(5)->timeout(15)
+            ->get('https://api.zoom.us/v2/users/'.rawurlencode($hostId).'/token', ['type' => 'zak']);
+        if (!$response->successful() || !$response->json('token')) {
+            throw new \RuntimeException('Unable to authorize the Zoom host. Check user:read:zak:admin scope and the meeting host account.');
+        }
+        return $response->json('token');
+    }
+
     public function generateSignature(string $meetingNumber, int $role = 0): string
     {
         $sdkKey = $this->credentials['meeting_sdk_key'] ?? '';
@@ -180,6 +193,7 @@ class ZoomLiveService
             'iat' => $iat,
             'aud' => 'zoom',
             'appKey' => $sdkKey,
+            'sdkKey' => $sdkKey,
             'tokenExp' => $exp,
             'alg' => 'HS256',
             'mn' => $meetingNumber,

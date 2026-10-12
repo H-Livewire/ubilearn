@@ -28,9 +28,18 @@ class LiveClassController extends Controller
             abort(404, 'Live class not found');
         }
 
+        $isHost = $user->role === 'admin' || (int) $live_class->course->instructor?->user_id === (int) $user->id;
+        if (!$isHost) {
+            abort_unless(\Modules\Course\Models\CourseEnrollment::ofUser($user->id)->ofCourse($live_class->course_id)->exists(), 403);
+            $info = $live_class->getAdditionalInfoArray();
+            unset($info['start_url']);
+            $live_class->additional_info = $info;
+        }
+
         // Always use the embedded SDK approach
         return Inertia::render('course-player/live-class/zoom-live-class', [
             'live_class' => $live_class,
+            'is_host' => $isHost,
             'watchHistory' => $watchHistory,
             'zoom_sdk_client_id' => $this->zoomLiveService->zoomConfig['zoom_sdk_client_id'] ?? null,
         ]);
@@ -107,7 +116,11 @@ class LiveClassController extends Controller
             }
 
             // Check if user is host (instructor)
-            $isHost = $liveClass->course->instructor_id === Auth::id() ? 1 : 0;
+            $user = Auth::user();
+            $isHost = $user->role === 'admin' || (int) $liveClass->course->instructor?->user_id === (int) $user->id ? 1 : 0;
+            if (!$isHost && !\Modules\Course\Models\CourseEnrollment::ofUser($user->id)->ofCourse($liveClass->course_id)->exists()) {
+                return response()->json(['error' => 'You are not enrolled in this course.'], 403);
+            }
 
             // Get meeting info using the helper method
             $meetingInfo = $liveClass->getAdditionalInfoArray();
@@ -116,6 +129,7 @@ class LiveClassController extends Controller
                 return response()->json(['error' => 'Meeting info not found'], 404);
             }
 
+            $zak = $isHost ? $this->zoomLiveService->hostZak((string) ($meetingInfo['host_id'] ?? 'me')) : null;
             $signature = $this->zoomLiveService->generateSignature(
                 (string) $meetingInfo['id'],
                 $isHost
@@ -126,6 +140,7 @@ class LiveClassController extends Controller
                 'meetingNumber' => (string) $meetingInfo['id'], // Ensure string format
                 'password' => $meetingInfo['password'] ?? '',
                 'role' => $isHost,
+                'zak' => $zak,
             ]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);

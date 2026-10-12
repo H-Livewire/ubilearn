@@ -1,4 +1,7 @@
 export interface Paper {
+   has_pdf: boolean;
+   has_marking: boolean;
+   has_instructions: boolean;
    id: number;
    title: string;
    education: string;

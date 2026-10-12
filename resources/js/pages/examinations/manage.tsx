@@ -1,5 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,10 +16,9 @@ const blank = {
    exam_type: '',
    organizer: '',
    source_name: '',
-   source_url: '',
-   pdf_url: '',
-   answer_url: '',
-   has_answers: false,
+   question_file: null as File | null,
+   marking_file: null as File | null,
+   instructions_file: null as File | null,
    published: true,
 };
 export default function Manage({
@@ -29,6 +28,7 @@ export default function Manage({
    papers: Page<Paper>;
    options: Options;
 }) {
+   const formRef = useRef<HTMLFormElement>(null);
    const [id, setId] = useState<number | null>(null);
    const { data, setData, post, errors, processing, reset } = useForm(blank);
    const fields: [keyof typeof blank, string][] = [
@@ -38,19 +38,19 @@ export default function Manage({
       ['year', 'Mwaka'],
       ['organizer', 'Shule / Mwandaaji'],
       ['source_name', 'Jina la chanzo'],
-      ['source_url', 'Link ya chanzo'],
-      ['pdf_url', 'PDF URL (faili yenye ruhusa ya kusambazwa)'],
-      ['answer_url', 'Majibu / Marking scheme URL'],
    ];
    function edit(p: Paper) {
+      formRef.current?.reset();
       setId(p.id);
       setData({
          ...blank,
          ...Object.fromEntries(
-            Object.keys(blank).map((k) => [k, p[k as keyof Paper] ?? '']),
+            Object.keys(blank)
+               .filter((k) => !k.endsWith('_file'))
+               .map((k) => [k, p[k as keyof Paper] ?? '']),
          ),
          year: p.year ? String(p.year) : '',
-         has_answers: p.has_answers,
+
          published: p.published,
       });
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -67,12 +67,15 @@ export default function Manage({
                </Link>
             </div>
             <form
+               ref={formRef}
                className="rounded-lg border bg-card p-5"
                onSubmit={(e) => {
                   e.preventDefault();
                   post(`/dashboard/examination-papers${id ? `/${id}` : ''}`, {
+                     forceFormData: true,
                      preserveScroll: true,
                      onSuccess: () => {
+                        formRef.current?.reset();
                         reset();
                         setId(null);
                      },
@@ -148,20 +151,56 @@ export default function Manage({
                      </div>
                   ))}
                </div>
-               <div className="my-5 flex flex-wrap gap-6">
-                  {(['has_answers', 'published'] as const).map((k) => (
-                     <label key={k} className="flex items-center gap-2 text-sm">
-                        <input
-                           type="checkbox"
-                           checked={data[k]}
-                           onChange={(e) => setData(k, e.target.checked)}
+               <div className="my-5 grid gap-4 sm:grid-cols-3">
+                  {(
+                     [
+                        ['question_file', 'PDF ya maswali', 'has_pdf'],
+                        [
+                           'marking_file',
+                           'Marking scheme / Majibu',
+                           'has_marking',
+                        ],
+                        ['instructions_file', 'Maelekezo', 'has_instructions'],
+                     ] as const
+                  ).map(([key, label, flag]) => (
+                     <div className="space-y-2" key={key}>
+                        <Label htmlFor={key}>{label}</Label>
+                        <Input
+                           id={key}
+                           type="file"
+                           accept="application/pdf,.pdf"
+                           required={
+                              key === 'question_file' &&
+                              !papers.data.find((p) => p.id === id)?.has_pdf
+                           }
+                           onChange={(e) =>
+                              setData(key, e.target.files?.[0] ?? null)
+                           }
                         />
-                        {k === 'has_answers'
-                           ? 'Majibu yanapatikana'
-                           : 'Onyesha kwenye catalogue'}
-                     </label>
+                        {papers.data.find((p) => p.id === id)?.[flag] && (
+                           <p className="text-sm text-primary">
+                              PDF ipo. Chagua nyingine kuibadilisha.
+                           </p>
+                        )}
+                        {errors[key] && (
+                           <p className="text-sm text-destructive">
+                              {errors[key]}
+                           </p>
+                        )}
+                     </div>
                   ))}
                </div>
+               <p className="mb-4 text-sm text-muted-foreground">
+                  PDF tu · hadi 10 MB kwa faili.
+               </p>
+               <label className="mb-5 flex items-center gap-2 text-sm">
+                  <input
+                     type="checkbox"
+                     checked={data.published}
+                     onChange={(e) => setData('published', e.target.checked)}
+                  />
+                  Onyesha kwenye catalogue
+               </label>
                <div className="flex gap-3">
                   <Button
                      disabled={processing}
@@ -174,6 +213,7 @@ export default function Manage({
                         type="button"
                         variant="outline"
                         onClick={() => {
+                           formRef.current?.reset();
                            reset();
                            setId(null);
                         }}
@@ -192,8 +232,12 @@ export default function Manage({
                      <div>
                         <p className="font-medium">{p.title}</p>
                         <p className="text-sm text-muted-foreground">
-                           {p.published ? 'Published' : 'Hidden'} ·{' '}
-                           {p.region || 'Kitaifa'}
+                           {!p.has_pdf
+                              ? 'Inahitaji PDF'
+                              : p.published
+                                ? 'Published'
+                                : 'Hidden'}{' '}
+                           · {p.region || 'Kitaifa'}
                         </p>
                      </div>
                      <Button variant="outline" onClick={() => edit(p)}>

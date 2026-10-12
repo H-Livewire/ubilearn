@@ -1,9 +1,13 @@
 import { Head, Link } from '@inertiajs/react';
-import type { ReactNode } from 'react';
+import { useState  } from 'react';
+import type {ReactNode} from 'react';
 import { Button } from '@/components/ui/button';
 import LandingLayout from '@/layouts/landing';
 import type { Paper } from './types';
 export default function PaperDetails({ paper: p }: { paper: Paper }) {
+   const [kind, setKind] = useState('question');
+   const url = `/examinations/${p.id}/files/${kind}`;
+
    return (
       <>
          <Head title={p.title} />
@@ -24,68 +28,51 @@ export default function PaperDetails({ paper: p }: { paper: Paper }) {
                   .filter(Boolean)
                   .join(' · ')}
             </p>
-            <div className="flex flex-wrap gap-3">
-               {p.pdf_url && (
-                  <Button
-                     asChild
-                     className="bg-black text-white hover:bg-black/85"
-                  >
-                     <a
-                        href={p.pdf_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+            <div className="flex flex-wrap items-center gap-3">
+               {(
+                  [
+                     ['question', 'Maswali', true],
+                     ['marking', 'Marking scheme', p.has_marking],
+                     ['instructions', 'Maelekezo', p.has_instructions],
+                  ] as const
+               )
+                  .filter((item) => item[2])
+                  .map(([value, label]) => (
+                     <Button
+                        key={value}
+                        onClick={() => setKind(value)}
+                        variant="outline"
+                        aria-pressed={kind === value}
+                        className={
+                           kind === value
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : ''
+                        }
                      >
-                        Fungua PDF / Download
-                     </a>
-                  </Button>
-               )}
-               {p.answer_url && (
-                  <Button asChild variant="outline">
-                     <a
-                        href={p.answer_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                     >
-                        Majibu / Marking scheme
-                     </a>
-                  </Button>
-               )}
-               {p.source_url && (
-                  <Button asChild variant="outline">
-                     <a
-                        href={p.source_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                     >
-                        Chanzo: {p.source_name || 'Fungua'} ↗
-                     </a>
-                  </Button>
-               )}
+                        {label}
+                     </Button>
+                  ))}
+               <Button
+                  asChild
+                  className="bg-black text-white hover:bg-black/85"
+               >
+                  <a href={`${url}?download=1`}>Download PDF</a>
+               </Button>
+               <Button asChild variant="outline">
+                  <a href={url} target="_blank" rel="noopener noreferrer">
+                     Fungua / Print
+                  </a>
+               </Button>
             </div>
-            {p.pdf_url ? (
-               <>
-                  <p className="text-sm text-muted-foreground">
-                     Tumia Download au Print ndani ya PDF viewer. Ikiwa viewer
-                     haifunguki, tumia “Fungua PDF”.
-                  </p>
-                  <iframe
-                     title={p.title}
-                     src={p.pdf_url}
-                     className="h-[70vh] w-full rounded-lg border"
-                     loading="lazy"
-                     referrerPolicy="no-referrer"
-                     sandbox="allow-scripts allow-same-origin allow-downloads allow-popups"
-                  />
-               </>
-            ) : (
-               <div className="rounded-lg border p-6">
-                  <p>Mtihani huu unapatikana kwenye chanzo chake.</p>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                     Fungua link ya chanzo kuchagua paper na kupata faili
-                     zinazopatikana.
-                  </p>
-               </div>
-            )}
+            <iframe
+               key={kind}
+               title={`${p.title} — ${kind}`}
+               src={url}
+               className="h-[75vh] w-full rounded-lg border bg-white"
+            />
+            <p className="text-sm text-muted-foreground">
+               Ikiwa simu yako haionyeshi PDF hapa, tumia Fungua / Print.
+            </p>
          </main>
       </>
    );

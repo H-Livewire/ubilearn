@@ -3,6 +3,8 @@ namespace App\Http\Controllers;
 use App\Models\ExamPaper;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 class ExamPaperController extends Controller
 {
     public const EDUCATION = ['nursery'=>'Awali','primary'=>'Primary','olevel'=>'O-Level','alevel'=>'A-Level','college'=>'College / University'];
@@ -13,11 +15,11 @@ class ExamPaperController extends Controller
     }
     public function index(Request $request) {
         $filters=$request->validate(['q'=>'nullable|string|max:120','education'=>'nullable|in:'.implode(',',array_keys(self::EDUCATION)), 'class_name'=>'nullable|string|max:80','region'=>'nullable|in:'.implode(',',self::REGIONS),'subject'=>'nullable|string|max:80','year'=>'nullable|integer|between:1900,2100','exam_type'=>'nullable|in:'.implode(',',self::TYPES),'answers'=>'nullable|in:yes,no']);
-        $query=ExamPaper::where('published',true);
+        $query=ExamPaper::where('published',true)->whereNotNull('files->question->path');
         foreach(['education','class_name','region','subject','year','exam_type'] as $field) if(!empty($filters[$field]))$query->where($field,$filters[$field]);
         if(!empty($filters['answers']))$query->where('has_answers',$filters['answers']==='yes');
         if(!empty($filters['q']))$query->where(function($q)use($filters){foreach(['title','subject','region','organizer'] as $field)$q->orWhere($field,'like','%'.$filters['q'].'%');});
-        $available=ExamPaper::where('published',true);
+        $available=ExamPaper::where('published',true)->whereNotNull('files->question->path');
         return Inertia::render('examinations/index',[
             'papers'=>$query->orderByDesc('year')->orderBy('title')->paginate(12)->withQueryString(),
             'filters'=>$filters,'options'=>$this->options(),
@@ -25,11 +27,47 @@ class ExamPaperController extends Controller
             'years'=>(clone $available)->whereNotNull('year')->distinct()->orderByDesc('year')->pluck('year'),
         ]);
     }
-    public function show(ExamPaper $paper){abort_unless($paper->published,404);return Inertia::render('examinations/show',['paper'=>$paper]);}
+    public function show(ExamPaper $paper){abort_unless($paper->published && $paper->has_pdf,404);return Inertia::render('examinations/show',['paper'=>$paper]);}
+    public function document(Request $request, ExamPaper $paper, string $kind) {
+        abort_unless(in_array($kind,['question','marking','instructions'],true),404);
+        abort_unless(($paper->published && $paper->has_pdf) || $request->user()?->role==='admin',404);
+        $file=$paper->files[$kind]??null; abort_unless($file,404);
+        $disk=Storage::disk($file['disk']); abort_unless($disk->exists($file['path']),404);
+        return $disk->response($file['path'],$file['name'],['Content-Type'=>'application/pdf','X-Content-Type-Options'=>'nosniff','Cache-Control'=>'private, no-store'], $request->boolean('download')?'attachment':'inline');
+    }
+
     public function manage(){return Inertia::render('examinations/manage',['papers'=>ExamPaper::orderByDesc('id')->paginate(20),'options'=>$this->options()]);}
     public function save(Request $request, ?ExamPaper $paper=null){
-        $data=$request->validate(['title'=>'required|string|max:255','education'=>'required|in:'.implode(',',array_keys(self::EDUCATION)),'class_name'=>'nullable|string|max:80','region'=>'nullable|in:'.implode(',',self::REGIONS),'subject'=>'nullable|string|max:80','year'=>'nullable|integer|between:1900,2100','exam_type'=>'nullable|in:'.implode(',',self::TYPES),'organizer'=>'nullable|string|max:120','source_name'=>'nullable|string|max:120','source_url'=>'nullable|url:https|max:2000','pdf_url'=>'nullable|url:https|max:2000','answer_url'=>'nullable|url:https|max:2000','has_answers'=>'required|boolean','published'=>'required|boolean']);
-        if(empty($data['source_url'])&&empty($data['pdf_url']))return back()->withErrors(['source_url'=>'Weka link ya chanzo au PDF.']);
-        ($paper??new ExamPaper)->fill($data)->save();return back()->with('success','Mtihani umehifadhiwa.');
+        $data=$request->validate(['title'=>'required|string|max:255','education'=>'required|in:'.implode(',',array_keys(self::EDUCATION)),'class_name'=>'nullable|string|max:80','region'=>'nullable|in:'.implode(',',self::REGIONS),'subject'=>'nullable|string|max:80','year'=>'nullable|integer|between:1900,2100','exam_type'=>'nullable|in:'.implode(',',self::TYPES),'organizer'=>'nullable|string|max:120','source_name'=>'nullable|string|max:120','published'=>'required|boolean']);
+        $request->validate([
+            'question_file'=>'nullable|file|mimes:pdf|max:10240',
+            'marking_file'=>'nullable|file|mimes:pdf|max:10240',
+            'instructions_file'=>'nullable|file|mimes:pdf|max:10240',
+        ]);
+        $paper ??= new ExamPaper;
+        if(!$paper->has_pdf && !$request->hasFile('question_file')) throw ValidationException::withMessages(['question_file'=>'Upload PDF ya maswali.']);
+        $disk=config('filesystems.default');
+        if(($request->hasFile('question_file') || $request->hasFile('marking_file') || $request->hasFile('instructions_file')) && app()->environment('production') && config('filesystems.disks.'.$disk.'.driver')==='local') {
+            throw ValidationException::withMessages(['question_file'=>'Unganisha Object Storage kwenye Laravel Cloud na iwe default disk ili PDF isifutike baada ya deploy.']);
+        }
+        $files=$paper->files??[]; $newPaths=[]; $oldPaths=[];
+        try {
+            foreach(['question','marking','instructions'] as $kind) if($request->hasFile($kind.'_file')) {
+                $upload=$request->file($kind.'_file');
+                $path=$upload->store('examination-papers',$disk);
+                if(!$path) throw new \RuntimeException('PDF upload failed. Check Object Storage configuration.');
+                $newPaths[]=[$disk,$path];
+                if(isset($files[$kind]))$oldPaths[]=$files[$kind];
+                $files[$kind]=['disk'=>$disk,'path'=>$path,'name'=>$upload->getClientOriginalName(),'size'=>$upload->getSize()];
+            }
+            $data['has_answers']=isset($files['marking']['path']);
+            $paper->fill($data); $paper->files=$files; $paper->save();
+        } catch(\Throwable $e) {
+            foreach($newPaths as [$fileDisk,$path])Storage::disk($fileDisk)->delete($path);
+            throw $e;
+        }
+        foreach($oldPaths as $old)Storage::disk($old['disk'])->delete($old['path']);
+        return back()->with('success','PDF za mtihani zimehifadhiwa.');
+
     }
 }

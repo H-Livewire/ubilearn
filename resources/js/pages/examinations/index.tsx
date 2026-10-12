@@ -266,17 +266,15 @@ export default function Examinations({
                               Ona mtihani
                            </Link>
                         </Button>
-                        {(p.pdf_url || p.source_url) && (
+                        {p.has_pdf && (
                            <Button
                               asChild
                               className="bg-black text-white hover:bg-black/85"
                            >
                               <a
-                                 href={p.pdf_url || p.source_url || ''}
-                                 target="_blank"
-                                 rel="noopener noreferrer"
+                                 href={`/examinations/${p.id}/files/question?download=1`}
                               >
-                                 {p.pdf_url ? 'Fungua PDF' : 'Fungua chanzo ↗'}
+                                 Download PDF
                               </a>
                            </Button>
                         )}

@@ -187,7 +187,7 @@ class ZoomLiveService
         $response = Http::withToken($this->createZoomToken())->connectTimeout(5)->timeout(15)
             ->get('https://api.zoom.us/v2/users/'.rawurlencode($hostId).'/token', ['type' => 'zak']);
         if (!$response->successful() || !$response->json('token')) {
-            throw new \RuntimeException('Unable to authorize the Zoom host. Check user:read:zak:admin scope and the meeting host account.');
+            throw new \RuntimeException('Unable to authorize the Zoom host. Add user:read:token:admin to the Server-to-Server OAuth app, save and activate it. The meeting host must belong to that Zoom account.');
         }
         return $response->json('token');
     }

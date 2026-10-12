@@ -181,6 +181,12 @@ const getDashboardRoutes = (page: SharedData): DashboardRoute[] => {
                      access: ['admin', 'collaborative', 'administrative'],
                   },
                   {
+                     name: 'Examination papers',
+                     slug: 'examination-papers',
+                     path: '/dashboard/examination-papers',
+                     access: ['admin'],
+                  },
+                  {
                      name: button.manage_exams || 'Manage Exams',
                      slug: routeLastSegment(exams.index.url()),
                      path: exams.index.url(),

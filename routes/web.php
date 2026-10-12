@@ -61,6 +61,14 @@ Route::middleware(['web'])->group(function () {
     Route::post('necta-result/guidance', [\App\Http\Controllers\NectaController::class, 'guidance'])->middleware('throttle:30,1');
     Route::get('necta-result/browse', [\App\Http\Controllers\NectaController::class, 'browse'])->middleware('throttle:30,1');
 
+    Route::get('examinations', [\App\Http\Controllers\ExamPaperController::class, 'index'])->name('examinations.index');
+    Route::get('examinations/{paper}', [\App\Http\Controllers\ExamPaperController::class, 'show'])->whereNumber('paper')->name('examinations.show');
+    Route::middleware(['auth', 'role:admin'])->group(function () {
+        Route::get('dashboard/examination-papers', [\App\Http\Controllers\ExamPaperController::class, 'manage']);
+        Route::post('dashboard/examination-papers', [\App\Http\Controllers\ExamPaperController::class, 'save']);
+        Route::post('dashboard/examination-papers/{paper}', [\App\Http\Controllers\ExamPaperController::class, 'save'])->whereNumber('paper');
+    });
+
     // Catch-all route for inner pages
     Route::get('/{slug}', [HomeController::class, 'inner_page'])->name('inner.page');
 });

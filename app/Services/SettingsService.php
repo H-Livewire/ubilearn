@@ -180,6 +180,10 @@ class SettingsService extends MediaService
                     ]));
                 }
                 foreach ($navbar->navbarItems as $item) {
+                    if ($item->value === '/exams/all') {
+                        $item->title = 'Examinations';
+                        $item->value = '/examinations';
+                    }
                     if ($item->value === '/courses/all') {
                         $courses = \Modules\Course\Models\Course::where('status', 'approved')
                             ->where('mode', 'public')->orderBy('title')->get(['id', 'title', 'slug']);

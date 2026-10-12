@@ -165,6 +165,23 @@ class ZoomLiveService
         }
     }
 
+    public function meetingLaunchUrl(array $meeting, bool $isHost): string
+    {
+        $url = (string) ($isHost ? ($meeting['start_url'] ?? '') : ($meeting['join_url'] ?? ''));
+        $host = strtolower((string) parse_url($url, PHP_URL_HOST));
+        if (parse_url($url, PHP_URL_SCHEME) !== 'https' ||
+            !($host === 'zoom.us' || str_ends_with($host, '.zoom.us') || $host === 'zoom.com' || str_ends_with($host, '.zoom.com'))) {
+            throw new \RuntimeException('Meeting haina link halali ya Zoom. Panga live class upya.');
+        }
+        if ($isHost) {
+            $uri = new \GuzzleHttp\Psr7\Uri($url);
+            $query = \GuzzleHttp\Psr7\Query::parse($uri->getQuery());
+            $query['zak'] = $this->hostZak((string) ($meeting['host_id'] ?? 'me'));
+            $url = (string) $uri->withQuery(\GuzzleHttp\Psr7\Query::build($query));
+        }
+        return $url;
+    }
+
     public function hostZak(string $hostId): string
     {
         $response = Http::withToken($this->createZoomToken())->connectTimeout(5)->timeout(15)

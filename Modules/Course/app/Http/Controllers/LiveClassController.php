@@ -4,6 +4,7 @@ namespace Modules\Course\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Modules\Course\Http\Requests\StoreLiveClassRequest;
 use Modules\Course\Http\Requests\UpdateLiveClassRequest;
@@ -18,7 +19,7 @@ class LiveClassController extends Controller
         private CoursePlayerService $coursePlayerService
     ) {}
 
-    public function index($id)
+    public function index(Request $request, $id)
     {
         $user = Auth::user();
         $live_class = CourseLiveClass::with('course')->findOrFail($id);
@@ -34,6 +35,14 @@ class LiveClassController extends Controller
             $info = $live_class->getAdditionalInfoArray();
             unset($info['start_url']);
             $live_class->additional_info = $info;
+        }
+
+        if (!$request->boolean('embedded')) {
+            try {
+                return Inertia::location($this->zoomLiveService->meetingLaunchUrl($live_class->getAdditionalInfoArray(), $isHost));
+            } catch (\Throwable $e) {
+                return back()->with('error', $e->getMessage());
+            }
         }
 
         // Always use the embedded SDK approach

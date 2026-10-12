@@ -14,3 +14,12 @@ $s = new Modules\Course\Services\ZoomLiveService;
 if ($s->zoomConfig['zoom_enabled'] || $s->zoomConfig['zoom_web_sdk']) exit(1);
 try { $s->createZoomToken(); exit(1); } catch(RuntimeException $e) {}
 echo "PASS: environment-only config, public props exclude secrets, SDK signature and missing-credentials handling.\n";
+class LaunchUrlProbe extends Modules\Course\Services\ZoomLiveService {
+    public function hostZak(string $hostId): string { return 'fresh-host-zak'; }
+}
+$s = new LaunchUrlProbe;
+$meeting = ['join_url'=>'https://us02web.zoom.us/j/123?pwd=abc','start_url'=>'https://us02web.zoom.us/s/123?zak=expired','host_id'=>'host-id'];
+if($s->meetingLaunchUrl($meeting,false)!==$meeting['join_url'])exit(1);
+if($s->meetingLaunchUrl($meeting,true)!=='https://us02web.zoom.us/s/123?zak=fresh-host-zak')exit(1);
+try { $s->meetingLaunchUrl(['join_url'=>'https://zoom.us.example.com/j/1'],false);exit(1); } catch(RuntimeException $e) {}
+echo "PASS: participant link, refreshed host ZAK and trusted Zoom redirect domains.\n";

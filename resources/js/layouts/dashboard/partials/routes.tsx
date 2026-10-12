@@ -37,7 +37,6 @@ import instructor from '@/routes/instructor';
 import instructors from '@/routes/instructors';
 import jobCirculars from '@/routes/job-circulars';
 import language from '@/routes/language';
-import liveClass from '@/routes/live-class';
 import marksheet from '@/routes/marksheet';
 import metaPixel from '@/routes/meta-pixel';
 import newsletters from '@/routes/newsletters';
@@ -568,12 +567,6 @@ const getDashboardRoutes = (page: SharedData): DashboardRoute[] => {
                      name: button.auth || 'Auth',
                      slug: routeLastSegment(auth0.index.url()),
                      path: auth0.index.url(),
-                     access: ['admin', 'collaborative', 'administrative'],
-                  },
-                  {
-                     name: button.live_class || 'Live Class',
-                     slug: routeLastSegment(liveClass.index.url()),
-                     path: liveClass.index.url(),
                      access: ['admin', 'collaborative', 'administrative'],
                   },
                   {

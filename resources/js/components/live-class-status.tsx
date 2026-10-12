@@ -80,11 +80,7 @@ const LiveClassStatus = ({ courseId, liveClass, zoomConfig }: Props) => {
       };
    }, [liveClass.class_date_and_time, liveClass.additional_info?.end_time]);
    const isSdkConfig =
-      zoomConfig.zoom_web_sdk &&
-      zoomConfig.zoom_sdk_client_id &&
-      zoomConfig.zoom_sdk_client_secret
-         ? true
-         : false;
+      zoomConfig.zoom_web_sdk && zoomConfig.zoom_sdk_client_id ? true : false;
 
    // Get status color
    const getStatusColor = (status: string) => {

@@ -2,24 +2,29 @@
 
 namespace Modules\Course\Services;
 
-use App\Services\SettingsService;
 use Illuminate\Support\Facades\Log;
 
 class ZoomLiveService
 {
     public $zoomConfig;
 
-    public function __construct(SettingsService $settingsService)
+    private array $credentials;
+
+    public function __construct()
     {
-        $setting = $settingsService->getSetting(['type' => 'live_class']);
-        $this->zoomConfig = $setting['fields'] ?? [];
+        $this->credentials = config('services.zoom', []);
+        // Only capability flags and the public SDK key may reach browser props.
+        $this->zoomConfig = [
+            'zoom_enabled' => !empty($this->credentials['client_id']) && !empty($this->credentials['client_secret']) && !empty($this->credentials['account_id']),
+            'zoom_web_sdk' => !empty($this->credentials['meeting_sdk_key']) && !empty($this->credentials['meeting_sdk_secret']),
+            'zoom_sdk_client_id' => $this->credentials['meeting_sdk_key'] ?? '',
+        ];
     }
 
     public function createZoomLive($data)
     {
         $topic = $data['class_topic'];
         $token = $this->createZoomToken();
-        $zoom_account_email = $this->zoomConfig['zoom_account_email'];
 
         // API Endpoint for creating a meeting
         $zoomEndpoint = 'https://api.zoom.us/v2/users/me/meetings';
@@ -27,7 +32,6 @@ class ZoomLiveService
         // Meeting data
         $meetingData = [
             'topic' => $topic,
-            'schedule_for' => $zoom_account_email,
             'type' => 2, // Scheduled meeting
             'start_time' => $data['class_date_and_time'], // Start time (in UTC)
             'duration' => 60, // Duration in minutes
@@ -118,9 +122,10 @@ class ZoomLiveService
 
     public function createZoomToken()
     {
-        $clientId = $this->zoomConfig['zoom_client_id'];
-        $accountId = $this->zoomConfig['zoom_account_id'];
-        $clientSecret = $this->zoomConfig['zoom_client_secret'];
+        $clientId = $this->credentials['client_id'] ?? '';
+        $accountId = $this->credentials['account_id'] ?? '';
+        $clientSecret = $this->credentials['client_secret'] ?? '';
+        if (!$clientId || !$accountId || !$clientSecret) throw new \RuntimeException('Configure ZOOM_CLIENT_ID, ZOOM_CLIENT_SECRET and ZOOM_ACCOUNT_ID in the environment.');
         $oauthUrl = 'https://zoom.us/oauth/token?grant_type=account_credentials&account_id='.$accountId;
 
         try {
@@ -159,8 +164,8 @@ class ZoomLiveService
 
     public function generateSignature(string $meetingNumber, int $role = 0): string
     {
-        $sdkKey = $this->zoomConfig['zoom_sdk_client_id'];
-        $sdkSecret = $this->zoomConfig['zoom_sdk_client_secret'];
+        $sdkKey = $this->credentials['meeting_sdk_key'] ?? '';
+        $sdkSecret = $this->credentials['meeting_sdk_secret'] ?? '';
 
         if (! $sdkKey || ! $sdkSecret) {
             throw new \Exception('Zoom SDK credentials not configured');

@@ -12,7 +12,6 @@ use App\Http\Requests\UpdateInstructorProfileRequest;
 use App\Http\Requests\UpdateMetaPixelRequest;
 use App\Http\Requests\UpdateSmtpSettingsRequest;
 use App\Http\Requests\UpdateStorageRequest;
-use App\Http\Requests\UpdateZoomConfigRequest;
 use App\Models\Footer;
 use App\Models\FooterItem;
 use App\Models\Navbar;
@@ -293,23 +292,12 @@ class SettingController extends Controller
      */
     public function live_class(Request $request)
     {
-        $liveClass = $this->settingsService->getSetting(['type' => 'live_class']);
-
-        return Inertia::render('dashboard/settings/live-class', compact('liveClass'));
+        return redirect()->route('system.index')->with('success', 'Zoom credentials are managed in Laravel Cloud environment variables.');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function live_class_update(UpdateZoomConfigRequest $request, string $id)
+    public function live_class_update(Request $request, string $id)
     {
-        try {
-            $this->settingsService->zoomConfigUpdate($request->validated(), $id);
-
-            return back()->with('success', 'Zoom configuration settings updated successfully.');
-        } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
-        }
+        abort(410, 'Zoom credentials are managed in environment variables.');
     }
 
     /**

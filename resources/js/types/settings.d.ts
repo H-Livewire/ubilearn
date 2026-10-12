@@ -129,6 +129,7 @@ interface PageFields {
 }
 
 interface ZoomConfigFields {
+   zoom_enabled?: boolean;
    zoom_account_email: string;
    zoom_account_id: string;
    zoom_client_id: string;

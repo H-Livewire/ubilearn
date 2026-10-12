@@ -58,4 +58,12 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI', rtrim(env('APP_URL', 'http://localhost'), '/').'/auth/google/callback'),
     ],
 
+    'zoom' => [
+        'client_id' => env('ZOOM_CLIENT_ID'),
+        'client_secret' => env('ZOOM_CLIENT_SECRET'),
+        'account_id' => env('ZOOM_ACCOUNT_ID'),
+        'meeting_sdk_key' => env('ZOOM_MEETING_SDK_KEY'),
+        'meeting_sdk_secret' => env('ZOOM_MEETING_SDK_SECRET'),
+    ],
+
 ];

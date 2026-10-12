@@ -35,15 +35,17 @@ class CourseLiveClass extends Model
     /**
      * Get additional_info as array regardless of storage format
      */
-    public function getAdditionalInfoArray()
+    public function getAdditionalInfoAttribute($value): array
     {
-        if (is_string($this->additional_info)) {
-            return $this->additional_info ?: [];
-        } elseif (is_array($this->additional_info)) {
-            return $this->additional_info;
+        for ($i = 0; $i < 2 && is_string($value); $i++) {
+            $value = json_decode($value, true);
         }
+        return is_array($value) ? $value : [];
+    }
 
-        return [];
+    public function getAdditionalInfoArray(): array
+    {
+        return $this->additional_info;
     }
 
     /**

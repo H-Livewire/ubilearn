@@ -13,7 +13,8 @@ import { Card } from '@/components/ui/card';
 
 const CourseLiveClasses = () => {
    const { props } = usePage<StudentCourseProps>();
-   const { course, live_classes, zoomConfig } = props;
+   const { course, zoomConfig } = props;
+   const live_classes = props.live_classes ?? [];
 
    return (
       <div className="space-y-4">
@@ -24,7 +25,7 @@ const CourseLiveClasses = () => {
                   No Live Classes Scheduled
                </h3>
                <p className="text-gray-500">
-                  Schedule your first live class to get started with Zoom.
+                  Hakuna live class iliyopangwa kwenye kozi hii bado.
                </p>
             </div>
          ) : (

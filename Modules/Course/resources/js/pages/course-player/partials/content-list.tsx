@@ -209,8 +209,8 @@ const ContentList = ({
                               No Live Classes Scheduled
                            </h3>
                            <p className="text-gray-500">
-                              Schedule your first live class to get started with
-                              Zoom.
+                              Hakuna live class iliyopangwa kwenye kozi hii
+                              bado.
                            </p>
                         </Card>
                      ) : (

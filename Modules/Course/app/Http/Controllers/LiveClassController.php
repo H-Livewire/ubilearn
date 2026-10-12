@@ -21,7 +21,7 @@ class LiveClassController extends Controller
     public function index($id)
     {
         $user = Auth::user();
-        $live_class = CourseLiveClass::with('course')->find($id);
+        $live_class = CourseLiveClass::with('course')->findOrFail($id);
         $watchHistory = $this->coursePlayerService->getWatchHistory(['course_id' => $live_class->course_id]);
 
         if (! $live_class) {

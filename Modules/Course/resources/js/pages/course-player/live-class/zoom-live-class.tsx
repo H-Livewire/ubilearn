@@ -5,9 +5,8 @@ import { useEffect, useRef, useState } from 'react';
 
 interface Props {
    live_class: CourseLiveClass;
-   watchHistory: WatchHistory;
+   watchHistory: WatchHistory | null;
    zoom_sdk_client_id?: string;
-   zoom_sdk_client_secret?: string;
 }
 
 interface MeetingConfig {
@@ -71,7 +70,7 @@ const ZoomLiveClass = ({
 
    const redirectUrl = isAdmin
       ? `/dashboard/courses`
-      : `/play-course/${live_class.course.slug}/${watchHistory.id}/${watchHistory.current_watching_id}`;
+      : `/student/courses/${live_class.course_id}/live_classes`;
 
    // Get meeting info
    const meetingInfo = (() => {

@@ -143,6 +143,7 @@ interface ExamEnrollment extends TableCommon {
 }
 
 interface ExamAttempt extends TableCommon {
+   released_at?: string | null;
    user_id: number;
    exam_id: number;
    attempt_number: number;

@@ -81,8 +81,11 @@ const MatchingQuestion = ({ question, answer, onAnswerChange }: Props) => {
       [matches],
    );
    const rightItems = useMemo(
-      () => matches.map((pair: any) => ({ id: pair.id, text: pair.answer })),
-      [matches],
+      () =>
+         ((question.options as any)?.choices ?? []).map(
+            (text: string, index: number) => ({ id: index, text }),
+         ),
+      [question.options],
    );
 
    const [shuffledRightItems, setShuffledRightItems] = useState([

@@ -81,14 +81,16 @@ class StudentController extends Controller
                 'user_id' => $user->id,
                 'relations' => ['exam', 'attempt_answers.exam_question.question_options'],
             ]);
+            abort_unless($props['attempt'] && (int) $props['attempt']->exam_id === $id, 404);
+            $props['attempt'] = $props['attempt']->forStudent();
         }
 
         return Inertia::render('student/exam/index', [
             ...$props,
             'tab' => $tab,
             'exam' => $exam,
-            'attempts' => $attempts,
-            'bestAttempt' => $bestAttempt,
+            'attempts' => $attempts->map(fn ($attempt) => $attempt->forStudent()),
+            'bestAttempt' => $bestAttempt?->forStudent(),
         ]);
     }
 

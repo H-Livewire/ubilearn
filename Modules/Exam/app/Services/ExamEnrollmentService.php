@@ -160,6 +160,7 @@ class ExamEnrollmentService extends MediaService
         $attempts = ExamAttempt::where('exam_id', $exam_id)
             ->where('user_id', $user_id)
             ->where('status', 'completed')
+            ->whereNotNull('released_at')
             ->get();
 
         if ($attempts->isEmpty()) {

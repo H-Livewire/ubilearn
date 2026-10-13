@@ -32,6 +32,8 @@ class ExamAttempt extends Model
         'user_id',
         'exam_id',
         'attempt_number',
+        'released_at',
+        'released_by',
         'draft_answers',
         'deadline_at',
         'start_time',
@@ -45,6 +47,7 @@ class ExamAttempt extends Model
     ];
 
     protected $casts = [
+        'released_at' => 'datetime',
         'draft_answers' => 'array',
         'deadline_at' => 'datetime',
         'start_time' => 'datetime',
@@ -56,6 +59,16 @@ class ExamAttempt extends Model
         'is_passed' => 'boolean',
         'attempt_number' => 'integer',
     ];
+
+    public function forStudent(): array
+    {
+        $data = $this->toArray();
+        unset($data['draft_answers'], $data['released_by']);
+        if (! $this->released_at) {
+            foreach (['obtained_marks','percentage','correct_answers','incorrect_answers','is_passed','attempt_answers'] as $field) unset($data[$field]);
+        }
+        return $data;
+    }
 
     public function user(): BelongsTo
     {

@@ -233,6 +233,32 @@ const Review = ({
                   </div>
                )}
 
+               <div className="mb-4 flex flex-wrap items-center gap-3">
+                  <Button
+                     className="bg-black text-white hover:bg-black/85"
+                     disabled={
+                        submitting ||
+                        attempt.status !== 'completed' ||
+                        Boolean(attempt.released_at)
+                     }
+                     onClick={() =>
+                        router.post(
+                           `/dashboard/exams/attempts/${attempt.id}/release`,
+                           {},
+                           { preserveScroll: true },
+                        )
+                     }
+                  >
+                     {attempt.released_at
+                        ? 'Matokeo yametolewa'
+                        : 'Toa matokeo'}
+                  </Button>
+                  {!attempt.released_at && (
+                     <p className="text-sm text-muted-foreground">
+                        Student haoni marks hadi utoe matokeo.
+                     </p>
+                  )}
+               </div>
                {/* Submit Grades Button */}
                {needsManualGrading && (
                   <Button

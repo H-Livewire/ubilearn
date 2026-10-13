@@ -27,6 +27,7 @@ class ExamAttemptController extends Controller
      */
     public function index(Request $request, string $exam_id): Response
     {
+        $this->authorizeTeacher(Exam::findOrFail($exam_id));
         $attempts = $this->examAttempt->getExamAttempts(array_merge($request->all(), [
             'exam_id' => $exam_id,
             'paginate' => true,
@@ -52,6 +53,8 @@ class ExamAttemptController extends Controller
             ],
         ]);
 
+        abort_unless($attempt && (int) $attempt->exam_id === (int) $exam_id, 404);
+        $this->authorizeTeacher($attempt->exam);
         return Inertia::render('Exam/dashboard/exams/review', [
             'exam_id' => $exam_id,
             'attempt' => $attempt,
@@ -86,8 +89,21 @@ class ExamAttemptController extends Controller
         abort_unless($attempt->status === 'in_progress', 409);
         $attempt->load(['exam.questions.question_options']);
 
+        $publicAttempt = $attempt->forStudent();
+        foreach ($publicAttempt['exam']['questions'] as &$question) {
+            foreach ($question['question_options'] ?? [] as $index => $option) unset($question['question_options'][$index]['is_correct']);
+            $options = $question['options'] ?? [];
+            if ($question['question_type'] === 'matching') {
+                $choices = collect($options['matches'] ?? [])->pluck('answer')->unique()->sort()->values()->all();
+                $options['choices'] = $choices;
+                $options['matches'] = array_map(fn ($pair) => ['id' => $pair['id'], 'question' => $pair['question']], $options['matches'] ?? []);
+            }
+            foreach (['answers','correct_order','sample_answer','correct_answer'] as $key) unset($options[$key]);
+            $question['options'] = $options;
+        }
+        unset($question);
         return Inertia::render('student/exam/attempt', [
-            'attempt' => $attempt,
+            'attempt' => $publicAttempt,
         ]);
     }
 
@@ -162,13 +178,39 @@ class ExamAttemptController extends Controller
             ->with('info', 'Exam attempt abandoned.');
     }
 
+    private function authorizeTeacher(Exam $exam): void
+    {
+        $user = Auth::user();
+        abort_unless($user && ($user->role === 'admin' || ($user->role === 'instructor' && $user->instructor_id && (int) $user->instructor_id === (int) $exam->instructor_id)), 403);
+    }
+
+    public function release(Request $request, ExamAttempt $attempt)
+    {
+        $this->authorizeTeacher($attempt->exam);
+        DB::transaction(function () use ($attempt) {
+            $locked = ExamAttempt::whereKey($attempt->id)->lockForUpdate()->firstOrFail();
+            abort_unless($locked->status === 'completed', 422, 'Finish marking before releasing results.');
+            abort_if($locked->attempt_answers()->whereNull('is_correct')->exists(), 422, 'Some answers still need marking.');
+            $locked->update(['released_at' => now(), 'released_by' => Auth::id()]);
+        });
+        return back()->with('success', 'Matokeo yametolewa kwa student.');
+    }
+
     /**
      * Grade exam attempt (Admin/Instructor only)
      */
     public function grade(Request $request, ExamAttempt $attempt)
     {
-        // Validate manual grades
+        $this->authorizeTeacher($attempt->exam);
+        abort_unless(in_array($attempt->status, ['submitted','completed'], true), 422);
+        $request->validate(['manual_grades' => 'required|array', 'manual_grades.*' => 'numeric|min:0']);
         $manualGrades = $request->input('manual_grades', []);
+        foreach ($manualGrades as $questionId => $marks) {
+            $answer = $attempt->attempt_answers()->where('exam_question_id', $questionId)->first();
+            if (! $answer || $marks > $answer->exam_question->marks) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['manual_grades' => 'Marks must belong to this attempt and not exceed question marks.']);
+            }
+        }
 
         $this->examAttempt->reviewAttempt($attempt, $manualGrades);
 

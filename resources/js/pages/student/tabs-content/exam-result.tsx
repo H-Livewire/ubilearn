@@ -49,6 +49,17 @@ const ExamResult = () => {
       );
    }, [answers]);
 
+   if (attempt && !attempt.released_at) {
+      return (
+         <div className="rounded-xl border p-8 text-center">
+            <h2 className="text-xl font-bold">Matokeo bado hayajatolewa</h2>
+            <p className="mt-2 text-muted-foreground">
+               Teacher atatoa matokeo baada ya kusahihisha.
+            </p>
+         </div>
+      );
+   }
+
    if (!attempt) {
       return (
          <div className="flex h-full items-center justify-center p-10">

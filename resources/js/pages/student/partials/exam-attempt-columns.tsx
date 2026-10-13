@@ -65,6 +65,14 @@ const ExamAttemptColumn = (
          accessorKey: 'obtained_marks',
          header: () => <div className="text-center">Score</div>,
          cell: ({ row }) => {
+            if (!row.original.released_at) {
+return (
+                  <p className="text-center text-sm text-muted-foreground">
+                     Pending release
+                  </p>
+               );
+}
+
             const bestScore =
                row.original && Number(row.original.total_marks) > 0
                   ? Math.round(
@@ -146,19 +154,22 @@ const ExamAttemptColumn = (
       {
          accessorKey: 'correct_answers',
          header: () => <div className="text-center">Answers</div>,
-         cell: ({ row }) => (
-            <div className="py-1 text-center">
-               <p className="text-sm">
-                  <span className="text-green-600">
-                     {row.getValue('correct_answers')}
-                  </span>{' '}
-                  /{' '}
-                  <span className="text-red-600">
-                     {row.original.incorrect_answers}
-                  </span>
-               </p>
-            </div>
-         ),
+         cell: ({ row }) =>
+            !row.original.released_at ? (
+               <p className="text-center text-muted-foreground">—</p>
+            ) : (
+               <div className="py-1 text-center">
+                  <p className="text-sm">
+                     <span className="text-green-600">
+                        {row.getValue('correct_answers')}
+                     </span>{' '}
+                     /{' '}
+                     <span className="text-red-600">
+                        {row.original.incorrect_answers}
+                     </span>
+                  </p>
+               </div>
+            ),
       },
       {
          accessorKey: 'end_time',
@@ -197,7 +208,7 @@ const ExamAttemptColumn = (
 
             return (
                <div className="flex justify-end gap-2 py-1 pr-4">
-                  {attempt.status === 'completed' && (
+                  {attempt.status === 'completed' && attempt.released_at && (
                      <Button asChild variant="secondary" className="h-8">
                         <Link
                            href={studentExam.show(

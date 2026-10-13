@@ -402,7 +402,8 @@ class ExamAttemptService
     {
         return ExamAttempt::where('exam_id', $exam_id)
             ->where('user_id', $user_id)
-            ->whereIn('status', ['completed', 'submitted'])
+            ->whereNotNull('released_at')
+            ->where('status', 'completed')
             ->orderBy('obtained_marks', 'desc')
             ->first();
     }
@@ -438,6 +439,7 @@ class ExamAttemptService
             $totalObtainedMarks = 0;
             $correctAnswers = 0;
             $incorrectAnswers = 0;
+            $pending = false;
 
             // Load attempt with answers and questions
             $attempt->load(['attempt_answers.exam_question']);
@@ -461,6 +463,11 @@ class ExamAttemptService
                         'is_correct' => $isCorrect,
                         'marks_obtained' => $marksObtained,
                     ]);
+                } elseif ($question->question_type === 'short_answer') {
+                    if ($attemptAnswer->is_correct === null) {
+                        $pending = true;
+                        continue;
+                    }
                 } else {
                     // Auto-grade based on question type
                     $result = $this->gradeAnswer($question, $attemptAnswer->answer_data);
@@ -518,7 +525,9 @@ class ExamAttemptService
                 'correct_answers' => $correctAnswers,
                 'incorrect_answers' => $incorrectAnswers,
                 'is_passed' => $isPassed,
-                'status' => 'completed',
+                'status' => $pending ? 'submitted' : 'completed',
+                'released_at' => null,
+                'released_by' => null,
             ]);
 
             DB::commit();

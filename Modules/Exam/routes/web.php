@@ -74,6 +74,7 @@ Route::middleware(['auth', 'role:instructor,admin'])->prefix('dashboard')->group
     // Exam Attempt Review
     Route::get('exams/{exam_id}/attempts', [ExamAttemptController::class, 'index'])->name('exam-attempts.index');
     Route::get('exams/{exam_id}/attempts/{id}', [ExamAttemptController::class, 'review'])->name('exam-attempts.review');
+    Route::post('exams/attempts/{attempt}/release', [ExamAttemptController::class, 'release'])->name('exam-attempts.release');
     Route::post('exams/attempts/{attempt}/grade', [ExamAttemptController::class, 'grade'])->name('exam-attempts.grade');
 
     // course enrolment

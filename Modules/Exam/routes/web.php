@@ -89,6 +89,7 @@ Route::middleware(['auth', 'role:student,instructor,admin'])->prefix('student')-
     // Exam Attempts
     Route::post('exams/{exam}/attempts/start', [ExamAttemptController::class, 'start'])->name('exam-attempts.start')->middleware(CheckExamEnrollMiddleware::class);
     Route::get('exam-attempts/{attempt}/take', [ExamAttemptController::class, 'take'])->name('exam-attempts.take');
+    Route::post('exam-attempts/{attempt}/draft', [ExamAttemptController::class, 'saveDraft'])->name('exam-attempts.draft');
     Route::post('exam-attempts/{attempt}/submit', [ExamAttemptController::class, 'submit'])->name('exam-attempts.submit');
     Route::post('exam-attempts/{attempt}/abandon', [ExamAttemptController::class, 'abandon'])->name('exam-attempts.abandon');
 

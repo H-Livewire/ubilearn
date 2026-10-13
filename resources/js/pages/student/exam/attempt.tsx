@@ -1,6 +1,7 @@
 import { Head, router } from '@inertiajs/react';
+import axios from 'axios';
 import { AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
    AlertDialog,
    AlertDialogAction,
@@ -22,6 +23,8 @@ import TimerComponent from './partials/timer-component';
 
 interface Props {
    attempt: ExamAttempt;
+   deadline: string;
+   savedAnswers: { exam_question_id: number; answer_data: any }[];
 }
 
 function loadExamDraftFromStorage(attemptId: number): {
@@ -52,30 +55,24 @@ function loadExamDraftFromStorage(attemptId: number): {
    }
 }
 
-const TakeExam = ({ attempt }: Props) => {
+const TakeExam = ({ attempt, deadline, savedAnswers }: Props) => {
    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-   const [answers, setAnswers] = useState<Record<number, any>>(
-      () => loadExamDraftFromStorage(attempt.id).answers,
-   );
+   const [answers, setAnswers] = useState<Record<number, any>>(() => ({
+      ...Object.fromEntries(
+         savedAnswers.map((a) => [a.exam_question_id, a.answer_data]),
+      ),
+      ...loadExamDraftFromStorage(attempt.id).answers,
+   }));
    const [markedQuestions, setMarkedQuestions] = useState<Set<number>>(
       () => loadExamDraftFromStorage(attempt.id).marked,
    );
    const [showSubmitDialog, setShowSubmitDialog] = useState(false);
    const [isSubmitting, setIsSubmitting] = useState(false);
-   const [fallbackAttemptStartMs] = useState(() => Date.now());
-
-   const durationSeconds =
-      ((attempt.exam.duration_hours || 0) * 60 +
-         (attempt.exam.duration_minutes || 0)) *
-      60;
-   const attemptStart = attempt.start_time
-      ? new Date(attempt.start_time).getTime()
-      : fallbackAttemptStartMs;
-
-   const effectiveDuration = durationSeconds > 0 ? durationSeconds : 60 * 60; // default to 1 hour when not configured
-   const computedDeadline = attempt.end_time
-      ? attempt.end_time
-      : new Date(attemptStart + effectiveDuration * 1000).toISOString();
+   const [saveStatus, setSaveStatus] = useState('Inasubiri kuhifadhi…');
+   const inFlight = useRef(false);
+   const answersRef = useRef(answers);
+   const savedSnapshot = useRef('');
+   const computedDeadline = deadline;
 
    const questions = attempt.exam.questions || [];
    const currentQuestion = questions[currentQuestionIndex];
@@ -92,14 +89,72 @@ const TakeExam = ({ attempt }: Props) => {
       );
    }, [attempt.id, answers, markedQuestions]);
 
-   // Auto-save answers to localStorage every 30 seconds
+   // Keep a local recovery copy immediately, then persist the latest draft to the server.
    useEffect(() => {
-      const interval = setInterval(() => {
-         saveToLocalStorage();
-      }, 30000);
+      answersRef.current = answers;
+      saveToLocalStorage();
+   }, [answers, saveToLocalStorage]);
 
-      return () => clearInterval(interval);
-   }, [saveToLocalStorage]);
+   useEffect(() => {
+      let mounted = true;
+      const save = async () => {
+         if (
+            inFlight.current ||
+            isSubmitting ||
+            Date.now() >= new Date(deadline).getTime()
+         ) {
+return;
+}
+
+         const snapshot = JSON.stringify(answersRef.current);
+
+         if (snapshot === savedSnapshot.current) {
+return;
+}
+
+         inFlight.current = true;
+
+         if (mounted) {
+setSaveStatus('Inahifadhi…');
+}
+
+         try {
+            await axios.post(`/student/exam-attempts/${attempt.id}/draft`, {
+               answers: Object.entries(JSON.parse(snapshot)).map(
+                  ([id, answer]) => ({
+                     exam_question_id: Number(id),
+                     answer_data: answer,
+                  }),
+               ),
+            });
+            savedSnapshot.current = snapshot;
+
+            if (mounted) {
+setSaveStatus(
+                  snapshot === JSON.stringify(answersRef.current)
+                     ? 'Majibu yamehifadhiwa'
+                     : 'Inasubiri kuhifadhi…',
+               );
+}
+         } catch {
+            if (mounted) {
+setSaveStatus('Haijahifadhiwa kwenye server. Inajaribu tena…');
+}
+         } finally {
+            inFlight.current = false;
+         }
+      };
+      const timeout = setTimeout(save, 1000);
+      const interval = setInterval(save, 5000);
+      window.addEventListener('online', save);
+
+      return () => {
+         mounted = false;
+         clearTimeout(timeout);
+         clearInterval(interval);
+         window.removeEventListener('online', save);
+      };
+   }, [attempt.id, deadline, isSubmitting]);
 
    // Warn before leaving page
    useEffect(() => {
@@ -114,33 +169,16 @@ const TakeExam = ({ attempt }: Props) => {
          window.removeEventListener('beforeunload', handleBeforeUnload);
    }, []);
 
-   const saveAnswerToBackend = async (questionId: number, answer: any) => {
-      // await router.post(
-      //    examAttempts.answer.url(attempt.id),
-      //    {
-      //       question_id: questionId,
-      //       answer_data: answer,
-      //    },
-      //    {
-      //       preserveScroll: true,
-      //       preserveState: true,
-      //    },
-      // );
-   };
-
    const handleAnswerChange = (answer: any) => {
       if (!currentQuestion) {
          return;
       }
 
+      setSaveStatus('Inasubiri kuhifadhi…');
       setAnswers((prev) => ({
          ...prev,
          [currentQuestion.id]: answer,
       }));
-
-      // Save to backend
-      saveAnswerToBackend(currentQuestion.id as number, answer);
-      saveToLocalStorage();
    };
 
    const handlePrevious = () => {
@@ -207,6 +245,13 @@ const TakeExam = ({ attempt }: Props) => {
          <Head title={`Taking: ${attempt.exam.title}`} />
 
          <main className="flex min-h-screen flex-col justify-between overflow-x-hidden">
+            <p
+               role="status"
+               aria-live="polite"
+               className="bg-background px-4 py-2 text-center text-sm text-muted-foreground"
+            >
+               {saveStatus}
+            </p>
             <AttemptNavbar
                attempt={attempt}
                questionIndex={currentQuestionIndex}

@@ -5,6 +5,8 @@ namespace Modules\Exam\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Exam\Http\Requests\ExamAttemptRequest;
@@ -53,6 +55,8 @@ class ExamAttemptController extends Controller
         return Inertia::render('Exam/dashboard/exams/review', [
             'exam_id' => $exam_id,
             'attempt' => $attempt,
+            'deadline' => $this->deadline($attempt)->toIso8601String(),
+            'savedAnswers' => $attempt->draft_answers ?? [],
         ]);
     }
 
@@ -87,6 +91,28 @@ class ExamAttemptController extends Controller
         ]);
     }
 
+    private function deadline(ExamAttempt $attempt): \Carbon\CarbonInterface
+    {
+        return $attempt->deadline_at ?? $attempt->start_time->copy()->addMinutes(max(1, ($attempt->exam->duration_hours * 60 + $attempt->exam->duration_minutes) ?: 60));
+    }
+
+    public function saveDraft(Request $request, ExamAttempt $attempt)
+    {
+        abort_unless((int) $attempt->user_id === (int) Auth::id(), 403);
+        $data = $request->validate([
+            'answers' => 'present|array|max:1000',
+            'answers.*.exam_question_id' => ['required', 'distinct', Rule::exists('exam_questions', 'id')->where('exam_id', $attempt->exam_id)],
+            'answers.*.answer_data' => 'present',
+        ]);
+        return DB::transaction(function () use ($attempt, $data) {
+            $locked = ExamAttempt::whereKey($attempt->id)->lockForUpdate()->firstOrFail();
+            abort_unless($locked->status === 'in_progress', 409);
+            abort_if(now()->greaterThanOrEqualTo($this->deadline($locked)), 409, 'Exam time has ended.');
+            $locked->update(['draft_answers' => $data['answers']]);
+            return response()->json(['saved_at' => now()->toIso8601String()]);
+        });
+    }
+
     /**
      * Submit exam answers
      */
@@ -98,8 +124,13 @@ class ExamAttemptController extends Controller
             return back()->with('error', 'This attempt has already been submitted.');
         }
 
-        $answers = $request->input('answers', []);
-        $attempt = $this->examAttempt->submitAttempt($attempt, $answers);
+        $attempt = DB::transaction(function () use ($request, $attempt) {
+            $locked = ExamAttempt::whereKey($attempt->id)->lockForUpdate()->firstOrFail();
+            abort_unless($locked->status === 'in_progress', 409);
+            $answers = now()->greaterThanOrEqualTo($this->deadline($locked))
+                ? ($locked->draft_answers ?? []) : $request->input('answers', []);
+            return $this->examAttempt->submitAttempt($locked, $answers);
+        });
 
         return redirect()
             ->route('student.exam.show', [

@@ -30,6 +30,7 @@ class ExamAttemptService
             'exam_id' => $exam->id,
             'attempt_number' => $previousAttempts + 1,
             'start_time' => now(),
+            'deadline_at' => now()->addMinutes(max(1, ($exam->duration_hours * 60 + $exam->duration_minutes) ?: 60)),
             'total_marks' => $exam->total_marks,
             'status' => 'in_progress',
         ]);

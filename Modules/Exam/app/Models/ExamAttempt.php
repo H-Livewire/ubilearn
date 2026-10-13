@@ -32,6 +32,8 @@ class ExamAttempt extends Model
         'user_id',
         'exam_id',
         'attempt_number',
+        'draft_answers',
+        'deadline_at',
         'start_time',
         'end_time',
         'total_marks',
@@ -43,6 +45,8 @@ class ExamAttempt extends Model
     ];
 
     protected $casts = [
+        'draft_answers' => 'array',
+        'deadline_at' => 'datetime',
         'start_time' => 'datetime',
         'end_time' => 'datetime',
         'total_marks' => 'decimal:2',

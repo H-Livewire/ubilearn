@@ -21,7 +21,9 @@ class CheckExamEnrollMiddleware
             return $next($request);
         }
 
-        $exam = Exam::findOrFail($request->exam_id);
+        $exam = $request->route('exam');
+        if (! $exam instanceof Exam) $exam = Exam::findOrFail($exam);
+        abort_unless((int) $request->exam_id === (int) $exam->id, 422);
 
         if ($user->role == 'instructor' && $user->instructor_id == $exam->instructor_id) {
             return $next($request);

@@ -179,6 +179,11 @@ class SettingsService extends MediaService
                         'title' => 'NECTA result', 'value' => '/necta-result', 'active' => true, 'sort' => 3,
                     ]));
                 }
+                $navbar->setRelation('navbarItems', $navbar->navbarItems->reject(fn ($item) =>
+                    in_array(trim($item->value ?? '', '/'), ['our-team', 'team'], true)
+                    || strtolower(trim($item->title ?? '')) === 'our team'
+                    || $item->slug === 'our-team'
+                )->values());
                 foreach ($navbar->navbarItems as $item) {
                     if (in_array($item->value, ['/exams/all', '/examinations'], true)) {
                         $item->title = 'Past papers';
@@ -197,6 +202,19 @@ class SettingsService extends MediaService
                         ];
                     }
                 }
+                $items = $navbar->navbarItems->reject(fn ($item) => $item->value === '/online-examination')->values();
+                $past = $items->first(fn ($item) => $item->value === '/examinations');
+                if ($past) {
+                    // Preserve stored ordering while placing the new link immediately after Past papers.
+                    $items = $items->sortBy('sort')->values();
+                    $position = $items->search(fn ($item) => $item->value === '/examinations');
+                    $items->splice($position + 1, 0, [new \App\Models\NavbarItem([
+                        'id' => -2, 'slug' => 'online-examination', 'type' => 'url',
+                        'title' => 'Online examination', 'value' => '/online-examination', 'active' => true,
+                    ])]);
+                    foreach ($items as $position => $item) $item->sort = $position;
+                }
+                $navbar->setRelation('navbarItems', $items);
             }
 
             return $navbar;

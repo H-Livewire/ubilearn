@@ -48,7 +48,7 @@ class ExamAttemptService
             $needsManualReview = false;
 
             foreach ($answers as $answer) {
-                $question = ExamQuestion::findOrFail($answer['exam_question_id']);
+                $question = ExamQuestion::where('exam_id', $attempt->exam_id)->findOrFail($answer['exam_question_id']);
 
                 if (! $question) {
                     continue;

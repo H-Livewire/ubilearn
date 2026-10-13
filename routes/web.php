@@ -61,6 +61,7 @@ Route::middleware(['web'])->group(function () {
     Route::post('necta-result/guidance', [\App\Http\Controllers\NectaController::class, 'guidance'])->middleware('throttle:30,1');
     Route::get('necta-result/browse', [\App\Http\Controllers\NectaController::class, 'browse'])->middleware('throttle:30,1');
 
+    Route::get('online-examination', [\Modules\Exam\Http\Controllers\ExamController::class, 'online'])->name('online-examination');
     Route::get('examinations', [\App\Http\Controllers\ExamPaperController::class, 'index'])->name('examinations.index');
     Route::get('examinations/{paper}/files/{kind}', [\App\Http\Controllers\ExamPaperController::class, 'document'])->whereNumber('paper')->whereIn('kind',['question','marking','instructions']);
     Route::get('examinations/{paper}', [\App\Http\Controllers\ExamPaperController::class, 'show'])->whereNumber('paper')->name('examinations.show');

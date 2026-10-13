@@ -3,6 +3,7 @@
 namespace Modules\Exam\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class ExamAttemptRequest extends FormRequest
 {
@@ -16,16 +17,16 @@ class ExamAttemptRequest extends FormRequest
         if ($this->isMethod('post') && $this->routeIs('*.start')) {
             // Starting an exam attempt
             return [
-                'exam_id' => 'required|exists:exams,id',
+                'exam_id' => ['required', Rule::in([(string) $this->route('exam')?->id])],
             ];
         }
 
         if ($this->isMethod('post') && $this->routeIs('*.submit')) {
             // Submitting exam answers
             return [
-                'exam_attempt_id' => 'required|exists:exam_attempts,id',
-                'answers' => 'required|array',
-                'answers.*.exam_question_id' => 'required|exists:exam_questions,id',
+                'exam_attempt_id' => ['required', Rule::in([(string) $this->route('attempt')?->id])],
+                'answers' => 'present|array',
+                'answers.*.exam_question_id' => ['required', 'distinct', Rule::exists('exam_questions', 'id')->where('exam_id', $this->route('attempt')?->exam_id)],
                 'answers.*.answer_data' => 'required',
             ];
         }

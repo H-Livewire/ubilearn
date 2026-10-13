@@ -56,6 +56,17 @@ class ExamController extends Controller
     /**
      * Display exams by category (public page, similar to courses)
      */
+    public function online(Request $request): Response
+    {
+        $exams = $this->exam->getAllExams([
+            ...$request->validate(['exams_page' => 'nullable|integer|min:1']),
+            'exams_per_page' => 12, 'status' => 'published',
+            'reviews_count' => true, 'average_rating' => true, 'enrollments_count' => true,
+            'paginate' => true,
+        ]);
+        return Inertia::render('online-examination/index', ['exams' => $exams]);
+    }
+
     public function category_exams(Request $request, string $slug): Response
     {
         $levels = LevelType::cases();

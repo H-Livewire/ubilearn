@@ -78,6 +78,8 @@ class ExamAttemptController extends Controller
      */
     public function take(ExamAttempt $attempt)
     {
+        abort_unless((int) $attempt->user_id === (int) Auth::id(), 403);
+        abort_unless($attempt->status === 'in_progress', 409);
         $attempt->load(['exam.questions.question_options']);
 
         return Inertia::render('student/exam/attempt', [
@@ -90,6 +92,7 @@ class ExamAttemptController extends Controller
      */
     public function submit(ExamAttemptRequest $request, ExamAttempt $attempt)
     {
+        abort_unless((int) $attempt->user_id === (int) Auth::id(), 403);
         // Check if attempt is in progress
         if ($attempt->status !== 'in_progress') {
             return back()->with('error', 'This attempt has already been submitted.');
@@ -112,6 +115,7 @@ class ExamAttemptController extends Controller
      */
     public function abandon(ExamAttempt $attempt)
     {
+        abort_unless((int) $attempt->user_id === (int) Auth::id(), 403);
         if ($attempt->status !== 'in_progress') {
             return back()->with('error', 'This attempt is not in progress.');
         }

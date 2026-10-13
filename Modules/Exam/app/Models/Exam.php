@@ -37,6 +37,7 @@ class Exam extends BaseModel implements HasMedia
     use HasFactory, InteractsWithMedia;
 
     protected $fillable = [
+        'starts_at',
         'title',
         'slug',
         'short_description',
@@ -67,6 +68,7 @@ class Exam extends BaseModel implements HasMedia
     ];
 
     protected $casts = [
+        'starts_at' => 'datetime',
         'price' => 'decimal:2',
         'discount' => 'boolean',
         'discount_price' => 'decimal:2',

@@ -17,6 +17,9 @@ const ExamSettings = () => {
             transform={(formData) => ({
                ...formData,
                tab,
+               starts_at: formData.starts_at
+                  ? new Date(String(formData.starts_at)).toISOString()
+                  : null,
                duration_hours: Number(formData.duration_hours),
                duration_minutes: Number(formData.duration_minutes),
                pass_mark: Number(formData.pass_mark),
@@ -29,6 +32,34 @@ const ExamSettings = () => {
             {({ errors, processing }) => (
                <>
                   <div className="grid gap-6 md:grid-cols-2">
+                     <div>
+                        <Label htmlFor="starts_at">
+                           Muda wa kuanza (optional)
+                        </Label>
+                        <Input
+                           id="starts_at"
+                           name="starts_at"
+                           type="datetime-local"
+                           defaultValue={
+                              exam.starts_at
+                                 ? new Date(
+                                      new Date(exam.starts_at).getTime() -
+                                         new Date(
+                                            exam.starts_at,
+                                         ).getTimezoneOffset() *
+                                            60000,
+                                   )
+                                      .toISOString()
+                                      .slice(0, 16)
+                                 : ''
+                           }
+                        />
+                        <InputError message={errors.starts_at} />
+                        <p className="mt-1 text-xs text-muted-foreground">
+                           Muda wa kifaa chako. Acha wazi kwa mtihani wa kufanya
+                           wakati wowote.
+                        </p>
+                     </div>
                      <div>
                         <Label>Duration (Hours) *</Label>
                         <Input

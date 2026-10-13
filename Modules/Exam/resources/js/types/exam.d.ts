@@ -24,6 +24,7 @@ interface ExamCategoryChild extends TableCommon {
 }
 
 interface Exam extends TableCommon {
+   starts_at?: string | null;
    title: string;
    slug: string;
    short_description?: string;

@@ -28,7 +28,9 @@ class UpdateExamRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        $exam = $this->route('exam');
+        $user = $this->user();
+        return $user && $exam && ($user->role === 'admin' || ($user->role === 'instructor' && $user->instructor_id && (int) $user->instructor_id === (int) $exam->instructor_id));
     }
 
     /**
@@ -100,6 +102,7 @@ class UpdateExamRequest extends FormRequest
     private function settingsTabRules(): array
     {
         return [
+            'starts_at' => 'nullable|date',
             'duration_hours' => 'required|integer|min:0',
             'duration_minutes' => 'required|integer|min:0|max:59',
             'pass_mark' => 'required|numeric|min:0|max:100',

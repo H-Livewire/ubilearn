@@ -1,9 +1,11 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import LandingLayout from '@/layouts/landing';
 import type { Page } from '../examinations/types';
 type OnlineExam = {
+   starts_at: string | null;
    id: number;
    slug: string;
    title: string;
@@ -14,9 +16,14 @@ type OnlineExam = {
 };
 export default function OnlineExamination({
    exams,
+   followed,
 }: {
    exams: Page<OnlineExam>;
+   followed: number[];
 }) {
+   const [currentTime] = useState(() => Date.now());
+   const { auth } = usePage<{ auth: { user: unknown } }>().props;
+
    return (
       <>
          <Head title="Online examination" />
@@ -42,6 +49,35 @@ export default function OnlineExamination({
                         marks ·{' '}
                         {exam.duration_hours * 60 + exam.duration_minutes} min
                      </p>
+                     {exam.starts_at && (
+                        <p className="mb-3 text-sm text-primary">
+                           {new Date(exam.starts_at).toLocaleString()}
+                        </p>
+                     )}
+                     {exam.starts_at &&
+                        new Date(exam.starts_at).getTime() > currentTime && (
+                           <Button
+                              variant="outline"
+                              className="mb-3"
+                              onClick={() =>
+                                 auth?.user
+                                    ? router.post(
+                                         `/student/exams/${exam.id}/reminder`,
+                                         {
+                                            enabled: !followed.includes(
+                                               exam.id,
+                                            ),
+                                         },
+                                         { preserveScroll: true },
+                                      )
+                                    : router.get('/login')
+                              }
+                           >
+                              {followed.includes(exam.id)
+                                 ? 'Zima reminder'
+                                 : 'Nikumbushe'}
+                           </Button>
+                        )}
                      <Button
                         asChild
                         className="mt-auto bg-black text-white hover:bg-black/85"

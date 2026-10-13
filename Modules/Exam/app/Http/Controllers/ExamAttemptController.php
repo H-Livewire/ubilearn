@@ -69,6 +69,7 @@ class ExamAttemptController extends Controller
     public function start(ExamAttemptRequest $request, Exam $exam)
     {
         $user = Auth::user();
+        if ($exam->starts_at && $exam->starts_at->isFuture()) return back()->with('error', 'Mtihani bado haujaanza.');
         $attempt = $this->examAttempt->startAttempt($user, $exam);
 
         if (! $attempt) {

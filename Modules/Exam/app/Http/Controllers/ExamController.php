@@ -64,7 +64,18 @@ class ExamController extends Controller
             'reviews_count' => true, 'average_rating' => true, 'enrollments_count' => true,
             'paginate' => true,
         ]);
-        return Inertia::render('online-examination/index', ['exams' => $exams]);
+        return Inertia::render('online-examination/index', ['exams' => $exams, 'followed' => $request->user() ? \Illuminate\Support\Facades\DB::table('exam_reminders')->where('user_id', $request->user()->id)->pluck('exam_id') : []]);
+    }
+
+    public function reminder(Request $request, Exam $exam)
+    {
+        abort_unless($exam->status === 'published' && $exam->starts_at && $exam->starts_at->isFuture(), 422);
+        $data = $request->validate(['enabled' => 'required|boolean']);
+        $query = \Illuminate\Support\Facades\DB::table('exam_reminders')->where('user_id', $request->user()->id)->where('exam_id', $exam->id);
+        if ($data['enabled']) {
+            $query->insertOrIgnore(['user_id' => $request->user()->id, 'exam_id' => $exam->id, 'created_at' => now(), 'updated_at' => now()]);
+        } else $query->delete();
+        return back()->with('success', $data['enabled'] ? 'Reminder imewashwa.' : 'Reminder imezimwa.');
     }
 
     public function category_exams(Request $request, string $slug): Response

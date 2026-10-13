@@ -87,6 +87,7 @@ Route::middleware(['auth', 'role:instructor,admin'])->prefix('dashboard')->group
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'role:student,instructor,admin'])->prefix('student')->group(function () {
+    Route::post('exams/{exam}/reminder', [ExamController::class, 'reminder'])->name('exams.reminder');
     // Exam Attempts
     Route::post('exams/{exam}/attempts/start', [ExamAttemptController::class, 'start'])->name('exam-attempts.start')->middleware(CheckExamEnrollMiddleware::class);
     Route::get('exam-attempts/{attempt}/take', [ExamAttemptController::class, 'take'])->name('exam-attempts.take');

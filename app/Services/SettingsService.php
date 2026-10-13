@@ -180,8 +180,8 @@ class SettingsService extends MediaService
                     ]));
                 }
                 foreach ($navbar->navbarItems as $item) {
-                    if ($item->value === '/exams/all') {
-                        $item->title = 'Examinations';
+                    if (in_array($item->value, ['/exams/all', '/examinations'], true)) {
+                        $item->title = 'Past papers';
                         $item->value = '/examinations';
                     }
                     if ($item->value === '/courses/all') {

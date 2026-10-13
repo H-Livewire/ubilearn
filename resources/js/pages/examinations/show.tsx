@@ -1,6 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
-import { useState  } from 'react';
-import type {ReactNode} from 'react';
+import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import LandingLayout from '@/layouts/landing';
 import type { Paper } from './types';
@@ -13,7 +13,7 @@ export default function PaperDetails({ paper: p }: { paper: Paper }) {
          <Head title={p.title} />
          <main className="container mx-auto max-w-5xl space-y-5 px-4 py-10">
             <Link href="/examinations" className="text-sm underline">
-               ← Examinations
+               ← Past papers
             </Link>
             <h1 className="text-2xl font-bold">{p.title}</h1>
             <p className="text-sm text-muted-foreground">

@@ -58,10 +58,10 @@ export default function Manage({
 
    return (
       <>
-         <Head title="Examination papers" />
+         <Head title="Past papers" />
          <div className="mx-auto max-w-5xl space-y-6 p-4">
             <div className="flex justify-between">
-               <h1 className="text-2xl font-bold">Examination papers</h1>
+               <h1 className="text-2xl font-bold">Past papers</h1>
                <Link href="/examinations" className="underline">
                   Ona catalogue ↗
                </Link>

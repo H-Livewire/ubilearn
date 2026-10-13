@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { FileText, Search, SlidersHorizontal } from 'lucide-react';
+import { Search, SlidersHorizontal } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -111,10 +111,10 @@ export default function Examinations({
 
    return (
       <>
-         <Head title="Examinations" />
+         <Head title="Past papers" />
          <main className="container mx-auto max-w-6xl space-y-5 px-4 py-8 sm:py-10">
             <div>
-               <h1 className="text-3xl font-bold">Examinations</h1>
+               <h1 className="text-3xl font-bold">Past papers</h1>
                <p className="mt-2 text-sm text-muted-foreground">
                   Tafuta mtihani, soma au pakua.
                </p>
@@ -229,17 +229,31 @@ export default function Examinations({
                   Online exams
                </Link>
             </div>
-            <div className="space-y-3" aria-busy={busy}>
+            <div
+               className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+               aria-busy={busy}
+            >
                {papers.data.map((p) => (
                   <article
                      key={p.id}
-                     className="flex flex-col gap-4 rounded-lg border bg-card p-4 sm:flex-row sm:items-center sm:justify-between"
+                     className="flex min-w-0 flex-col overflow-hidden rounded-xl border bg-card shadow-sm"
                   >
-                     <div className="flex min-w-0 gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
-                           <FileText size={22} />
-                        </div>
-                        <div>
+                     <div className="relative h-64 overflow-hidden border-b bg-white">
+                        <iframe
+                           title={`PDF preview: ${p.title}`}
+                           src={`/examinations/${p.id}/files/question#page=1&toolbar=0&navpanes=0&view=FitH`}
+                           loading="lazy"
+                           tabIndex={-1}
+                           className="pointer-events-none h-full w-full border-0"
+                        />
+                        <Link
+                           href={`/examinations/${p.id}`}
+                           className="absolute inset-0 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+                           aria-label={`View ${p.title}`}
+                        />
+                     </div>
+                     <div className="flex flex-1 flex-col p-4">
+                        <div className="mb-4 flex-1">
                            <h2 className="font-semibold">{p.title}</h2>
                            <p className="mt-1 text-sm text-muted-foreground">
                               {[p.class_name, p.subject, p.year, p.exam_type]
@@ -259,25 +273,25 @@ export default function Examinations({
                                  : ''}
                            </p>
                         </div>
-                     </div>
-                     <div className="flex shrink-0 gap-2">
-                        <Button asChild variant="outline">
-                           <Link href={`/examinations/${p.id}`}>
-                              Ona mtihani
-                           </Link>
-                        </Button>
-                        {p.has_pdf && (
-                           <Button
-                              asChild
-                              className="bg-black text-white hover:bg-black/85"
-                           >
-                              <a
-                                 href={`/examinations/${p.id}/files/question?download=1`}
-                              >
-                                 Download PDF
-                              </a>
+                        <div className="flex flex-wrap gap-2">
+                           <Button asChild variant="outline">
+                              <Link href={`/examinations/${p.id}`}>
+                                 View PDF
+                              </Link>
                            </Button>
-                        )}
+                           {p.has_pdf && (
+                              <Button
+                                 asChild
+                                 className="bg-black text-white hover:bg-black/85"
+                              >
+                                 <a
+                                    href={`/examinations/${p.id}/files/question?download=1`}
+                                 >
+                                    Download PDF
+                                 </a>
+                              </Button>
+                           )}
+                        </div>
                      </div>
                   </article>
                ))}

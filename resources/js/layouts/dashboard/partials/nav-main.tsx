@@ -46,7 +46,16 @@ export function NavMain() {
                <SidebarMenu key={key} className="space-y-1">
                   <SidebarGroupLabel>{title}</SidebarGroupLabel>
 
-                  {pages.map((page) => {
+                  {pages.map((routePage) => {
+                     const page = routePage;
+
+                     if (
+                        page.slug === 'exams' &&
+                        !(auth.user.role === 'admin' || (page as any).active)
+                     ) {
+                        return null;
+                     }
+
                      const role = page.access.includes(
                         auth.user.role || 'admin',
                      );

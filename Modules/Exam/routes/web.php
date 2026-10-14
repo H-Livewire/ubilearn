@@ -53,7 +53,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('dashboard')->group(function (
 | Instructor Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'role:instructor,admin'])->prefix('dashboard')->group(function () {
+Route::middleware(['auth', 'role:instructor,admin', \App\Http\Middleware\ExamManagement::class])->prefix('dashboard')->group(function () {
+    Route::get('exams/{exam}/import', [\Modules\Exam\Http\Controllers\ExamImportController::class, 'index']);
+    Route::post('exams/{exam}/import/extract', [\Modules\Exam\Http\Controllers\ExamImportController::class, 'extract']);
+    Route::post('exams/{exam}/import/parse', [\Modules\Exam\Http\Controllers\ExamImportController::class, 'parse']);
+    Route::post('exams/{exam}/import', [\Modules\Exam\Http\Controllers\ExamImportController::class, 'store']);
     // Exams (Admin can manage all)
     Route::resource('exams', ExamController::class)->except(['show', 'update', 'destroy']);
     Route::post('exams/{exam}', [ExamController::class, 'update'])->name('exams.update');
@@ -88,6 +92,7 @@ Route::middleware(['auth', 'role:instructor,admin'])->prefix('dashboard')->group
 */
 Route::middleware(['auth', 'role:student,instructor,admin'])->prefix('student')->group(function () {
     Route::post('exams/{exam}/reminder', [ExamController::class, 'reminder'])->name('exams.reminder');
+    Route::get('exam-diagrams/{question}', [\Modules\Exam\Http\Controllers\ExamImportController::class, 'image']);
     // Exam Attempts
     Route::post('exams/{exam}/attempts/start', [ExamAttemptController::class, 'start'])->name('exam-attempts.start')->middleware(CheckExamEnrollMiddleware::class);
     Route::get('exam-attempts/{attempt}/take', [ExamAttemptController::class, 'take'])->name('exam-attempts.take');

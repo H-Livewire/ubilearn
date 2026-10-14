@@ -16,6 +16,15 @@ const BecomeInstructor = () => {
    const { button, input, frontend } = translate;
    const [isEditing, setIsEditing] = useState(instructor ? false : true);
 
+   const designationOptions = ['Teacher', 'Mjasiriamali', 'Dactor'];
+   const [designationChoice, setDesignationChoice] = useState(
+      designationOptions.includes(instructor?.designation || '')
+         ? instructor.designation
+         : instructor?.designation
+           ? 'Other'
+           : '',
+   );
+
    const initialSkills = instructor?.skills
       ? typeof instructor.skills === 'string'
          ? (JSON.parse(instructor.skills) as string[])
@@ -72,13 +81,44 @@ const BecomeInstructor = () => {
                   <div className="relative space-y-4">
                      <div>
                         <Label htmlFor="designation">{input.designation}</Label>
-                        <Input
+                        <select
                            id="designation"
-                           type="text"
-                           name="designation"
-                           defaultValue={instructor?.designation || ''}
-                           placeholder={input.designation_placeholder}
-                        />
+                           name={
+                              designationChoice === 'Other'
+                                 ? undefined
+                                 : 'designation'
+                           }
+                           className="h-10 w-full rounded-md border bg-background px-3"
+                           value={designationChoice}
+                           required
+                           onChange={(e) =>
+                              setDesignationChoice(e.target.value)
+                           }
+                        >
+                           <option value="">Chagua designation</option>
+                           {designationOptions.map((option) => (
+                              <option key={option} value={option}>
+                                 {option}
+                              </option>
+                           ))}
+                           <option value="Other">Nyingine</option>
+                        </select>
+                        {designationChoice === 'Other' && (
+                           <Input
+                              className="mt-2"
+                              name="designation"
+                              required
+                              maxLength={255}
+                              defaultValue={
+                                 designationOptions.includes(
+                                    instructor?.designation || '',
+                                 )
+                                    ? ''
+                                    : instructor?.designation || ''
+                              }
+                              placeholder="Andika designation yako"
+                           />
+                        )}
                         <InputError message={errors.designation} />
                      </div>
 

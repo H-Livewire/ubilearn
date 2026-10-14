@@ -122,6 +122,7 @@ class HandleInertiaRequests extends Middleware
                 ...parent::share($request),
                 'name' => config('app.name'),
                 'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+                'canManageExams' => $user && ($user->role === 'admin' || ($user->role === 'instructor' && $user->instructor?->status === 'approved' && strcasecmp(trim($user->instructor->designation), 'Teacher') === 0)),
                 'auth' => ['user' => $user],
                 'loginOptions' => fn () => $user ? null : $this->loginOptions(),
                 'authStatus' => fn () => $request->session()->get('status'),

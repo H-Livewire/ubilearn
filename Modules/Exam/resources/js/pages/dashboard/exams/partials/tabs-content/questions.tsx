@@ -4,7 +4,7 @@ import { Renderer } from '@/components/rich-editor';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { destroy, duplicate, reorder } from '@/routes/exam-questions';
-import { router, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import {
    ArrowRight,
    ArrowUpDown,
@@ -48,6 +48,13 @@ const Questions = () => {
                   multiple choice, short answer, and many other question types.
                </p>
 
+               {exam.status === 'draft' && (
+                  <Button asChild variant="outline" className="mb-3">
+                     <Link href={`/dashboard/exams/${exam.id}/import`}>
+                        Import PDF / Word
+                     </Link>
+                  </Button>
+               )}
                <QuestionDialog
                   exam={exam}
                   handler={
@@ -75,6 +82,13 @@ const Questions = () => {
             </div>
 
             <div className="flex items-center gap-2">
+               {exam.status === 'draft' && (
+                  <Button asChild variant="outline">
+                     <Link href={`/dashboard/exams/${exam.id}/import`}>
+                        Import PDF / Word
+                     </Link>
+                  </Button>
+               )}
                <DataSortModal
                   title="Questions"
                   data={questions}

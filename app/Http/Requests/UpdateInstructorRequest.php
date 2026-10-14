@@ -22,6 +22,7 @@ class UpdateInstructorRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'designation' => 'required|string|max:255',
             'skills' => 'required',
             'biography' => 'required|string|min:50|max:5000',
             'resume' => 'nullable|file|mimes:pdf,doc,docx|max:3072',

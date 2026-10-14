@@ -166,7 +166,7 @@ const getDashboardRoutes = (page: SharedData): DashboardRoute[] => {
                name: button.exams || 'Exams',
                path: '',
                slug: 'exams',
-               active: true,
+               active: Boolean((page as any).canManageExams),
                access: [
                   'admin',
                   'instructor',

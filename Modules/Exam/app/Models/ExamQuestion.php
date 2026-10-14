@@ -20,7 +20,9 @@ class ExamQuestion extends BaseModel implements HasMedia
 {
     use HasFactory, InteractsWithMedia;
 
+    protected $hidden = ['import_asset'];
     protected $fillable = [
+        'import_asset',
         'exam_id',
         'question_type',
         'title',
@@ -31,6 +33,7 @@ class ExamQuestion extends BaseModel implements HasMedia
     ];
 
     protected $casts = [
+        'import_asset' => 'array',
         'marks' => 'decimal:2',
         'sort' => 'integer',
         'options' => 'array',

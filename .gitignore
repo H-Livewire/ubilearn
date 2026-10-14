@@ -24,3 +24,5 @@
 /.vscode/
 /.phpunit.cache/
 /auth.json
+
+/public/assets/exam-import/

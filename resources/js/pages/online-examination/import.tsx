@@ -1,6 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import axios from 'axios';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { Worker } from 'tesseract.js';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import DashboardLayout from '@/layouts/dashboard/layout';
 import DiagramCrop from './diagram-crop';
-type Image = { name: string; data: string };
+type Image = { name: string; data: string; width?: number; height?: number };
 type Question = {
    title: string;
    choices: string[];
@@ -19,17 +19,34 @@ type Question = {
 };
 export default function ImportExam({
    exam,
+   drafts = [],
 }: {
-   exam: { id: number; title: string };
+   exam: { id: number; title: string } | null;
+   drafts?: { id: number; title: string }[];
 }) {
+   const [selectedId, setSelectedId] = useState(exam?.id ?? 0);
+   const [file, setFile] = useState<File>();
+   const [progress, setProgress] = useState(0);
+   const activeExam = exam ?? drafts.find((draft) => draft.id === selectedId);
    const [questions, setQuestions] = useState<Question[]>([]);
    const [images, setImages] = useState<Image[]>([]);
+   const originalImages = useRef<Image[]>([]);
+   const [brandImage, setBrandImage] = useState(0);
    const [text, setText] = useState('');
    const [status, setStatus] = useState('');
    const [error, setError] = useState('');
    const [busy, setBusy] = useState(false);
    const [reviewed, setReviewed] = useState(false);
-   const base = `/dashboard/exams/${exam.id}/import`;
+   const base = exam
+      ? `/dashboard/exams/${exam.id}/import`
+      : '/dashboard/exam-import';
+   async function stage(percent: number, label: string) {
+      setProgress(percent);
+      setStatus(label);
+      await new Promise<void>((resolve) =>
+         requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      );
+   }
    function change(index: number, patch: Partial<Question>) {
       setQuestions((items) =>
          items.map((q, i) => (i === index ? { ...q, ...patch } : q)),
@@ -56,19 +73,38 @@ export default function ImportExam({
       setReviewed(false);
       setQuestions([]);
       setImages([]);
-      setStatus('Inasoma document…');
+      await stage(10, 'Preparing file...');
 
       try {
          if (file.size > 10 * 1024 * 1024) {
             throw new Error('Document iwe chini ya 10 MB.');
          }
 
+         await stage(35, 'Loading UbiLearn logo...');
+         const brand = new Image();
+         await new Promise<void>((resolve, reject) => {
+            brand.onload = () => resolve();
+            brand.onerror = () =>
+               reject(new Error('UbiLearn logo could not load.'));
+            brand.src = '/assets/icons/ubi-learn-logo-v2.png';
+         });
+
          if (file.name.toLowerCase().endsWith('.docx')) {
             const form = new FormData();
             form.append('document', file);
-            const { data } = await axios.post(`${base}/extract`, form);
+            const { data } = await axios.post(`${base}/extract`, form, {
+               onUploadProgress: (event) => {
+                  if (event.total) {
+                     setProgress(
+                        35 + Math.round((event.loaded / event.total) * 25),
+                     );
+                  }
+               },
+            });
+            await stage(65, 'Processing questions...');
             setText(data.text);
             setImages(data.images);
+            originalImages.current = data.images;
             setQuestions(data.questions);
 
             if (!data.questions.length) {
@@ -97,11 +133,13 @@ export default function ImportExam({
                   throw new Error('Import hadi kurasa 30 kwa document moja.');
                }
 
+               await stage(65, 'Processing questions and page previews...');
                const pageImages: Image[] = [];
                const texts: string[] = [];
 
                for (let n = 1; n <= pdf.numPages; n++) {
-                  setStatus(`Inasoma ukurasa ${n}/${pdf.numPages}…`);
+                  setProgress(65 + Math.round(((n - 1) / pdf.numPages) * 20));
+                  setStatus(`Processing page ${n}/${pdf.numPages}...`);
                   const page = await pdf.getPage(n);
                   const content = await page.getTextContent();
                   const lines = new Map<
@@ -158,6 +196,8 @@ export default function ImportExam({
                   texts.push(pageText);
                   pageImages.push({
                      name: `Ukurasa ${n}`,
+                     width: original.width,
+                     height: original.height,
                      data: canvas.toDataURL('image/jpeg', 0.8),
                   });
                   page.cleanup();
@@ -166,6 +206,8 @@ export default function ImportExam({
                const value = texts.join('\n');
                setText(value);
                setImages(pageImages);
+               setProgress(90);
+               setStatus('Finalizing setup...');
                await parseText(value);
             } finally {
                await worker?.terminate();
@@ -176,7 +218,11 @@ export default function ImportExam({
                'Tumia PDF au DOCX. Kwa .doc ya zamani, save as DOCX kwanza.',
             );
          }
+
+         await stage(90, 'Finalizing setup...');
+         await stage(100, 'Ready!');
       } catch (e) {
+         setStatus('Preparation failed');
          setError(
             axios.isAxiosError(e)
                ? Object.values(e.response?.data?.errors ?? {})
@@ -190,10 +236,99 @@ export default function ImportExam({
          );
       } finally {
          setBusy(false);
-         setStatus('');
       }
    }
+   async function downloadPrepared() {
+      if (!file) {
+         return;
+      }
+
+      setBusy(true);
+      setError('');
+
+      try {
+         if (file.name.toLowerCase().endsWith('.pdf')) {
+            const { jsPDF } = await import('jspdf');
+            const pages = images.filter(
+               (image) =>
+                  image.name.startsWith('Ukurasa ') &&
+                  image.width &&
+                  image.height,
+            );
+
+            if (!pages.length) {
+               throw new Error('Prepare PDF kwanza.');
+            }
+
+            const first = pages[0];
+            const output = new jsPDF({
+               unit: 'pt',
+               format: [first.width!, first.height!],
+               orientation:
+                  first.width! > first.height! ? 'landscape' : 'portrait',
+            });
+            pages.forEach((page, i) => {
+               if (i) {
+                  output.addPage(
+                     [page.width!, page.height!],
+                     page.width! > page.height! ? 'landscape' : 'portrait',
+                  );
+               }
+
+               output.addImage(
+                  page.data,
+                  'JPEG',
+                  0,
+                  0,
+                  page.width!,
+                  page.height!,
+               );
+            });
+            output.save('UbiLearn-' + file.name);
+         } else {
+            const replacements = images.filter((image) =>
+               originalImages.current.some(
+                  (original) =>
+                     original.name === image.name &&
+                     original.data !== image.data,
+               ),
+            );
+            const form = new FormData();
+            form.append('document', file);
+            replacements.forEach((image, i) => {
+               form.append(`replacements[${i}][name]`, image.name);
+               form.append(`replacements[${i}][data]`, image.data);
+            });
+            const response = await axios.post(
+               '/dashboard/exam-import/brand-docx',
+               form,
+               { responseType: 'blob' },
+            );
+            const url = URL.createObjectURL(response.data);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'UbiLearn-' + file.name;
+            link.click();
+            URL.revokeObjectURL(url);
+         }
+      } catch (error) {
+         setError(
+            error instanceof Error
+               ? error.message
+               : 'Prepared file download failed.',
+         );
+      } finally {
+         setBusy(false);
+      }
+   }
+
    function save() {
+      if (!activeExam) {
+         setError('Chagua draft ya kuhifadhi maswali.');
+
+         return;
+      }
+
       setBusy(true);
       setError('');
       const selectedImages = [
@@ -204,7 +339,7 @@ export default function ImportExam({
          ),
       ];
       router.post(
-         base,
+         `/dashboard/exams/${activeExam.id}/import`,
          {
             questions: questions.map((q) => ({
                ...q,
@@ -225,10 +360,14 @@ export default function ImportExam({
          <Head title="Import online exam" />
          <main className="mx-auto max-w-5xl space-y-5 p-4 sm:p-6">
             <Link
-               href={`/dashboard/exams/${exam.id}/edit?tab=questions`}
+               href={
+                  exam
+                     ? `/dashboard/exams/${exam.id}/edit?tab=questions`
+                     : '/dashboard/exams'
+               }
                className="text-sm underline"
             >
-               ← {exam.title}
+               ← {exam?.title ?? 'Online exams'}
             </Link>
             <h1 className="text-2xl font-bold">Import PDF / Word</h1>
             <p className="text-sm text-muted-foreground">
@@ -243,22 +382,152 @@ export default function ImportExam({
                   type="file"
                   accept=".pdf,.docx"
                   disabled={busy}
-                  onChange={(e) => importFile(e.target.files?.[0])}
+                  onChange={(e) => {
+                     setFile(e.target.files?.[0]);
+                     setProgress(0);
+                     setStatus('');
+                     setQuestions([]);
+                     setImages([]);
+                     setText('');
+                     setError('');
+                  }}
                />
+               <Button
+                  className="mt-3 bg-black text-white hover:bg-black/85"
+                  disabled={busy || !file}
+                  onClick={() => importFile(file)}
+               >
+                  {busy ? 'Preparing…' : 'Prepare'}
+               </Button>
                <p className="mt-2 text-sm text-muted-foreground">
                   Scanned PDF hutumia OCR. Kagua equations na maandishi; OCR
                   inaweza kukosea.
                </p>
             </div>
             {status && (
-               <p role="status" className="text-sm text-primary">
-                  {status}
-               </p>
+               <div
+                  className="space-y-2 rounded-xl border bg-card p-4"
+                  role="status"
+                  aria-live="polite"
+               >
+                  <div className="flex justify-between text-sm font-semibold">
+                     <span>{status}</span>
+                     <span>{progress}%</span>
+                  </div>
+                  <div
+                     role="progressbar"
+                     aria-label="Preparing exam"
+                     aria-valuenow={progress}
+                     aria-valuemin={0}
+                     aria-valuemax={100}
+                     className="h-2 overflow-hidden rounded-full bg-muted"
+                  >
+                     <div
+                        className="h-full bg-primary transition-all duration-500"
+                        style={{ width: `${progress}%` }}
+                     />
+                  </div>
+               </div>
+            )}
+            {!exam && (
+               <div className="space-y-2 rounded-xl border p-4">
+                  <Label htmlFor="draft">Draft ya kuhifadhi maswali</Label>
+                  <select
+                     id="draft"
+                     className="h-10 w-full rounded-md border bg-background px-3"
+                     value={selectedId}
+                     disabled={busy}
+                     onChange={(e) => setSelectedId(Number(e.target.value))}
+                  >
+                     <option value={0}>Chagua draft</option>
+                     {drafts.map((draft) => (
+                        <option key={draft.id} value={draft.id}>
+                           {draft.title}
+                        </option>
+                     ))}
+                  </select>
+                  <div className="flex gap-3 text-sm">
+                     <a
+                        href="/dashboard/exams/create"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline"
+                     >
+                        Create exam draft
+                     </a>
+                     <button
+                        type="button"
+                        className="underline"
+                        onClick={() => router.reload({ only: ['drafts'] })}
+                     >
+                        Refresh drafts
+                     </button>
+                  </div>
+               </div>
             )}
             {error && (
                <p role="alert" className="text-sm text-destructive">
                   {error}
                </p>
+            )}
+            {images.length > 0 && (
+               <details className="rounded-xl border bg-card p-4">
+                  <summary className="cursor-pointer font-semibold">
+                     Badilisha logo kwenye page / picha
+                  </summary>
+                  <p className="my-3 text-sm text-muted-foreground">
+                     Chagua page au picha ya logo. Replacement itaonekana kwenye
+                     preview na diagrams unazotumia kwenye online exam.
+                  </p>
+                  <select
+                     aria-label="Page ya logo"
+                     className="mb-3 h-10 w-full rounded-md border bg-background px-3"
+                     value={brandImage}
+                     disabled={busy}
+                     onChange={(e) => setBrandImage(Number(e.target.value))}
+                  >
+                     {images.map((image, i) => (
+                        <option key={i} value={i}>
+                           {image.name}
+                        </option>
+                     ))}
+                  </select>
+                  {images[brandImage] && (
+                     <DiagramCrop
+                        key={`${brandImage}-${images[brandImage].data.slice(-24)}`}
+                        src={images[brandImage].data}
+                        disabled={busy}
+                        logo
+                        onCrop={(value) => {
+                           const previous = images[brandImage].data;
+                           setImages((items) =>
+                              items.map((image, i) =>
+                                 i === brandImage
+                                    ? { ...image, data: value }
+                                    : image,
+                              ),
+                           );
+                           setQuestions((items) =>
+                              items.map((q) =>
+                                 q.image === previous
+                                    ? { ...q, image: value }
+                                    : q,
+                              ),
+                           );
+                           setReviewed(false);
+                        }}
+                     />
+                  )}
+               </details>
+            )}
+            {progress === 100 && (
+               <Button
+                  variant="outline"
+                  disabled={busy}
+                  onClick={downloadPrepared}
+               >
+                  Download prepared file
+               </Button>
             )}
             {text && (
                <details className="rounded-lg border p-4">
@@ -370,8 +639,8 @@ export default function ImportExam({
                         const file = event.target.files?.[0];
 
                         if (!file) {
-return;
-}
+                           return;
+                        }
 
                         if (
                            file.size > 2 * 1024 * 1024 ||

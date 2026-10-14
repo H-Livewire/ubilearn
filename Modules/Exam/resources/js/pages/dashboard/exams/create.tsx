@@ -8,6 +8,7 @@ import {
    AccordionContent,
    AccordionItem,
 } from '@/components/ui/accordion';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -25,7 +26,7 @@ import courseDurations from '@/data/course-durations';
 import { useAuth } from '@/hooks/use-auth';
 import DashboardLayout from '@/layouts/dashboard/layout';
 import { index as examsIndex, store } from '@/routes/exams';
-import { Form, useForm } from '@inertiajs/react';
+import { Link, Form, useForm } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
 
@@ -82,6 +83,14 @@ const CreateExam = (props: Props) => {
             className="mb-4"
          />
 
+         <div className="container mb-4 flex flex-wrap gap-3">
+            <Button variant="outline" disabled>
+               1. Create manually
+            </Button>
+            <Button asChild className="bg-black text-white hover:bg-black/85">
+               <Link href="/dashboard/exam-import">2. Upload PDF / Word</Link>
+            </Button>
+         </div>
          <Card className="container p-4 md:p-6">
             <Form
                {...store.form()}

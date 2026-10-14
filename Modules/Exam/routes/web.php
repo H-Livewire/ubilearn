@@ -54,6 +54,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('dashboard')->group(function (
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'role:instructor,admin', \App\Http\Middleware\ExamManagement::class])->prefix('dashboard')->group(function () {
+    Route::get('exam-import', [\Modules\Exam\Http\Controllers\ExamImportController::class, 'hub']);
+    Route::post('exam-import/extract', [\Modules\Exam\Http\Controllers\ExamImportController::class, 'extractFile']);
+    Route::post('exam-import/brand-docx', [\Modules\Exam\Http\Controllers\ExamImportController::class, 'brandDocx']);
+    Route::post('exam-import/parse', [\Modules\Exam\Http\Controllers\ExamImportController::class, 'parseFile']);
     Route::get('exams/{exam}/import', [\Modules\Exam\Http\Controllers\ExamImportController::class, 'index']);
     Route::post('exams/{exam}/import/extract', [\Modules\Exam\Http\Controllers\ExamImportController::class, 'extract']);
     Route::post('exams/{exam}/import/parse', [\Modules\Exam\Http\Controllers\ExamImportController::class, 'parse']);

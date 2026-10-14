@@ -198,6 +198,17 @@ const getDashboardRoutes = (page: SharedData): DashboardRoute[] => {
                      ],
                   },
                   {
+                     name: 'Import PDF / Word',
+                     slug: 'exam-import',
+                     path: '/dashboard/exam-import',
+                     access: [
+                        'admin',
+                        'instructor',
+                        'collaborative',
+                        'administrative',
+                     ],
+                  },
+                  {
                      name: button.create_exam || 'Create Exam',
                      slug: routeLastSegment(exams.create.url()),
                      path: exams.create.url(),

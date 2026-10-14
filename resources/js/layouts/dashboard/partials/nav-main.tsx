@@ -22,7 +22,13 @@ export function NavMain() {
    const { state } = useSidebar();
    const compact = state === 'collapsed';
    const segments = getRouteSegments(page.url);
-   const accordionFromUrl = segments.length > 1 ? segments[1] : '';
+   const accordionFromUrl = ['exam-import', 'examination-papers'].includes(
+      segments[1],
+   )
+      ? 'exams'
+      : segments.length > 1
+        ? segments[1]
+        : '';
 
    const [openAccordions, setOpenAccordions] = useState(() => accordionFromUrl);
    const [prevUrl, setPrevUrl] = useState(page.url);

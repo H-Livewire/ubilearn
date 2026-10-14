@@ -5,14 +5,18 @@ export default function DiagramCrop({
    src,
    disabled,
    onCrop,
+   logo = false,
 }: {
    src: string;
    disabled: boolean;
    onCrop: (value: string) => void;
+   logo?: boolean;
 }) {
    const image = useRef<HTMLImageElement>(null);
    const [start, setStart] = useState<Point | null>(null);
    const [end, setEnd] = useState<Point | null>(null);
+   const [branding, setBranding] = useState(false);
+   const [brandError, setBrandError] = useState('');
    const [dragging, setDragging] = useState(false);
    const rect =
       start && end
@@ -69,10 +73,62 @@ export default function DiagramCrop({
       setEnd(null);
    }
 
+   async function replaceLogo() {
+      if (!image.current || !rect) {
+         return;
+      }
+
+      setBranding(true);
+      setBrandError('');
+
+      try {
+         const brand = new Image();
+         await new Promise<void>((resolve, reject) => {
+            brand.onload = () => resolve();
+            brand.onerror = () =>
+               reject(new Error('UbiLearn logo could not load.'));
+            brand.src = '/assets/icons/ubi-learn-logo-v2.png';
+         });
+         const canvas = document.createElement('canvas');
+         canvas.width = image.current.naturalWidth;
+         canvas.height = image.current.naturalHeight;
+         const context = canvas.getContext('2d')!;
+         context.drawImage(image.current, 0, 0);
+         const x = rect.x * canvas.width,
+            y = rect.y * canvas.height,
+            w = rect.width * canvas.width,
+            h = rect.height * canvas.height;
+         context.fillStyle = '#ffffff';
+         context.fillRect(x, y, w, h);
+         const scale = Math.min(
+            w / brand.naturalWidth,
+            h / brand.naturalHeight,
+         );
+         context.drawImage(
+            brand,
+            x + (w - brand.naturalWidth * scale) / 2,
+            y + (h - brand.naturalHeight * scale) / 2,
+            brand.naturalWidth * scale,
+            brand.naturalHeight * scale,
+         );
+         onCrop(canvas.toDataURL('image/jpeg', 0.9));
+         setStart(null);
+         setEnd(null);
+      } catch (error) {
+         setBrandError(
+            error instanceof Error ? error.message : 'Logo replacement failed.',
+         );
+      } finally {
+         setBranding(false);
+      }
+   }
+
    return (
       <div className="space-y-2">
          <p className="text-xs text-muted-foreground">
-            Drag kuchagua diagram au equation tu, kisha Crop.
+            {logo
+               ? 'Drag kuchagua eneo la logo ya zamani tu, kisha Replace with UbiLearn.'
+               : 'Drag kuchagua diagram au equation tu, kisha Crop.'}
          </p>
          <div
             className="relative inline-block max-w-full touch-none"
@@ -119,13 +175,26 @@ export default function DiagramCrop({
             <Button
                variant="outline"
                disabled={
-                  disabled || !rect || rect.width < 0.01 || rect.height < 0.01
+                  disabled ||
+                  branding ||
+                  !rect ||
+                  rect.width < 0.01 ||
+                  rect.height < 0.01
                }
-               onClick={crop}
+               onClick={logo ? replaceLogo : crop}
             >
-               Crop diagram
+               {branding
+                  ? 'Logo import…'
+                  : logo
+                    ? 'Replace with UbiLearn'
+                    : 'Crop diagram'}
             </Button>
          </div>
+         {brandError && (
+            <p role="alert" className="text-sm text-destructive">
+               {brandError}
+            </p>
+         )}
       </div>
    );
 }

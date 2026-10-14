@@ -29,7 +29,13 @@ const NavMainItem = (props: NavMainItemProps) => {
    const compact = state === 'collapsed';
 
    const activeAccordion = (slug: string) => {
-      return routeSecondSegment(page.url) === slug;
+      const section = routeSecondSegment(page.url);
+
+      return (
+         section === slug ||
+         (slug === 'exams' &&
+            ['exam-import', 'examination-papers'].includes(section))
+      );
    };
 
    const activeRoute = (slug: string) => {

@@ -1,6 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { ExternalLink, LoaderCircle } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -14,6 +14,14 @@ function Necta({ levels }: { levels: Record<string, string> }) {
    const [school, setSchool] = useState('');
    const [busy, setBusy] = useState(false);
    const [error, setError] = useState('');
+   useEffect(() => {
+      // Back navigation can restore React state from the browser's page cache.
+      const resetLoading = () => setBusy(false);
+      window.addEventListener('pageshow', resetLoading);
+
+      return () => window.removeEventListener('pageshow', resetLoading);
+   }, []);
+
    async function openNecta(event: FormEvent) {
       event.preventDefault();
 
@@ -64,6 +72,7 @@ function Necta({ levels }: { levels: Record<string, string> }) {
          window.location.assign(target.href);
       } catch (e) {
          setError(e instanceof Error ? e.message : 'Tafadhali jaribu tena.');
+      } finally {
          setBusy(false);
       }
    }

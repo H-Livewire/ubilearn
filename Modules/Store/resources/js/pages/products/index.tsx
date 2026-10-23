@@ -9,6 +9,7 @@ import {
    DropdownMenuSeparator,
    DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import LandingLayout from '@/layouts/landing';
 import { getQueryParams } from '@/lib/route';
 import { cn } from '@/lib/utils';
@@ -392,53 +393,56 @@ const Index = ({
                         )}
                      </aside>
                      <div className="min-w-0 bg-background px-5 py-8 md:px-9">
-                        <div
-                           className="mx-auto mb-8 flex max-w-xl border"
-                           role="tablist"
-                           aria-label="Book collections"
+                        <Tabs
+                           value={tab}
+                           onValueChange={(value) =>
+                              setTab(value as typeof tab)
+                           }
                         >
+                           <TabsList
+                              aria-label="Book collections"
+                              className="mx-auto mb-8 flex h-auto max-w-xl rounded-none border bg-transparent p-0"
+                           >
+                              {(
+                                 [
+                                    ['new_arrivals', 'New arrivals'],
+                                    ['featured', 'Featured books'],
+                                    ['most_viewed', 'Most viewed'],
+                                 ] as const
+                              ).map(([key, label]) => (
+                                 <TabsTrigger
+                                    key={key}
+                                    value={key}
+                                    className="flex-1 rounded-none border-b-2 border-transparent px-2 py-4 text-sm font-bold data-[state=active]:bg-transparent data-[state=active]:text-emerald-700 data-[state=active]:shadow-none dark:data-[state=active]:text-emerald-400"
+                                 >
+                                    {label}
+                                 </TabsTrigger>
+                              ))}
+                           </TabsList>
                            {(
                               [
-                                 ['new_arrivals', 'New arrivals'],
-                                 ['featured', 'Featured books'],
-                                 ['most_viewed', 'Most viewed'],
+                                 'new_arrivals',
+                                 'featured',
+                                 'most_viewed',
                               ] as const
-                           ).map(([key, label]) => (
-                              <button
-                                 type="button"
-                                 role="tab"
-                                 aria-selected={tab === key}
-                                 id={`tab-${key}`}
-                                 aria-controls="collection-panel"
+                           ).map((key) => (
+                              <TabsContent
                                  key={key}
-                                 onClick={() => setTab(key)}
-                                 className={cn(
-                                    'flex-1 border-b-2 px-2 py-4 text-sm font-bold',
-                                    tab === key
-                                       ? 'border-emerald-700 text-emerald-700 dark:text-emerald-400'
-                                       : 'border-transparent text-muted-foreground',
-                                 )}
+                                 value={key}
+                                 className="grid gap-x-9 sm:grid-cols-2"
                               >
-                                 {label}
-                              </button>
+                                 {displayShelves[key]
+                                    .slice(0, 8)
+                                    .map((book) => (
+                                       <BookTile
+                                          compact
+                                          key={book.id}
+                                          book={book}
+                                       />
+                                    ))}
+                              </TabsContent>
                            ))}
-                        </div>
-                        <div
-                           key={tab}
-                           id="collection-panel"
-                           role="tabpanel"
-                           aria-labelledby={`tab-${tab}`}
-                           className="ubi-book-collection grid gap-x-9 sm:grid-cols-2"
-                        >
-                           {displayShelves[tab].slice(0, 8).map((book) => (
-                              <BookTile compact key={book.id} book={book} />
-                           ))}
-                        </div>
-                        {!displayShelves[tab].length && (
-                           <p className="py-20 text-center text-sm text-muted-foreground">
-                              No books in this collection yet.
-                           </p>
-                        )}
+                        </Tabs>
                      </div>
                   </div>
                </section>

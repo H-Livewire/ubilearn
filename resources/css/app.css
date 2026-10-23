@@ -1078,3 +1078,18 @@ button.rte-button.rte-button--primary.\!mt-3.\!w-full.cursor-pointer {
       animation: none;
    }
 }
+
+/* Shared tab transitions: keep visited panels mounted to retain form state. */
+.premium-tabs-indicator { position:absolute; left:0; bottom:0; pointer-events:none; background:var(--primary); border-radius:2px; transition:transform 320ms cubic-bezier(.22,1,.36,1),width 320ms cubic-bezier(.22,1,.36,1),opacity 160ms; }
+.premium-tabs-list[data-orientation="vertical"] .premium-tabs-indicator { display:none; }
+.premium-tab-content[hidden] { display:none !important; }
+.premium-tab-content[data-transition="exit"] { animation:premium-tab-out 100ms ease-out both; pointer-events:none; }
+.premium-tab-content[data-transition="enter"] { animation:premium-tab-in 300ms cubic-bezier(.22,1,.36,1) both; }
+.premium-tab-content[data-transition="enter"] > :not(style):not(script) { animation:premium-tab-child 300ms cubic-bezier(.22,1,.36,1) both; }
+.premium-tab-content[data-transition="enter"] > :nth-child(2) { animation-delay:60ms; }
+.premium-tab-content[data-transition="enter"] > :nth-child(3) { animation-delay:120ms; }
+.premium-tab-content[data-transition="enter"] > :nth-child(n+4) { animation-delay:180ms; }
+@keyframes premium-tab-in { from { opacity:0; transform:translateY(16px); filter:blur(2px); } 55% { filter:blur(0); } to { opacity:1; transform:translateY(0); filter:blur(0); } }
+@keyframes premium-tab-child { from { opacity:0; translate:0 8px; } to { opacity:1; translate:0 0; } }
+@keyframes premium-tab-out { to { opacity:0; transform:translateY(-12px); } }
+@media (prefers-reduced-motion:reduce) { .premium-tab-content, .premium-tab-content > * { animation:none !important; } .premium-tabs-indicator { transition:none; } }

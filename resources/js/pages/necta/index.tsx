@@ -2,6 +2,7 @@ import { Head } from '@inertiajs/react';
 import { ExternalLink, LoaderCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
+import Swal from 'sweetalert2';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,7 +14,6 @@ function Necta({ levels }: { levels: Record<string, string> }) {
    const [year, setYear] = useState('2025');
    const [school, setSchool] = useState('');
    const [busy, setBusy] = useState(false);
-   const [error, setError] = useState('');
    useEffect(() => {
       // Back navigation can restore React state from the browser's page cache.
       const resetLoading = () => setBusy(false);
@@ -30,7 +30,7 @@ function Necta({ levels }: { levels: Record<string, string> }) {
       }
 
       setBusy(true);
-      setError('');
+      Swal.close();
 
       try {
          const params = new URLSearchParams({
@@ -71,7 +71,23 @@ function Necta({ levels }: { levels: Record<string, string> }) {
 
          window.location.assign(target.href);
       } catch (e) {
-         setError(e instanceof Error ? e.message : 'Tafadhali jaribu tena.');
+         void Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'error',
+            title: e instanceof Error ? e.message : 'Tafadhali jaribu tena.',
+            showConfirmButton: false,
+            showCloseButton: true,
+            timer: 8000,
+            timerProgressBar: true,
+            returnFocus: false,
+            didOpen: (popup) => {
+               popup.addEventListener('mouseenter', Swal.stopTimer);
+               popup.addEventListener('mouseleave', Swal.resumeTimer);
+               popup.addEventListener('focusin', Swal.stopTimer);
+               popup.addEventListener('focusout', Swal.resumeTimer);
+            },
+         });
       } finally {
          setBusy(false);
       }
@@ -145,7 +161,7 @@ function Necta({ levels }: { levels: Record<string, string> }) {
                            onChange={(event) => {
                               setLevel(event.target.value);
                               setSchool('');
-                              setError('');
+                              Swal.close();
                            }}
                         >
                            {Object.entries(levels).map(([key, label]) => (
@@ -156,11 +172,6 @@ function Necta({ levels }: { levels: Record<string, string> }) {
                         </select>
                      </div>
                   </div>
-                  {error && (
-                     <p role="alert" className="text-sm text-destructive">
-                        {error}
-                     </p>
-                  )}
                   <Button
                      type="submit"
                      disabled={busy}

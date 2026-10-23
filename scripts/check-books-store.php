@@ -53,6 +53,8 @@ check(str_contains(route('products.edit',['product'=>$book->id],false),'/edit'),
 $disabled=new App\Http\Middleware\OnlineExamsDisabled;
 check($disabled->handle(Request::create('/dashboard/exams/create'),$next)->getTargetUrl()===url('/examinations'),'Retired exam GET redirected');
 try{$disabled->handle(Request::create('/dashboard/exams','POST'),$next);throw new RuntimeException('Exam mutation accepted');}catch(Symfony\Component\HttpKernel\Exception\HttpException $e){check($e->getStatusCode()===410,'Exam mutation disabled');}
+check($service->getBookShelves()['school']->isEmpty(),'Non-school books excluded');
+DB::table('product_categories')->where('id',1)->update(['title'=>'School books']);check($service->getBookShelves()['school']->count()===2,'School category books included');
 $app->instance('system',(object)['fields'=>['selling_currency'=>'USD']]);
 try{app(Modules\Billing\Services\PaymentService::class)->getCheckoutItem('product',(string)$book->id,null);throw new RuntimeException('Wrong currency checkout accepted');}catch(Illuminate\Validation\ValidationException $e){check(isset($e->errors()['currency']),'Wrong currency is blocked before payment');}
 Storage::disk('books')->deleteDirectory('');Storage::disk('public')->deleteDirectory('');

@@ -29,6 +29,15 @@ class ProductService extends MediaService
             'children' => (clone $base)->whereHas('product_category', fn ($q) => $q->where(function ($q) {
                 foreach (['%child%', '%kids%', '%watoto%'] as $term) $q->orWhereRaw('LOWER(title) LIKE ?', [$term]);
             }))->latest()->limit(10)->get(),
+            'school' => (clone $base)->where(function ($q) {
+                $q->whereHas('product_category', function ($category) {
+                    $category->where(function ($category) {
+                        foreach (['%school%', '%shule%', '%biology%', '%biolojia%', '%secondary%', '%primary%', '%education%', '%elimu%'] as $term) {
+                            $category->orWhereRaw('LOWER(title) LIKE ?', [$term]);
+                        }
+                    });
+                })->orWhereRaw('LOWER(title) LIKE ?', ['%biology%'])->orWhereRaw('LOWER(title) LIKE ?', ['%biolojia%']);
+            })->latest()->limit(10)->get(),
             'special_offers' => (clone $base)->where('pricing_type', 'paid')->where('discount', true)->where('discount_price', '>', 0)->whereColumn('discount_price', '<', 'price')->latest()->limit(5)->get(),
         ];
     }

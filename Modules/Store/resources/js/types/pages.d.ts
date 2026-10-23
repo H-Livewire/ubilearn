@@ -8,6 +8,7 @@ interface BookShelves {
    most_viewed: Product[];
    best_sellers: Product[];
    children: Product[];
+   school: Product[];
    special_offers: Product[];
 }
 interface ProductsIndexProps extends SharedData {

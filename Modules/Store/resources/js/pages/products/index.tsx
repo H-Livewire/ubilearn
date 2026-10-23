@@ -26,7 +26,7 @@ import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { BookPrice, BookShelf, BookTile } from '../../components/book-display';
 import BookHeroCarousel from '../../components/book-hero-carousel';
-import SampleBooks from '../../components/sample-books';
+import SampleBooks, { schoolBookSamples } from '../../components/sample-books';
 import ProductWishlistHandler from '../../components/wishlist-handler';
 
 const Index = ({
@@ -397,6 +397,21 @@ const Index = ({
                   background
                   backgroundImage="/assets/images/books-children-reading.jpeg"
                />
+               {shelves.school.length > 0 ? (
+                  <BookShelf
+                     title="School books"
+                     books={shelves.school}
+                     background
+                     backgroundImage="/assets/images/school-books-background.jpeg"
+                  />
+               ) : (
+                  <SampleBooks
+                     title="School books"
+                     covers={schoolBookSamples}
+                     backgroundImage="/assets/images/school-books-background.jpeg"
+                  />
+               )}
+
                <BookShelf
                   title="Best seller books"
                   books={shelves.best_sellers}

@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
@@ -12,9 +13,16 @@ export default function PaperDetails({ paper: p }: { paper: Paper }) {
       <>
          <Head title={p.title} />
          <main className="container mx-auto max-w-5xl space-y-5 px-4 py-10">
-            <Link href="/examinations" className="text-sm underline">
-               ← Past papers
-            </Link>
+            <Button
+               asChild
+               variant="outline"
+               className="group rounded-full border-emerald-700/20 bg-emerald-50/50 px-5 text-emerald-800 shadow-sm transition-colors hover:border-emerald-700 hover:bg-emerald-700 hover:text-white dark:bg-emerald-950/30 dark:text-emerald-300"
+            >
+               <Link href="/examinations">
+                  <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1 motion-reduce:transform-none" />
+                  Previous
+               </Link>
+            </Button>
             <h1 className="text-2xl font-bold">{p.title}</h1>
             <p className="text-sm text-muted-foreground">
                {[
@@ -59,11 +67,6 @@ export default function PaperDetails({ paper: p }: { paper: Paper }) {
                >
                   <a href={`${url}?download=1`}>Download PDF</a>
                </Button>
-               <Button asChild variant="outline">
-                  <a href={url} target="_blank" rel="noopener noreferrer">
-                     Fungua / Print
-                  </a>
-               </Button>
             </div>
             {!p.has_marking && (
                <p className="text-sm text-muted-foreground">
@@ -77,7 +80,7 @@ export default function PaperDetails({ paper: p }: { paper: Paper }) {
                className="h-[75vh] w-full rounded-lg border bg-white"
             />
             <p className="text-sm text-muted-foreground">
-               Ikiwa simu yako haionyeshi PDF hapa, tumia Fungua / Print.
+               Ikiwa simu yako haionyeshi PDF hapa, tumia Download PDF.
             </p>
          </main>
       </>

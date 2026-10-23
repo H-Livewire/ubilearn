@@ -730,15 +730,16 @@ button.rte-button.rte-button--primary.\!mt-3.\!w-full.cursor-pointer {
    line-height: 1.6;
 }
 
-/* BookGlow: five real covers, stable DOM positions and GPU-only movement. */
+/* BookGlow: uploaded photo slides with stable positions and GPU-only movement. */
 .bookglow {
    position: relative;
    isolation: isolate;
    overflow: hidden;
    min-height: 640px;
    border-radius: 12px;
-   background: #10251c;
-   color: #fff8e8;
+   background: #fff;
+   border: 1px solid #e6ebe7;
+   color: #162b20;
    outline-offset: 4px;
 }
 .bookglow-background {
@@ -766,7 +767,7 @@ button.rte-button.rte-button--primary.\!mt-3.\!w-full.cursor-pointer {
    font-size: 10px;
    text-transform: uppercase;
    letter-spacing: 0.25em;
-   color: #dfc384;
+   color: #87703a;
 }
 .bookglow-heading h1 {
    margin: 6px 0;
@@ -775,11 +776,11 @@ button.rte-button.rte-button--primary.\!mt-3.\!w-full.cursor-pointer {
    letter-spacing: -0.03em;
 }
 .bookglow-heading h1 span {
-   color: #e1c585;
+   color: #94753a;
 }
 .bookglow-heading p {
    font-size: 12px;
-   color: #e9e1cfb3;
+   color: #657267;
 }
 .bookglow-stage {
    height: 350px;
@@ -801,7 +802,7 @@ button.rte-button.rte-button--primary.\!mt-3.\!w-full.cursor-pointer {
       transform 850ms cubic-bezier(0.22, 0.68, 0.15, 1),
       opacity 850ms ease,
       filter 400ms ease;
-   filter: drop-shadow(0 24px 18px #0009);
+   filter: drop-shadow(0 18px 13px #233c2529);
    transform-style: preserve-3d;
 }
 .bookglow-item img {
@@ -811,11 +812,11 @@ button.rte-button.rte-button--primary.\!mt-3.\!w-full.cursor-pointer {
    border-radius: 3px 6px 6px 3px;
 }
 .bookglow-item.is-active {
-   filter: drop-shadow(0 24px 22px #000b) drop-shadow(0 0 18px #e1c58544);
+   filter: drop-shadow(0 22px 18px #233c2533) drop-shadow(0 0 12px #e1c58533);
 }
 .bookglow-item:hover,
 .bookglow-item:focus-visible {
-   filter: drop-shadow(0 20px 24px #000b) drop-shadow(0 0 22px #e1c58588);
+   filter: drop-shadow(0 20px 18px #233c2544) drop-shadow(0 0 16px #e1c58555);
 }
 .bookglow-item:focus-visible {
    outline: 2px solid #e1c585;
@@ -847,7 +848,7 @@ button.rte-button.rte-button--primary.\!mt-3.\!w-full.cursor-pointer {
    margin-top: 13px;
    padding: 10px 22px;
    border: 1px solid #d9ba737a;
-   color: #edd49e;
+   color: #166347;
    border-radius: 4px;
    font-size: 12px;
    font-weight: 600;
@@ -863,8 +864,8 @@ button.rte-button.rte-button--primary.\!mt-3.\!w-full.cursor-pointer {
    place-items: center;
    border: 1px solid #d9ba7366;
    border-radius: 50%;
-   background: #0b1e16b3;
-   color: #edd49e;
+   background: #fff;
+   color: #166347;
    transition:
       background 0.2s,
       transform 0.2s;
@@ -875,7 +876,7 @@ button.rte-button.rte-button--primary.\!mt-3.\!w-full.cursor-pointer {
    height: 42px;
 }
 .bookglow-arrow:hover {
-   background: #83652c;
+   background: #f1f7f3;
 }
 .bookglow-prev {
    left: 18px;
@@ -906,7 +907,7 @@ button.rte-button.rte-button--primary.\!mt-3.\!w-full.cursor-pointer {
    width: 7px;
    height: 7px;
    border-radius: 50%;
-   background: #e7d7b75c;
+   background: #d5dbd6;
    transition:
       transform 0.3s,
       background 0.3s;
@@ -922,7 +923,7 @@ button.rte-button.rte-button--primary.\!mt-3.\!w-full.cursor-pointer {
    align-items: center;
    flex-direction: column;
    gap: 16px;
-   color: #e1c585;
+   color: #94753a;
 }
 .ubi-book-tile img {
    transition:
@@ -990,5 +991,71 @@ button.rte-button.rte-button--primary.\!mt-3.\!w-full.cursor-pointer {
    }
    .ubi-book-tile:hover img {
       transform: none;
+   }
+}
+
+/* The uploaded photos are the moving slides, on a clean white canvas. */
+.bookglow-photos .bookglow-stage {
+   --gap: clamp(95px, 21vw, 255px);
+}
+.bookglow-photos .bookglow-item {
+   width: clamp(230px, 27vw, 340px);
+   height: 260px;
+   top: 42px;
+}
+.bookglow-photos .bookglow-item img {
+   object-fit: contain;
+   background: #fff;
+   padding: 8px;
+   border: 1px solid #d9d1bc;
+   border-radius: 5px;
+}
+.bookglow-photos .bookglow-spine {
+   display: none;
+}
+@media (max-width: 640px) {
+   .bookglow-photos .bookglow-stage {
+      --gap: 105px;
+   }
+   .bookglow-photos .bookglow-item {
+      width: 230px;
+      height: 230px;
+   }
+}
+
+/* Minimal photo carousel: imagery, navigation and one call to action. */
+.bookglow-photos {
+   min-height: 465px;
+}
+.bookglow-photos .bookglow-stage {
+   height: 340px;
+}
+.bookglow-photos .bookglow-item {
+   top: 30px;
+   transition:
+      transform 1200ms cubic-bezier(0.22, 0.68, 0.15, 1),
+      opacity 1200ms ease,
+      filter 400ms ease;
+}
+.bookglow-photos .bookglow-caption {
+   padding: 0 55px 55px;
+}
+.bookglow-photos .bookglow-caption a {
+   margin-top: 0;
+}
+.bookglow-photos .bookglow-arrow {
+   top: 38%;
+}
+@media (max-width: 640px) {
+   .bookglow-photos {
+      min-height: 425px;
+   }
+   .bookglow-photos .bookglow-stage {
+      height: 300px;
+   }
+}
+@media (prefers-reduced-motion: reduce) {
+   .bookglow-photos .bookglow-item {
+      transition: none;
    }
 }

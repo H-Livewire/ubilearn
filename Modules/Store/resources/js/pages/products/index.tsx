@@ -26,6 +26,7 @@ import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { BookPrice, BookShelf, BookTile } from '../../components/book-display';
 import BookHeroCarousel from '../../components/book-hero-carousel';
+import SampleBooks from '../../components/sample-books';
 import ProductWishlistHandler from '../../components/wishlist-handler';
 
 const Index = ({
@@ -57,20 +58,20 @@ const Index = ({
          shelves.special_offers.length < 2 ||
          motion.matches
       ) {
-return;
-}
+         return;
+      }
 
       const timer = window.setInterval(() => {
          if (!document.hidden) {
-setOfferIndex(
+            setOfferIndex(
                (index) => (index + 1) % shelves.special_offers.length,
             );
-}
+         }
       }, 7000);
       const stop = () => {
          if (motion.matches) {
-window.clearInterval(timer);
-}
+            window.clearInterval(timer);
+         }
       };
       motion.addEventListener('change', stop);
 
@@ -158,15 +159,8 @@ window.clearInterval(timer);
                </button>
             </form>
          </div>
-         {!browsing && (
-            <BookHeroCarousel
-               books={
-                  shelves.featured.length
-                     ? shelves.featured
-                     : shelves.new_arrivals
-               }
-            />
-         )}
+         {!browsing && <BookHeroCarousel />}
+         {!browsing && shelves.new_arrivals.length === 0 && <SampleBooks />}
          {browsing ? (
             <section className="container py-12">
                <div className="mb-8 flex items-center justify-between">
@@ -212,8 +206,8 @@ window.clearInterval(timer);
                            if (
                               !event.currentTarget.contains(event.relatedTarget)
                            ) {
-setOfferPaused(false);
-}
+                              setOfferPaused(false);
+                           }
                         }}
                      >
                         <h1 className="bg-emerald-700 px-4 py-3 text-2xl font-semibold text-white">

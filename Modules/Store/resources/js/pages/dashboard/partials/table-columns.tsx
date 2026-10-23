@@ -1,20 +1,17 @@
 import ActionsDropdown from '@/components/actions-dropdown';
-import { systemCurrency } from '@/lib/utils';
 import { destroy, edit } from '@/routes/products';
 import { Link } from '@inertiajs/react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Eye } from 'lucide-react';
+import { formatBookAmount } from '../../../lib/book-price';
 
 interface TableColumnProps {
    isAdmin: boolean;
    system: SharedData['system'];
 }
 
-const TableColumn = ({
-   isAdmin,
-   system,
-}: TableColumnProps): ColumnDef<Product>[] => {
-   const { amount } = systemCurrency(system.fields['selling_currency']);
+const TableColumn = ({ isAdmin }: TableColumnProps): ColumnDef<Product>[] => {
+   const amount = formatBookAmount;
 
    return [
       {

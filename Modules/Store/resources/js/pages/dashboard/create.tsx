@@ -246,7 +246,7 @@ const Index = (props: ProductCreateProps) => {
                                        <AccordionContent className="space-y-4 p-0.5">
                                           <div className="pt-3">
                                              <Label htmlFor="price">
-                                                Price *
+                                                Price (TSh) *
                                              </Label>
                                              <Input
                                                 type="number"
@@ -277,7 +277,7 @@ const Index = (props: ProductCreateProps) => {
                                                    htmlFor="discount"
                                                    className="mb-0"
                                                 >
-                                                   Discounted Price
+                                                   Discounted Price (TSh)
                                                 </Label>
                                              </div>
 

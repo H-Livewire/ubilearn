@@ -88,7 +88,7 @@ const Pricing = () => {
                      <AccordionItem value="paid" className="border-none">
                         <AccordionContent className="space-y-4 p-0.5">
                            <div className="pt-3">
-                              <Label>Price *</Label>
+                              <Label>Price (TSh) *</Label>
                               <Input
                                  type="number"
                                  name="price"
@@ -108,7 +108,7 @@ const Pricing = () => {
                                     }}
                                  />
                                  <Label htmlFor="discount" className="mb-0">
-                                    Discounted Price
+                                    Discounted Price (TSh)
                                  </Label>
                               </div>
 

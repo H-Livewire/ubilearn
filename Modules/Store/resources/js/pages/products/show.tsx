@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import LandingLayout from '@/layouts/landing';
-import { systemCurrency } from '@/lib/utils';
 import payments from '@/routes/payments';
 import { store as storeProductOrder } from '@/routes/product-orders';
 import { shop } from '@/routes/products';
@@ -21,12 +20,13 @@ import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { BookShelf } from '../../components/book-display';
 import ProductWishlistHandler from '../../components/wishlist-handler';
+import { formatBookAmount } from '../../lib/book-price';
 import Reviews from './partials/reviews';
 
 const Show = () => {
    const { props } = usePage<ProductDetailsProps>();
    const { product, order, wishlists, auth, relatedBooks = [] } = props;
-   const { amount } = systemCurrency(props.system.fields['selling_currency']);
+   const amount = formatBookAmount;
    const [activeImage, setActiveImage] = useState(
       product.thumbnail || product.images?.[0]?.url,
    );
@@ -125,7 +125,7 @@ const Show = () => {
                <div className="mt-4 flex items-center gap-3">
                   {product.pricing_type === 'free' ? (
                      <span className="text-3xl font-bold text-emerald-700 dark:text-emerald-400">
-                        Free
+                        TSh 0
                      </span>
                   ) : product.discount ? (
                      <>

@@ -1,16 +1,37 @@
-import { details, shop } from '@/routes/products';
+import { shop } from '@/routes/products';
 import { Link } from '@inertiajs/react';
-import { ArrowLeft, ArrowRight, BookOpen, Pause, Play } from 'lucide-react';
-import { useEffect, useState  } from 'react';
-import type {CSSProperties} from 'react';
+import { ArrowLeft, ArrowRight, BookOpen } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import type { CSSProperties } from 'react';
 
-const backgrounds = [
-   '/assets/images/bookglow-library.jpg',
-   '/assets/images/bookglow-stack.png',
-   '/assets/images/bookglow-reading.jpeg',
+const slides = [
+   {
+      id: 'library',
+      title: 'Discover your next read',
+      thumbnail: '/assets/images/bookglow-library.jpg',
+   },
+   {
+      id: 'stack',
+      title: 'A world of books awaits',
+      thumbnail: '/assets/images/bookglow-stack.png',
+   },
+   {
+      id: 'reading',
+      title: 'Make time for a good book',
+      thumbnail: '/assets/images/bookglow-reading.jpeg',
+   },
+   {
+      id: 'photo',
+      title: 'Explore the UbiLearn library',
+      thumbnail: '/assets/images/bookglow-photo.avif',
+   },
+   {
+      id: 'children',
+      title: 'Learning together',
+      thumbnail: '/assets/images/books-children-reading.jpeg',
+   },
 ];
-export default function BookHeroCarousel({ books }: { books: Product[] }) {
-   const slides = books.filter((book) => book.thumbnail).slice(0, 5);
+export default function BookHeroCarousel() {
    const [activeIndex, setActiveIndex] = useState(0);
    const [paused, setPaused] = useState(false);
    const [autoplay, setAutoplay] = useState(true);
@@ -22,18 +43,18 @@ export default function BookHeroCarousel({ books }: { books: Product[] }) {
       const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
       if (paused || !autoplay || slides.length < 2 || motion.matches) {
-return;
-}
+         return;
+      }
 
       const timer = window.setInterval(() => {
          if (!document.hidden) {
-setActiveIndex((index) => (index + 1) % slides.length);
-}
-      }, 6000);
+            setActiveIndex((index) => (index + 1) % slides.length);
+         }
+      }, 5000);
       const stop = () => {
          if (motion.matches) {
-window.clearInterval(timer);
-}
+            window.clearInterval(timer);
+         }
       };
       motion.addEventListener('change', stop);
 
@@ -41,7 +62,7 @@ window.clearInterval(timer);
          window.clearInterval(timer);
          motion.removeEventListener('change', stop);
       };
-   }, [paused, autoplay, slides.length]);
+   }, [paused, autoplay]);
 
    return (
       <section
@@ -50,20 +71,20 @@ window.clearInterval(timer);
          aria-roledescription="carousel"
       >
          <div
-            className="bookglow"
+            className="bookglow bookglow-photos"
             tabIndex={0}
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
             onFocusCapture={() => setPaused(true)}
             onBlurCapture={(event) => {
                if (!event.currentTarget.contains(event.relatedTarget)) {
-setPaused(false);
-}
+                  setPaused(false);
+               }
             }}
             onKeyDown={(event) => {
                if (event.target !== event.currentTarget || slides.length < 2) {
-return;
-}
+                  return;
+               }
 
                if (event.key === 'ArrowRight') {
                   event.preventDefault();
@@ -86,38 +107,21 @@ return;
                }
             }}
          >
-            {backgrounds.map((src, index) => (
-               <img
-                  key={src}
-                  src={src}
-                  alt=""
-                  aria-hidden="true"
-                  className="bookglow-background"
-                  style={{
-                     opacity: active % backgrounds.length === index ? 0.32 : 0,
-                  }}
-               />
-            ))}
-            <div aria-hidden="true" className="bookglow-shade" />
-            <div className="bookglow-heading">
-               <span>UbiLearn presents</span>
-               <h1>
-                  BookGlow <span>Carousel</span>
-               </h1>
-               <p>Find a story. Discover a new perspective.</p>
-            </div>
             <div className="bookglow-stage">
                {slides.map((slide, index) => {
                   let slot = (index - active + slides.length) % slides.length;
 
                   if (slot > slides.length / 2) {
-slot -= slides.length;
-}
+                     slot -= slides.length;
+                  }
 
                   return (
                      <Link
                         key={slide.id}
-                        href={details({ slug: slide.slug, id: slide.id })}
+                        href={shop.url(
+                           { category: 'all' },
+                           { query: { browse: 1 } },
+                        )}
                         className={`bookglow-item ${slot === 0 ? 'is-active' : ''}`}
                         style={
                            {
@@ -154,8 +158,12 @@ slot -= slides.length;
                   className="bookglow-caption"
                   aria-live={paused ? 'polite' : 'off'}
                >
-                  <p>{book.title}</p>
-                  <Link href={details({ slug: book.slug, id: book.id })}>
+                  <Link
+                     href={shop.url(
+                        { category: 'all' },
+                        { query: { browse: 1 } },
+                     )}
+                  >
                      Explore book <ArrowRight className="h-4 w-4" />
                   </Link>
                </div>
@@ -193,15 +201,13 @@ slot -= slides.length;
                   </div>
                   <button
                      type="button"
-                     className="bookglow-pause"
-                     aria-label={autoplay ? 'Pause carousel' : 'Play carousel'}
+                     className="sr-only focus:not-sr-only focus:absolute focus:right-4 focus:bottom-4 focus:rounded focus:bg-white focus:p-2 focus:text-emerald-800"
+                     aria-label={
+                        autoplay ? 'Pause carousel' : 'Resume carousel'
+                     }
                      onClick={() => setAutoplay((value) => !value)}
                   >
-                     {autoplay ? (
-                        <Pause className="h-4 w-4" />
-                     ) : (
-                        <Play className="h-4 w-4" />
-                     )}
+                     {autoplay ? 'Pause carousel' : 'Resume carousel'}
                   </button>
                </>
             )}

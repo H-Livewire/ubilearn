@@ -46,6 +46,12 @@ class PaymentService
     public function getCheckoutItem(string $item_type, string $item_id, ?string $coupon_code)
     {
         abort_if($item_type === 'exam', 410, 'Online examinations are no longer available.');
+        if ($item_type === 'product' && (app('system')->fields['selling_currency'] ?? 'USD') !== 'TZS') {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'currency' => 'Books are priced in TSh. Set the selling currency to TZS before accepting book payments.',
+            ]);
+        }
+
         $item = null;
         $coupon = null;
 

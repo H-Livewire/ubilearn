@@ -4,15 +4,15 @@ import {
    CarouselItem,
 } from '@/components/ui/carousel';
 import type { CarouselApi } from '@/components/ui/carousel';
-import { cn, systemCurrency } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { details } from '@/routes/products';
-import { Link, usePage } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { formatBookAmount } from '../lib/book-price';
 
 export function BookPrice({ book }: { book: Product }) {
-   const { system } = usePage<SharedData>().props;
-   const { amount } = systemCurrency(system.fields.selling_currency);
+   const amount = formatBookAmount;
    const saving =
       book.pricing_type === 'paid' &&
       book.discount &&
@@ -26,13 +26,13 @@ export function BookPrice({ book }: { book: Product }) {
       <div className="flex flex-wrap items-center justify-center gap-1.5 text-sm">
          <span className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
             {book.pricing_type === 'free'
-               ? 'Free'
-               : amount(Number(saving ? book.discount_price : book.price))}
+               ? 'TSh 0'
+               : amount(saving ? book.discount_price : book.price)}
          </span>
          {saving > 0 && (
             <>
                <span className="text-xs text-muted-foreground line-through">
-                  {amount(Number(book.price))}
+                  {amount(book.price)}
                </span>
                <span className="rounded-sm bg-emerald-800 px-1.5 py-0.5 font-bold text-white">
                   -{saving}%
@@ -86,12 +86,6 @@ export function BookTile({
                book.product_category?.title ||
                'UbiLearn'}
          </p>
-         <Link
-            href={href}
-            className="mb-4 line-clamp-2 flex h-12 items-center justify-center text-sm font-medium hover:text-emerald-700 dark:hover:text-emerald-400"
-         >
-            {book.title}
-         </Link>
          <Link href={href} className="mb-5 block">
             <img
                src={book.thumbnail || '/assets/images/blank-image.jpg'}
@@ -99,6 +93,12 @@ export function BookTile({
                loading="lazy"
                className="mx-auto h-56 w-full object-contain transition-transform duration-300 hover:-translate-y-1 motion-reduce:transform-none md:h-64"
             />
+         </Link>
+         <Link
+            href={href}
+            className="mb-3 line-clamp-2 flex h-12 items-center justify-center text-sm font-medium hover:text-emerald-700 dark:hover:text-emerald-400"
+         >
+            {book.title}
          </Link>
          <BookPrice book={book} />
       </article>

@@ -28,3 +28,9 @@ php artisan books:secure-files
 The command copies each book, verifies its checksum, switches the media record to private storage, and removes the old public copy. Missing source files must be uploaded again. Books with old public-only files stay out of the public Books catalog until secured. Other legacy product types remain in the database for historical records.
 
 Test a book purchase with the configured payment gateway before offering paid books. This change does not configure gateway accounts or create a Cloud bucket.
+
+## Book prices
+
+Book prices are entered and displayed in Tanzanian shillings (`TSh`). This is formatting, not an exchange-rate conversion. Set **Settings → System → Selling currency** to **TZS** before accepting book payments. Checkout rejects a different selling currency so the displayed shilling amount cannot be charged in dollars or another unit.
+
+When there are no published books, the uploaded sample covers are displayed with their titles and “Bei itawekwa (TSh)”. They are not purchasable products and have no database records. Upload the actual book and set its price to replace the samples with real offers.

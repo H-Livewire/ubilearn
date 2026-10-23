@@ -53,5 +53,7 @@ check(str_contains(route('products.edit',['product'=>$book->id],false),'/edit'),
 $disabled=new App\Http\Middleware\OnlineExamsDisabled;
 check($disabled->handle(Request::create('/dashboard/exams/create'),$next)->getTargetUrl()===url('/examinations'),'Retired exam GET redirected');
 try{$disabled->handle(Request::create('/dashboard/exams','POST'),$next);throw new RuntimeException('Exam mutation accepted');}catch(Symfony\Component\HttpKernel\Exception\HttpException $e){check($e->getStatusCode()===410,'Exam mutation disabled');}
+$app->instance('system',(object)['fields'=>['selling_currency'=>'USD']]);
+try{app(Modules\Billing\Services\PaymentService::class)->getCheckoutItem('product',(string)$book->id,null);throw new RuntimeException('Wrong currency checkout accepted');}catch(Illuminate\Validation\ValidationException $e){check(isset($e->errors()['currency']),'Wrong currency is blocked before payment');}
 Storage::disk('books')->deleteDirectory('');Storage::disk('public')->deleteDirectory('');
 echo "PASS: private PDF upload, hidden raw URLs, purchaser-only access, download bytes, invalid files, legacy migration, Books routes and retired exam actions.\n";

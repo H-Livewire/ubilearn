@@ -1,9 +1,10 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { cn, systemCurrency } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { details } from '@/routes/products';
-import { Link, usePage } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 import { ArrowUpRight, Star } from 'lucide-react';
+import { formatBookAmount } from '../lib/book-price';
 import ProductWishlistHandler from './wishlist-handler';
 
 interface Props {
@@ -13,8 +14,7 @@ interface Props {
 }
 
 const ProductCard = ({ product, className, wishlists }: Props) => {
-   const { props } = usePage<SharedData>();
-   const { amount } = systemCurrency(props.system.fields['selling_currency']);
+   const amount = formatBookAmount;
    const href = details({ slug: product.slug, id: product.id });
    const saving =
       product.discount && Number(product.price) > Number(product.discount_price)
@@ -79,18 +79,16 @@ const ProductCard = ({ product, className, wishlists }: Props) => {
                <div>
                   <p className="font-bold text-emerald-700 dark:text-emerald-400">
                      {product.pricing_type === 'free'
-                        ? 'Free'
+                        ? 'TSh 0'
                         : amount(
-                             Number(
-                                product.discount
-                                   ? product.discount_price
-                                   : product.price,
-                             ),
+                             product.discount
+                                ? product.discount_price
+                                : product.price,
                           )}
                   </p>
                   {saving > 0 && (
                      <p className="text-xs text-muted-foreground line-through">
-                        {amount(Number(product.price))}
+                        {amount(product.price)}
                      </p>
                   )}
                </div>

@@ -16,7 +16,12 @@ class ExamPaperController extends Controller
     public function index(Request $request) {
         $filters=$request->validate(['q'=>'nullable|string|max:120','education'=>'nullable|in:'.implode(',',array_keys(self::EDUCATION)), 'class_name'=>'nullable|string|max:80','region'=>'nullable|in:'.implode(',',self::REGIONS),'subject'=>'nullable|string|max:80','year'=>'nullable|integer|between:1900,2100','exam_type'=>'nullable|in:'.implode(',',self::TYPES),'answers'=>'nullable|in:yes,no']);
         $query=ExamPaper::where('published',true)->whereNotNull('files->question->path');
-        foreach(['education','class_name','region','subject','year','exam_type'] as $field) if(!empty($filters[$field]))$query->where($field,$filters[$field]);
+        foreach(['education','class_name','region','subject','year','exam_type'] as $field) {
+            if(empty($filters[$field])) continue;
+            if($field==='class_name' && ($filters['education']??'')==='primary' && preg_match('/^(?:class|standard)\s+(2|4|7)$/i',$filters[$field],$match)) {
+                $query->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(class_name)'),['standard '.$match[1],'class '.$match[1]]);
+            } else {$query->where($field,$filters[$field]);}
+        }
         if(!empty($filters['answers']))$query->where('has_answers',$filters['answers']==='yes');
         if(!empty($filters['q']))$query->where(function($q)use($filters){foreach(['title','subject','region','organizer'] as $field)$q->orWhere($field,'like','%'.$filters['q'].'%');});
         if($request->expectsJson()) {

@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { Check, ChevronDown } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
    DropdownMenu,
@@ -8,6 +8,7 @@ import {
    DropdownMenuContent,
    DropdownMenuRadioGroup,
    DropdownMenuRadioItem,
+   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
 import type { Paper } from '../types';
 import PaperRow from './paper-row';
@@ -39,14 +40,37 @@ export default function PaperSection({
    initialTotal?: number;
    initialPage?: number;
 }) {
+   const accordionId = useId();
+   const [expandedType, setExpandedType] = useState(filters.exam_type || '');
    const [items, setItems] = useState(initial);
    const [total, setTotal] = useState(initialTotal);
    const [page, setPage] = useState(initialPage);
    const [moreLoading, setMoreLoading] = useState(false);
    const [type, setType] = useState(filters.exam_type || '');
+   const classes: [string, string][] =
+      level === 'primary'
+         ? [
+              ['Standard 2', 'Class 2'],
+              ['Standard 4', 'Class 4'],
+              ['Standard 7', 'Class 7'],
+           ]
+         : level === 'olevel'
+           ? [
+                ['Form 2', 'Form 2'],
+                ['Form 4', 'Form 4'],
+             ]
+           : level === 'alevel'
+             ? [
+                  ['Form 5', 'Form 5'],
+                  ['Form 6', 'Form 6'],
+               ]
+             : [];
+   const [className, setClassName] = useState(
+      level === 'college' ? '' : filters.class_name || '',
+   );
    const [region, setRegion] = useState(filters.region || '');
    const [showRegions, setShowRegions] = useState(
-      Boolean(filters.exam_type || filters.region),
+      level !== 'college' && Boolean(filters.class_name),
    );
    const [loading, setLoading] = useState(false);
    const [error, setError] = useState('');
@@ -57,10 +81,12 @@ export default function PaperSection({
       nextRegion: string,
       nextPage = '1',
       append = false,
+      nextClass = className,
    ) {
       request.current?.abort();
       const controller = new AbortController();
       request.current = controller;
+      setClassName(nextClass);
       setType(nextType);
       setRegion(nextRegion);
       setLoading(!append);
@@ -69,6 +95,7 @@ export default function PaperSection({
       if (!append) {
          setItems([]);
          setTotal(0);
+         setShowRegions(false);
       }
 
       setError('');
@@ -78,7 +105,8 @@ export default function PaperSection({
             ...filters,
             education: level,
             exam_type: nextType,
-            region: nextRegion,
+            region: level === 'college' ? '' : nextRegion,
+            class_name: level === 'college' ? '' : nextClass,
          });
          params.set('page', nextPage);
          const response = await fetch(`/examinations?${params}`, {
@@ -115,7 +143,7 @@ export default function PaperSection({
             setPage(data.papers.current_page ?? Number(nextPage));
 
             if (!append) {
-               setShowRegions(true);
+               setShowRegions(level !== 'college' && Boolean(nextClass));
             }
          }
       } catch {
@@ -142,39 +170,135 @@ export default function PaperSection({
             />
          </div>
          <div className="flex justify-start">
-            <DropdownMenu>
-               <DropdownMenuTrigger asChild>
-                  <Button
-                     variant="outline"
-                     aria-label={`${title} examination type`}
+            {level === 'college' ? (
+               <Button
+                  variant="outline"
+                  aria-pressed="true"
+                  onClick={() => load('', '', '1', false, '')}
+               >
+                  <Check size={14} className="text-emerald-700" />
+                  All
+               </Button>
+            ) : (
+               <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                     <Button
+                        variant="outline"
+                        aria-label={`${title} examination type`}
+                     >
+                        {types.find(([value]) => value === type)?.[1] || 'All'}
+                        {className &&
+                           ` · ${classes.find(([value]) => value === className)?.[1] || className}`}
+                        <ChevronDown size={16} />
+                     </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                     align="start"
+                     className="max-h-[70vh] min-w-64 overflow-y-auto"
                   >
-                     {types.find(([value]) => value === type)?.[1] || 'All'}
-                     <ChevronDown size={16} />
-                  </Button>
-               </DropdownMenuTrigger>
-               <DropdownMenuContent align="start">
-                  <DropdownMenuRadioGroup
-                     value={type}
-                     onValueChange={(value) => load(value, '')}
-                  >
-                     {types.map(([value, label]) => (
+                     <DropdownMenuRadioGroup
+                        value={type}
+                        onValueChange={() => load('', '', '1', false, '')}
+                     >
                         <DropdownMenuRadioItem
-                           key={value}
-                           value={value}
+                           value=""
                            className="[&>span]:hidden"
                         >
-                           {type === value && (
+                           {!type && (
                               <Check
                                  size={14}
                                  className="absolute left-2 text-emerald-700"
                               />
                            )}
-                           {label}
+                           All
                         </DropdownMenuRadioItem>
-                     ))}
-                  </DropdownMenuRadioGroup>
-               </DropdownMenuContent>
-            </DropdownMenu>
+                     </DropdownMenuRadioGroup>
+                     {types.slice(1).map(([value, label]) =>
+                        classes.length ? (
+                           <div key={value}>
+                              <DropdownMenuItem
+                                 aria-expanded={expandedType === value}
+                                 aria-controls={`${accordionId}-${value}`}
+                                 onSelect={(event) => {
+                                    event.preventDefault();
+                                    setExpandedType((current) =>
+                                       current === value ? '' : value,
+                                    );
+                                 }}
+                                 className="justify-between py-3 pl-8"
+                              >
+                                 {type === value && (
+                                    <Check
+                                       size={14}
+                                       className="absolute left-2 text-emerald-700"
+                                    />
+                                 )}
+                                 {label}
+                                 <ChevronDown
+                                    size={14}
+                                    className={`ml-4 transition-transform duration-200 motion-reduce:transition-none ${expandedType === value ? 'rotate-180' : ''}`}
+                                 />
+                              </DropdownMenuItem>
+                              <div
+                                 id={`${accordionId}-${value}`}
+                                 aria-hidden={expandedType !== value}
+                                 inert={expandedType !== value}
+                                 className={`grid transition-[grid-template-rows,opacity] duration-250 ease-out motion-reduce:transition-none ${expandedType === value ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
+                              >
+                                 <div className="min-h-0 overflow-hidden">
+                                    <DropdownMenuRadioGroup
+                                       aria-label={`${label} classes`}
+                                       value={type === value ? className : ''}
+                                       onValueChange={(selectedClass) =>
+                                          load(
+                                             value,
+                                             '',
+                                             '1',
+                                             false,
+                                             selectedClass,
+                                          )
+                                       }
+                                       className="ml-5 border-l border-emerald-700/20 py-1"
+                                    >
+                                       {classes.map(
+                                          ([classValue, classLabel]) => (
+                                             <DropdownMenuRadioItem
+                                                key={classValue}
+                                                value={classValue}
+                                                className="py-2 [&>span]:hidden"
+                                             >
+                                                {type === value &&
+                                                   className === classValue && (
+                                                      <Check
+                                                         size={14}
+                                                         className="absolute left-2 text-emerald-700"
+                                                      />
+                                                   )}
+                                                {classLabel}
+                                             </DropdownMenuRadioItem>
+                                          ),
+                                       )}
+                                    </DropdownMenuRadioGroup>
+                                 </div>
+                              </div>
+                           </div>
+                        ) : (
+                           <DropdownMenuRadioGroup
+                              key={value}
+                              value={type}
+                              onValueChange={() =>
+                                 load(value, '', '1', false, '')
+                              }
+                           >
+                              <DropdownMenuRadioItem value={value}>
+                                 {label}
+                              </DropdownMenuRadioItem>
+                           </DropdownMenuRadioGroup>
+                        ),
+                     )}
+                  </DropdownMenuContent>
+               </DropdownMenu>
+            )}
          </div>
          {showRegions && (
             <PaperRow title={title} noun="regions" grid={false} compact>

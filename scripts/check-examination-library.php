@@ -21,6 +21,8 @@ try{
 $c->save(Request::create('/dashboard/examination-papers','POST',$data,[],['question_file'=>UploadedFile::fake()->createWithContent('questions.pdf',$pdf),'marking_file'=>UploadedFile::fake()->createWithContent('answers.pdf',$pdf)]));
 $p=ExamPaper::where('title',$data['title'])->firstOrFail();
 check($p->has_pdf && $p->has_marking && $p->has_answers,'Upload metadata');
+check(results($c,['education'=>'primary','class_name'=>'Class 7'])['total']===1,'Class labels match Standard records');
+check(results($c,['education'=>'primary','class_name'=>'Standard 4'])['total']===0,'Different primary classes remain isolated');
 check(Storage::disk('local')->exists($p->files['question']['path']),'Stored question PDF');
 check(results($c,['region'=>'Dar es Salaam','answers'=>'yes'])['total']===1,'Region and answer filters');
 // Each landing shelf must query its level independently of the global paginator.

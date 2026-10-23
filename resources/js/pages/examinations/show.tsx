@@ -41,7 +41,6 @@ export default function PaperDetails({ paper: p }: { paper: Paper }) {
                   [
                      ['question', 'Question Paper', true],
                      ['marking', 'Marking Scheme', true],
-                     ['instructions', 'Maelekezo', p.has_instructions],
                   ] as const
                )
                   .filter((item) => item[2])

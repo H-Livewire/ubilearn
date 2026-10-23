@@ -31,8 +31,8 @@ export default function PaperDetails({ paper: p }: { paper: Paper }) {
             <div className="flex flex-wrap items-center gap-3">
                {(
                   [
-                     ['question', 'Maswali', true],
-                     ['marking', 'Marking scheme', p.has_marking],
+                     ['question', 'Question Paper', true],
+                     ['marking', 'Marking Scheme', true],
                      ['instructions', 'Maelekezo', p.has_instructions],
                   ] as const
                )
@@ -41,6 +41,7 @@ export default function PaperDetails({ paper: p }: { paper: Paper }) {
                      <Button
                         key={value}
                         onClick={() => setKind(value)}
+                        disabled={value === 'marking' && !p.has_marking}
                         variant="outline"
                         aria-pressed={kind === value}
                         className={
@@ -64,6 +65,11 @@ export default function PaperDetails({ paper: p }: { paper: Paper }) {
                   </a>
                </Button>
             </div>
+            {!p.has_marking && (
+               <p className="text-sm text-muted-foreground">
+                  Marking scheme bado haijawekwa.
+               </p>
+            )}
             <iframe
                key={kind}
                title={`${p.title} — ${kind}`}

@@ -111,14 +111,20 @@ export default function Examinations({
 
    return (
       <>
-         <Head title="Past papers" />
+         <Head title="Past Papers" />
          <main className="container mx-auto max-w-6xl space-y-5 px-4 py-8 sm:py-10">
             <div>
-               <h1 className="text-3xl font-bold">Past papers</h1>
+               <h1 className="text-3xl font-bold">Past Papers</h1>
                <p className="mt-2 text-sm text-muted-foreground">
                   Tafuta mtihani, soma au pakua.
                </p>
             </div>
+            <img
+               src="/assets/images/past-papers-banner.png"
+               alt="Books on a shelf beside a green plant"
+               className="block h-auto w-full"
+               fetchPriority="high"
+            />
             <form
                onSubmit={(e) => {
                   e.preventDefault();
@@ -226,16 +232,23 @@ export default function Examinations({
             <div className="flex justify-between text-sm text-muted-foreground">
                <p>{busy ? 'Inatafuta…' : `${papers.total} mitihani`}</p>
             </div>
+            <div className="relative border-b pb-5 text-center">
+               <h2 className="text-2xl font-bold">Past Papers</h2>
+               <span
+                  aria-hidden="true"
+                  className="absolute bottom-0 left-1/2 h-0.5 w-32 -translate-x-1/2 bg-emerald-700"
+               />
+            </div>
             <div
-               className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+               className="grid gap-y-10 py-6 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5"
                aria-busy={busy}
             >
                {papers.data.map((p) => (
                   <article
                      key={p.id}
-                     className="flex min-w-0 flex-col overflow-hidden rounded-xl border bg-card shadow-sm"
+                     className="group flex min-w-0 flex-col border-r border-border bg-background px-4 text-center last:border-r-0"
                   >
-                     <div className="relative h-64 overflow-hidden border-b bg-white">
+                     <div className="relative mx-auto h-72 w-full max-w-56 overflow-hidden bg-white shadow-sm transition-transform duration-300 group-hover:-translate-y-1 group-hover:shadow-lg motion-reduce:transform-none">
                         <iframe
                            title={`PDF preview: ${p.title}`}
                            src={`/examinations/${p.id}/files/question#page=1&toolbar=0&navpanes=0&view=FitH`}
@@ -249,9 +262,16 @@ export default function Examinations({
                            aria-label={`View ${p.title}`}
                         />
                      </div>
-                     <div className="flex flex-1 flex-col p-4">
+                     <div className="flex flex-1 flex-col pt-5">
                         <div className="mb-4 flex-1">
-                           <h2 className="font-semibold">{p.title}</h2>
+                           <h3 className="font-semibold">
+                              <Link
+                                 href={`/examinations/${p.id}`}
+                                 className="hover:text-emerald-700"
+                              >
+                                 {p.title}
+                              </Link>
+                           </h3>
                            <p className="mt-1 text-sm text-muted-foreground">
                               {[p.class_name, p.subject, p.year, p.exam_type]
                                  .filter(Boolean)
@@ -270,7 +290,7 @@ export default function Examinations({
                                  : ''}
                            </p>
                         </div>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap justify-center gap-2">
                            <Button asChild variant="outline">
                               <Link href={`/examinations/${p.id}`}>
                                  View PDF
@@ -299,7 +319,10 @@ export default function Examinations({
                   nyingine.
                </div>
             )}
-            <nav aria-label="Kurasa" className="flex flex-wrap gap-2">
+            <nav
+               aria-label="Kurasa"
+               className="flex flex-wrap justify-center gap-2"
+            >
                {papers.links.map((l, i) =>
                   l.url ? (
                      <Link

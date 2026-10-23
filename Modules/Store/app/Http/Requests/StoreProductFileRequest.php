@@ -26,7 +26,7 @@ class StoreProductFileRequest extends FormRequest
         return [
             'product_id' => 'required|exists:products,id',
             'files' => 'required|array|min:1|max:5',
-            'files.*' => ['required', 'file', 'max:51200', new RejectsExecutableExtension],
+            'files.*' => ['required', 'file', 'mimes:pdf,epub', 'max:51200', new RejectsExecutableExtension],
         ];
     }
 }

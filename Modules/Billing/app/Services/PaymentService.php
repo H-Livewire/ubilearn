@@ -45,6 +45,7 @@ class PaymentService
 
     public function getCheckoutItem(string $item_type, string $item_id, ?string $coupon_code)
     {
+        abort_if($item_type === 'exam', 410, 'Online examinations are no longer available.');
         $item = null;
         $coupon = null;
 

@@ -39,6 +39,7 @@ class StoreProductRequest extends FormRequest
         $paid = PricingType::PAID->value;
 
         return [
+            'book_file' => 'required|file|mimes:pdf,epub|max:51200',
             'title' => 'required|string|max:255',
             'summary' => 'required|string',
             'description' => 'nullable|string',

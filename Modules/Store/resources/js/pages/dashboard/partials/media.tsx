@@ -93,7 +93,7 @@ const Media = () => {
                      <input type="hidden" name="tab" value={tab} />
 
                      <div>
-                        <Label>Thumbnail</Label>
+                        <Label>Book cover</Label>
                         <Input
                            type="file"
                            name="thumbnail"
@@ -128,7 +128,7 @@ const Media = () => {
                <div>
                   <h3 className="font-medium">Gallery Images</h3>
                   <p className="text-sm text-muted-foreground">
-                     Shown on the public product page. Up to 8 images.
+                     Shown on the public book page. Up to 8 images.
                   </p>
                </div>
                <div>
@@ -181,7 +181,7 @@ const Media = () => {
          <Card className="container space-y-4 p-4 sm:p-6">
             <div className="flex items-center justify-between">
                <div>
-                  <h3 className="font-medium">Downloadable Files</h3>
+                  <h3 className="font-medium">Book files (PDF / EPUB)</h3>
                   <p className="text-sm text-muted-foreground">
                      Delivered to buyers after purchase. Up to 5 files, 50MB
                      each.
@@ -192,6 +192,7 @@ const Media = () => {
                      type="file"
                      multiple
                      disabled={uploadingFiles}
+                     accept=".pdf,.epub,application/pdf,application/epub+zip"
                      onChange={uploadFiles}
                   />
                </div>

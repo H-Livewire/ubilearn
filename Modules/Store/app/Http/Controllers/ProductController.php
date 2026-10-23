@@ -52,6 +52,7 @@ class ProductController extends Controller
         $wishlists = $this->wishlistService->getWishlists(['user_id' => $user ? $user->id : null]);
         $products = $this->productService->getProducts([
             ...$request->all(),
+            'books_only' => true,
             'products_per_page' => 12,
             'category' => $categoryModel ? $categoryModel->id : 'all',
             'status' => 'approved',
@@ -164,9 +165,16 @@ class ProductController extends Controller
 
     public function store(StoreProductRequest $request)
     {
-        $this->productService->createProduct($request->validated());
-
-        return redirect(route('products.index'))->with('success', 'Product added successfully');
+        if (app()->environment('production') && config('filesystems.disks.books.driver') === 'local') {
+            throw \Illuminate\Validation\ValidationException::withMessages(['book_file' => 'Configure a private Books Object Storage bucket first.']);
+        }
+        $data = $request->validated(); unset($data['book_file']);
+        $book = \Illuminate\Support\Facades\DB::transaction(function () use ($data, $request) {
+            $book = $this->productService->createProduct($data);
+            $book->addMedia($request->file('book_file'))->usingName($request->file('book_file')->getClientOriginalName())->toMediaCollection(Product::FILES_COLLECTION);
+            return $book;
+        });
+        return redirect(route('products.edit', ['product'=>$book->id, 'tab'=>'pricing']))->with('success', 'Book uploaded. Review price and publish it.');
     }
 
     public function edit(Request $request, string $id)
@@ -243,6 +251,9 @@ class ProductController extends Controller
     {
         $product = Product::findOrFail($request->product_id);
 
+        if (app()->environment('production') && config('filesystems.disks.books.driver') === 'local') {
+            throw \Illuminate\Validation\ValidationException::withMessages(['files' => 'Configure a private Books Object Storage bucket before uploading paid books.']);
+        }
         foreach ($request->file('files') as $file) {
             $product->addMedia($file)
                 ->usingName($file->getClientOriginalName())

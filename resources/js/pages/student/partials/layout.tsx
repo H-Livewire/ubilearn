@@ -1,6 +1,5 @@
 import { Form, Link, usePage } from '@inertiajs/react';
 import {
-   FileQuestion,
    GraduationCap,
    Heart,
    ListFilter,
@@ -39,14 +38,8 @@ const Layout = ({ children, tab }: { children: ReactNode; tab: string }) => {
             Icon: GraduationCap,
          },
          {
-            id: 'exams',
-            name: 'Exams',
-            slug: 'exams',
-            Icon: FileQuestion,
-         },
-         {
             id: 'products',
-            name: 'Products',
+            name: 'My Books',
             slug: 'products',
             Icon: ShoppingBag,
          },

@@ -80,7 +80,7 @@ const Basic = () => {
                         rows={4}
                         name="summary"
                         defaultValue={product.summary}
-                        placeholder="Keep the summary short — it appears at the top of the product page."
+                        placeholder="Keep the summary short — it appears at the top of the book page."
                      />
                      <InputError message={errors.summary} />
                   </div>
@@ -91,8 +91,8 @@ const Basic = () => {
                         ssr={true}
                         output="html"
                         placeholder={{
-                           paragraph: 'Describe your product in detail',
-                           imageCaption: 'Describe your product in detail',
+                           paragraph: 'Describe your book in detail',
+                           imageCaption: 'Describe your book in detail',
                         }}
                         contentMinHeight={256}
                         contentMaxHeight={640}

@@ -145,7 +145,7 @@ const CategoryForm = ({ title, category, handler }: Props) => {
                            <InputError message={errors.description} />
                         </div>
                         <div>
-                           <Label>Thumbnail</Label>
+                           <Label>Book cover</Label>
                            <Input
                               type="file"
                               name="thumbnail"

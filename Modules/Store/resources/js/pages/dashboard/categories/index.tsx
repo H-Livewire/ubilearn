@@ -33,10 +33,10 @@ const Index = (props: ProductCategoriesIndexProps) => {
    return (
       <>
          <Breadcrumbs
-            title="Product Categories"
+            title="Book Categories"
             breadcrumbs={[
                { title: 'Dashboard', href: '/dashboard' },
-               { title: 'Product Categories' },
+               { title: 'Book Categories' },
             ]}
             action={
                <div className="flex items-center gap-3">

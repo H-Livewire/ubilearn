@@ -143,7 +143,7 @@ const Show = () => {
                         </div>
                      ) : (
                         <p className="text-sm text-muted-foreground">
-                           No downloadable files yet.
+                           The book file is not available yet.
                         </p>
                      )}
                   </div>

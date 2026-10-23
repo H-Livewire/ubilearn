@@ -29,6 +29,20 @@ return [
     */
 
     'disks' => [
+        'books' => env('BOOKS_BUCKET') ? [
+            'driver' => 's3',
+            'key' => env('BOOKS_ACCESS_KEY_ID', env('AWS_ACCESS_KEY_ID')),
+            'secret' => env('BOOKS_SECRET_ACCESS_KEY', env('AWS_SECRET_ACCESS_KEY')),
+            'region' => env('BOOKS_REGION', env('AWS_DEFAULT_REGION', env('AWS_REGION'))),
+            'bucket' => env('BOOKS_BUCKET'),
+            'endpoint' => env('BOOKS_ENDPOINT', env('AWS_ENDPOINT', env('AWS_ENDPOINT_URL'))),
+            'use_path_style_endpoint' => env('BOOKS_USE_PATH_STYLE_ENDPOINT', env('AWS_USE_PATH_STYLE_ENDPOINT', false)),
+            'visibility' => 'private', 'throw' => true,
+        ] : [
+            'driver' => 'local', 'root' => storage_path('app/private/books'),
+            'visibility' => 'private', 'serve' => false, 'throw' => true,
+        ],
+
 
         'local' => [
             'driver' => 'local',

@@ -67,7 +67,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
 
                   <div>
                      <h2 className="text-lg font-semibold capitalize md:text-2xl md:font-bold">
-                        {category ? category.title : 'All'} Products
+                        {category ? category.title : 'All'} Books
                      </h2>
                      {category?.description && (
                         <p className="mt-1 text-sm text-muted-foreground">

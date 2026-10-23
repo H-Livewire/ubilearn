@@ -54,7 +54,7 @@ const Index = (props: ProductDashboardIndexProps) => {
                <Button asChild className="h-9 px-4">
                   <Link href={create()}>
                      <Plus />
-                     Create Product
+                     Upload Book
                   </Link>
                </Button>
             }
@@ -94,7 +94,7 @@ const Index = (props: ProductDashboardIndexProps) => {
                   ) : (
                      <TableRow>
                         <TableCell className="h-24 text-center">
-                           No products found
+                           No books found
                         </TableCell>
                      </TableRow>
                   )}

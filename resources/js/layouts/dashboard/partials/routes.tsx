@@ -26,10 +26,6 @@ import categories from '@/routes/course-categories';
 import courseCoupons from '@/routes/course-coupons';
 import courseEnrollments from '@/routes/course-enrollments';
 import courses from '@/routes/courses';
-import examCategories from '@/routes/exam-categories';
-import examCoupons from '@/routes/exam-coupons';
-import examEnrollments from '@/routes/exam-enrollments';
-import exams from '@/routes/exams';
 import frontend from '@/routes/frontend';
 import frontendPages from '@/routes/frontend-pages';
 import googleAnalytics from '@/routes/google-analytics';
@@ -163,84 +159,16 @@ const getDashboardRoutes = (page: SharedData): DashboardRoute[] => {
             },
             {
                Icon: Book,
-               name: button.exams || 'Exams',
-               path: '',
-               slug: 'exams',
-               active: Boolean((page as any).canManageExams),
-               access: [
-                  'admin',
-                  'instructor',
-                  'collaborative',
-                  'administrative',
-               ],
-               children: [
-                  {
-                     name: button.categories || 'Categories',
-                     slug: routeLastSegment(examCategories.index.url()),
-                     path: examCategories.index.url(),
-                     access: ['admin', 'collaborative', 'administrative'],
-                  },
-                  {
-                     name: 'Examination papers',
-                     slug: 'examination-papers',
-                     path: '/dashboard/examination-papers',
-                     access: ['admin'],
-                  },
-                  {
-                     name: button.manage_exams || 'Manage Exams',
-                     slug: routeLastSegment(exams.index.url()),
-                     path: exams.index.url(),
-                     access: [
-                        'admin',
-                        'instructor',
-                        'collaborative',
-                        'administrative',
-                     ],
-                  },
-                  {
-                     name: 'Import PDF / Word',
-                     slug: 'exam-import',
-                     path: '/dashboard/exam-import',
-                     access: [
-                        'admin',
-                        'instructor',
-                        'collaborative',
-                        'administrative',
-                     ],
-                  },
-                  {
-                     name: button.create_exam || 'Create Exam',
-                     slug: routeLastSegment(exams.create.url()),
-                     path: exams.create.url(),
-                     access: [
-                        'admin',
-                        'instructor',
-                        'collaborative',
-                        'administrative',
-                     ],
-                  },
-                  {
-                     name: button.exam_coupons || 'Exam Coupons',
-                     slug: routeLastSegment(examCoupons.index.url()),
-                     path: examCoupons.index.url(),
-                     access: ['admin', 'collaborative', 'administrative'],
-                  },
-                  {
-                     name: button.exam_enrollments || 'Exam Enrollments',
-                     slug: routeLastSegment(examEnrollments.index.url()),
-                     path: examEnrollments.index.url(),
-                     access: [
-                        'admin',
-                        'instructor',
-                        'collaborative',
-                        'administrative',
-                     ],
-                  },
-               ],
+               name: 'Past papers',
+               path: '/dashboard/examination-papers',
+               slug: 'examination-papers',
+               active: true,
+               access: ['admin', 'collaborative', 'administrative'],
+               children: [],
             },
             {
                Icon: ShoppingBag,
-               name: 'Store',
+               name: 'Books',
                path: '',
                slug: 'store',
                active: true,
@@ -258,7 +186,7 @@ const getDashboardRoutes = (page: SharedData): DashboardRoute[] => {
                      access: ['admin', 'collaborative', 'administrative'],
                   },
                   {
-                     name: 'Manage Products',
+                     name: 'Manage Books',
                      slug: routeLastSegment(products.index.url()),
                      path: products.index.url(),
                      access: [
@@ -269,7 +197,7 @@ const getDashboardRoutes = (page: SharedData): DashboardRoute[] => {
                      ],
                   },
                   {
-                     name: 'Create Product',
+                     name: 'Upload Book',
                      slug: routeLastSegment(products.create.url()),
                      path: products.create.url(),
                      access: [
@@ -280,13 +208,13 @@ const getDashboardRoutes = (page: SharedData): DashboardRoute[] => {
                      ],
                   },
                   {
-                     name: 'Product Coupons',
+                     name: 'Book Coupons',
                      slug: routeLastSegment(productCoupons.index.url()),
                      path: productCoupons.index.url(),
                      access: ['admin', 'collaborative', 'administrative'],
                   },
                   {
-                     name: 'Product Sales',
+                     name: 'Book Sales',
                      slug: routeLastSegment(productOrders.sales.url()),
                      path: productOrders.sales.url(),
                      access: [

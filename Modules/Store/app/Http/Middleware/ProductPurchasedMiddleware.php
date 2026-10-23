@@ -42,6 +42,6 @@ class ProductPurchasedMiddleware
             return $next($request);
         }
 
-        return back()->with('error', 'You need to purchase this product before downloading its files');
+        return back()->with('error', 'You need to purchase this book before downloading its files');
     }
 }

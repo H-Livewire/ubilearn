@@ -29,10 +29,10 @@ const PurchasesIndex = ({ orders }: Props) => {
    return (
       <>
          <Breadcrumbs
-            title="My Purchases"
+            title="My Books"
             breadcrumbs={[
                { title: 'Dashboard', href: '/dashboard' },
-               { title: 'My Purchases' },
+               { title: 'My Books' },
             ]}
             className="mb-4"
          />
@@ -41,7 +41,7 @@ const PurchasesIndex = ({ orders }: Props) => {
             <Table className="border-y border-border">
                <TableHeader>
                   <TableRow>
-                     <TableHead className="pl-4">Product</TableHead>
+                     <TableHead className="pl-4">Book</TableHead>
                      <TableHead>Seller</TableHead>
                      <TableHead className="text-center">Total</TableHead>
                      <TableHead className="text-center">Date</TableHead>
@@ -110,7 +110,7 @@ const PurchasesIndex = ({ orders }: Props) => {
                   ) : (
                      <TableRow>
                         <TableCell colSpan={5} className="h-24 text-center">
-                           You have not purchased any products yet
+                           You have not purchased any books yet
                         </TableCell>
                      </TableRow>
                   )}

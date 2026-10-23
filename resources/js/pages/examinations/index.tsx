@@ -225,9 +225,6 @@ export default function Examinations({
             </div>
             <div className="flex justify-between text-sm text-muted-foreground">
                <p>{busy ? 'Inatafuta…' : `${papers.total} mitihani`}</p>
-               <Link className="underline" href="/exams/all">
-                  Online exams
-               </Link>
             </div>
             <div
                className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"

@@ -189,6 +189,9 @@ class SettingsService extends MediaService
                         $item->title = 'Past papers';
                         $item->value = '/examinations';
                     }
+                    if (in_array(trim($item->value ?? '', '/'), ['store', 'products', 'products/all', 'books'], true) || strtolower(trim($item->title ?? '')) === 'store') {
+                        $item->title = 'Books'; $item->value = '/books'; $item->type = 'url'; $item->items = [];
+                    }
                     if ($item->value === '/courses/all') {
                         $courses = \Modules\Course\Models\Course::where('status', 'approved')
                             ->where('mode', 'public')->orderBy('title')->get(['id', 'title', 'slug']);
@@ -202,18 +205,7 @@ class SettingsService extends MediaService
                         ];
                     }
                 }
-                $items = $navbar->navbarItems->reject(fn ($item) => $item->value === '/online-examination')->values();
-                $past = $items->first(fn ($item) => $item->value === '/examinations');
-                if ($past) {
-                    // Preserve stored ordering while placing the new link immediately after Past papers.
-                    $items = $items->sortBy('sort')->values();
-                    $position = $items->search(fn ($item) => $item->value === '/examinations');
-                    $items->splice($position + 1, 0, [new \App\Models\NavbarItem([
-                        'id' => -2, 'slug' => 'online-examination', 'type' => 'url',
-                        'title' => 'Online examination', 'value' => '/online-examination', 'active' => true,
-                    ])]);
-                    foreach ($items as $position => $item) $item->sort = $position;
-                }
+                $items = $navbar->navbarItems->reject(fn ($item) => $item->value === '/online-examination' || $item->slug === 'online-examination')->values();
                 $navbar->setRelation('navbarItems', $items);
             }
 

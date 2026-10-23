@@ -179,11 +179,11 @@ const CouponForm = ({ title, handler, coupon, products }: Props) => {
                                  }
                               >
                                  <SelectTrigger>
-                                    <SelectValue placeholder="All Products (global coupon)" />
+                                    <SelectValue placeholder="All Books (global coupon)" />
                                  </SelectTrigger>
                                  <SelectContent>
                                     <SelectItem value={GLOBAL_PRODUCT_VALUE}>
-                                       All Products (global coupon)
+                                       All Books (global coupon)
                                     </SelectItem>
                                     {products.map((p) => (
                                        <SelectItem

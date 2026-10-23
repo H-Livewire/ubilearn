@@ -1,8 +1,8 @@
 import StudentFeedback from '@/components/student-feedback';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Textarea } from '@/components/ui/textarea';
 import TableFooter from '@/components/table/table-footer';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { store as storeReview } from '@/routes/product-reviews';
 import { Form, usePage } from '@inertiajs/react';

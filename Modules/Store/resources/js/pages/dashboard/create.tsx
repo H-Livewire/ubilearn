@@ -63,10 +63,10 @@ const Index = (props: ProductCreateProps) => {
    return (
       <>
          <Breadcrumbs
-            title="Create Product"
+            title="Upload Book"
             breadcrumbs={[
                { title: 'Dashboard', href: '/dashboard' },
-               { title: 'Create New Product' },
+               { title: 'Upload New Book' },
             ]}
             className="mb-4"
          />
@@ -85,13 +85,30 @@ const Index = (props: ProductCreateProps) => {
                   return (
                      <>
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                           <div className="space-y-2 md:col-span-2">
+                              <Label htmlFor="book_file">
+                                 Book file (PDF / EPUB) *
+                              </Label>
+                              <Input
+                                 id="book_file"
+                                 name="book_file"
+                                 type="file"
+                                 accept=".pdf,.epub,application/pdf,application/epub+zip"
+                                 required
+                              />
+                              <InputError message={errors.book_file} />
+                              <p className="text-sm text-muted-foreground">
+                                 Hadi 50 MB. Buyer atapata download baada ya
+                                 kununua.
+                              </p>
+                           </div>
                            {/* Left Column */}
                            <div className="space-y-6">
                               <div>
                                  <Label>Title *</Label>
                                  <Input
                                     name="title"
-                                    placeholder="e.g. Advanced Microscope"
+                                    placeholder="e.g. Mathematics Standard 7"
                                  />
                                  <InputError message={errors.title} />
                               </div>
@@ -101,7 +118,7 @@ const Index = (props: ProductCreateProps) => {
                                  <Textarea
                                     rows={5}
                                     name="summary"
-                                    placeholder="Short summary shown at the top of the product page"
+                                    placeholder="Short summary shown at the top of the book page"
                                  />
                                  <InputError message={errors.summary} />
                               </div>
@@ -113,9 +130,9 @@ const Index = (props: ProductCreateProps) => {
                                     output="html"
                                     placeholder={{
                                        paragraph:
-                                          'Describe your product in detail',
+                                          'Describe your book in detail',
                                        imageCaption:
-                                          'Describe your product in detail',
+                                          'Describe your book in detail',
                                     }}
                                     contentMinHeight={256}
                                     contentMaxHeight={640}
@@ -285,7 +302,7 @@ const Index = (props: ProductCreateProps) => {
                               </div>
 
                               <div>
-                                 <Label htmlFor="thumbnail">Thumbnail</Label>
+                                 <Label htmlFor="thumbnail">Book cover</Label>
                                  <Input
                                     type="file"
                                     name="thumbnail"
@@ -298,7 +315,7 @@ const Index = (props: ProductCreateProps) => {
 
                         <div className="col-span-2 mt-6 text-right">
                            <LoadingButton loading={processing}>
-                              Create Product
+                              Upload Book
                            </LoadingButton>
                         </div>
                      </>

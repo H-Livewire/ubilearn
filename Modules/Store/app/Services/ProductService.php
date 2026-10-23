@@ -15,7 +15,7 @@ class ProductService extends MediaService
 {
     public function getCheckoutProduct(string $id): Product
     {
-        return Product::where('id', $id)->first();
+        return Product::where('status', 'approved')->whereHas('media', fn ($q) => $q->where('collection_name', Product::FILES_COLLECTION)->where('disk', 'books')->whereIn('mime_type', ['application/pdf','application/epub+zip']))->findOrFail($id);
     }
 
     public function createProduct(array $data): Product
@@ -88,6 +88,7 @@ class ProductService extends MediaService
         $perPage = array_key_exists('products_per_page', $data) ? intval($data['products_per_page']) : 10;
 
         $products = Product::searchWhen('title', $data, 'products_search')
+            ->when(!empty($data['books_only']), fn ($q) => $q->whereHas('media', fn ($media) => $media->where('collection_name', Product::FILES_COLLECTION)->where('disk', 'books')->whereIn('mime_type', ['application/pdf','application/epub+zip'])))
             ->when(array_key_exists('select', $data), function ($query) use ($data) {
                 $columns = is_array($data['select']) ? $data['select'] : explode(',', $data['select']);
 
@@ -202,18 +203,18 @@ class ProductService extends MediaService
     public function validateProductForApproval(Product $product): array
     {
         $hasThumbnail = ! empty($product->thumbnail);
-        $hasFile = $product->getMedia(Product::FILES_COLLECTION)->isNotEmpty();
+        $hasFile = $product->getMedia(Product::FILES_COLLECTION)->contains(fn ($media) => $media->disk === 'books' && in_array($media->mime_type, ['application/pdf','application/epub+zip'], true));
         $hasPrice = $product->pricing_type !== 'paid' || ! empty($product->price);
 
         $validationMessages = [];
         if (! $hasThumbnail) {
-            $validationMessages[] = 'Product thumbnail is missing';
+            $validationMessages[] = 'Book cover is missing';
         }
         if (! $hasFile) {
-            $validationMessages[] = 'At least one downloadable file is required';
+            $validationMessages[] = 'A private PDF or EPUB book file is required';
         }
         if (! $hasPrice) {
-            $validationMessages[] = 'Price is required for paid products';
+            $validationMessages[] = 'Price is required for paid books';
         }
 
         return [

@@ -18,14 +18,14 @@ class GenerateProductMetaTagsAction
         $system = app('system');
         $siteName = $system->fields['name'] ?? 'Mentor Learning Management System';
         $siteUrl = request()->url();
-        $totalProducts = $products->total ?? (is_array($products->data ?? null) ? count($products->data) : 0);
+        $totalBooks = $products->total ?? (is_array($products->data ?? null) ? count($products->data) : 0);
         $firstProductImage = ! empty($products->data) ? ($products->data[0]->thumbnail ?? null) : null;
 
-        $pageTitle = $category ? $category->title.' Products' : 'Store';
-        $pageDescription = $totalProducts > 0
-            ? "Browse $totalProducts".($category ? ' '.strtolower($category->title) : '').' products from our instructors.'
-            : 'Browse virtual and downloadable products from our instructors.';
-        $pageKeywords = ($category ? strtolower($category->title).', ' : '').'store, products, downloads, e-learning';
+        $pageTitle = $category ? $category->title.' Books' : 'Books';
+        $pageDescription = $totalBooks > 0
+            ? "Browse $totalBooks".($category ? ' '.strtolower($category->title) : '').' books from our authors.'
+            : 'Browse virtual and downloadable books from our authors.';
+        $pageKeywords = ($category ? strtolower($category->title).', ' : '').'books, ebooks, reading, downloads';
         $ogImage = $firstProductImage ?? $category->thumbnail ?? $system->fields['banner'] ?? '';
 
         return [
@@ -56,8 +56,8 @@ class GenerateProductMetaTagsAction
         $siteUrl = request()->url();
 
         $pageTitle = $product->meta_title ?? ($product->title.' | '.$siteName);
-        $pageDescription = $product->meta_description ?? $product->summary ?? 'Browse our store';
-        $pageKeywords = $product->meta_keywords ?? ($product->title.', store, product, '.($system->fields['keywords'] ?? 'LMS'));
+        $pageDescription = $product->meta_description ?? $product->summary ?? 'Browse our books';
+        $pageKeywords = $product->meta_keywords ?? ($product->title.', books, ebook, '.($system->fields['keywords'] ?? 'LMS'));
 
         $ogTitle = $product->og_title ?? $product->title;
         $ogDescription = $product->og_description ?? $pageDescription;

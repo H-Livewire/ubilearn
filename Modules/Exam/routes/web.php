@@ -15,6 +15,7 @@ use Modules\Exam\Http\Controllers\ExamReviewController;
 use Modules\Exam\Http\Controllers\ExamWishlistController;
 use Modules\Exam\Http\Middleware\CheckExamEnrollMiddleware;
 
+Route::middleware(\App\Http\Middleware\OnlineExamsDisabled::class)->group(function () {
 /*
 |--------------------------------------------------------------------------
 | Public/Guest Routes (similar to course routes)
@@ -115,4 +116,6 @@ Route::middleware(['auth', 'role:student,instructor,admin'])->prefix('student')-
 
     // free enrolment
     Route::post('exams/exam/enrollments', [ExamEnrollmentController::class, 'store'])->name('exam-enrollments.store');
+});
+
 });

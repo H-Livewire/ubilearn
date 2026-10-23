@@ -65,7 +65,7 @@ const Update = () => {
    return (
       <section className="space-y-6">
          <Breadcrumbs
-            title={'Manage Product'}
+            title={'Manage Book'}
             breadcrumbs={[
                { title: 'Dashboard', href: '/dashboard' },
                { title: 'Products', href: index.url() },

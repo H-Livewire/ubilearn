@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import LandingLayout from '@/layouts/landing';
 import { getQueryParams } from '@/lib/route';
 import { cn } from '@/lib/utils';
-import { usePage } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import ProductCard from '../../components/product-card';
 import Layout from './layout';
@@ -15,6 +15,7 @@ const Index = (props: ProductsIndexProps) => {
 
    return (
       <>
+         <Head title="Books" />
          {products.data.length > 0 ? (
             <div
                className={cn(
@@ -33,7 +34,7 @@ const Index = (props: ProductsIndexProps) => {
             </div>
          ) : (
             <Card className="p-10 text-center text-muted-foreground">
-               No products found
+               No books found
             </Card>
          )}
 

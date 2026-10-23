@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 
 const MyProducts = () => {
    const { props } = usePage<StudentDashboardProps>();
-   const { productOrders, system } = props;
+   const { productOrders } = props;
 
    return productOrders && productOrders.length > 0 ? (
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -29,7 +29,7 @@ const MyProducts = () => {
                      <Link
                         href={
                            order.product
-                              ? `/products/details/${order.product.slug}/${order.product_id}`
+                              ? `/books/details/${order.product.slug}/${order.product_id}`
                               : '#'
                         }
                      >
@@ -43,7 +43,7 @@ const MyProducts = () => {
       </div>
    ) : (
       <Card className="flex items-center justify-center p-6">
-         <p>You have not purchased any products yet.</p>
+         <p>You have not purchased any books yet.</p>
       </Card>
    );
 };

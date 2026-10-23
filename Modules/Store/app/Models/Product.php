@@ -4,7 +4,7 @@ namespace Modules\Store\Models;
 
 use App\Models\BaseModel;
 use App\Models\Instructor;
-use App\Rules\RejectsExecutableExtension;
+
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -34,19 +34,16 @@ class Product extends BaseModel implements HasMedia
      */
     public const FILES_COLLECTION = 'files';
 
-    /**
-     * Guard the downloadable-files collection against executable uploads at
-     * the media-library layer, independent of request-level validation —
-     * "digital product" files can be almost any type, so this can't rely on
-     * a `mimes:` allow-list the way the gallery images collection does.
-     */
+    /** Books are stored privately and accept PDF/EPUB documents only. */
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection(self::FILES_COLLECTION)
+        $this->addMediaCollection(self::FILES_COLLECTION)->useDisk('books')
             ->acceptsFile(function (PendingFile $file) {
-                return ! RejectsExecutableExtension::isDenied(pathinfo($file->name, PATHINFO_EXTENSION));
+                return in_array(strtolower(pathinfo($file->name, PATHINFO_EXTENSION)), ['pdf','epub'], true) && in_array($file->mimeType, ['application/pdf','application/epub+zip'], true);
             });
     }
+
+    protected $hidden = ['media'];
 
     protected $fillable = [
         'title',
@@ -136,7 +133,7 @@ class Product extends BaseModel implements HasMedia
 
     /**
      * Downloadable files, shaped for the frontend. Only expose this to
-     * owners/purchasers — the file URL is not access-controlled on its own.
+     * owners/purchasers through the purchase-gated download route.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -145,7 +142,7 @@ class Product extends BaseModel implements HasMedia
         return $this->getMedia(self::FILES_COLLECTION)->map(fn ($media) => [
             'id' => $media->id,
             'name' => $media->name ?: $media->file_name,
-            'url' => $media->getUrl(),
+            'url' => route('products.files.download', ['product'=>$this->id, 'media'=>$media->id], false),
             'size' => $media->size,
             'mime_type' => $media->mime_type,
         ])->all();

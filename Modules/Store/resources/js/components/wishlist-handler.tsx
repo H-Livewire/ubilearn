@@ -1,7 +1,3 @@
-import { router, usePage } from '@inertiajs/react';
-import { Heart } from 'lucide-react';
-import { useEffect } from 'react';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
    Tooltip,
@@ -11,6 +7,10 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import productWishlists from '@/routes/product-wishlists';
+import { router, usePage } from '@inertiajs/react';
+import { Heart } from 'lucide-react';
+import { useEffect } from 'react';
+import { toast } from 'sonner';
 
 interface Props {
    product: Product;

@@ -29,7 +29,7 @@ const SalesIndex = ({ orders }: Props) => {
             title="Sales"
             breadcrumbs={[
                { title: 'Dashboard', href: '/dashboard' },
-               { title: 'Product Sales' },
+               { title: 'Book Sales' },
             ]}
             className="mb-4"
          />
@@ -39,7 +39,7 @@ const SalesIndex = ({ orders }: Props) => {
                <TableHeader>
                   <TableRow>
                      <TableHead className="pl-4">Customer</TableHead>
-                     <TableHead>Product</TableHead>
+                     <TableHead>Book</TableHead>
                      <TableHead className="text-center">Subtotal</TableHead>
                      <TableHead className="text-center">Discount</TableHead>
                      <TableHead className="text-center">Tax</TableHead>

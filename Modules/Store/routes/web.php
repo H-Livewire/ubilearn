@@ -22,7 +22,8 @@ Route::controller(ProductController::class)->group(function () {
     // registered in the root routes/web.php, ahead of the `/{slug}`
     // catch-all — module routes load after it, so a single-segment route
     // here would be shadowed. Only the 3-segment detail route is safe here.
-    Route::get('products/details/{slug}/{id}', 'show')->name('products.details');
+    Route::get('books/details/{slug}/{id}', 'show')->name('products.details');
+    Route::get('products/details/{slug}/{id}', fn(string $slug,string $id)=>redirect('/books/details/'.rawurlencode($slug).'/'.$id));
 });
 
 /*
@@ -53,7 +54,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('dashboard/store')->group(func
 | Instructor Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'role:instructor,admin'])->prefix('dashboard/store')->group(function () {
+Route::middleware(['auth', 'role:instructor,admin', \App\Http\Middleware\BookManagement::class])->prefix('dashboard/store')->group(function () {
     // Products
     Route::resource('products', ProductController::class)->except(['show', 'update', 'destroy']);
 

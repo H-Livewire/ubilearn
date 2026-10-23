@@ -18,7 +18,7 @@ class NectaResultsService
     public function document(string $url): DOMXPath
     {
         for ($i = 0; $i < 4; $i++) {
-            if (!in_array(parse_url($url, PHP_URL_HOST), self::HOSTS, true) || parse_url($url, PHP_URL_SCHEME) !== 'https') {
+            if (!in_array(parse_url($url, PHP_URL_HOST), self::HOSTS, true) || parse_url($url, PHP_URL_SCHEME) !== 'https' || parse_url($url, PHP_URL_PORT) || parse_url($url, PHP_URL_USER) || parse_url($url, PHP_URL_PASS)) {
                 throw new \RuntimeException('Chanzo cha matokeo hakijathibitishwa.');
             }
             $cached = Cache::get('necta:html:v2:'.hash('sha256', $url));
@@ -45,112 +45,51 @@ class NectaResultsService
         return new DOMXPath($dom);
     }
 
-    public function lookup(string $level, int $year, string $index): array
+    /** Resolve directory links only; never download or interpret candidate results. */
+    public function schoolUrl(string $level, int $year, string $school): string
     {
-        $index = strtoupper(trim($index));
-        $index = preg_replace('~[.\-]~', '/', $index);
-        $index = preg_replace('~/'.preg_quote((string) $year, '~').'$~', '', $index);
-        if (!preg_match('~^([SP]\d{4}|PS\d{7,})/(\d{4})$~', $index, $match)) {
-            throw ValidationException::withMessages(['index' => 'Andika namba kamili, mfano S0156/0001 au P0156/0001.']);
+        $school = strtoupper(trim($school));
+        $primary = in_array($level, ['psle', 'sfna'], true);
+        if (!isset(self::LEVELS[$level]) || !preg_match($primary ? '/^PS[0-9]{7,10}$/' : '/^[SP][0-9]{4}$/', $school)) {
+            throw ValidationException::withMessages(['school' => $primary ? 'Andika namba ya shule, mfano PS0101001.' : 'Andika namba ya shule, mfano S0156 au P0156.']);
         }
-        $entry = collect($this->years($level))->firstWhere('year', $year);
-        if (!$entry) throw ValidationException::withMessages(['year' => 'Matokeo ya mwaka huu hayajaonekana kwenye orodha rasmi ya NECTA.']);
-        $key = 'necta:lookup:v3:'.$level.':'.$year.':'.$index;
-        return Cache::remember($key, 3600, function () use ($entry, $match, $index) {
-            $directory = $this->browse($entry['key']);
-            $centre = collect($directory['children'])->first(fn ($child) => preg_match('~^'.preg_quote($match[1], '~').'\b~i', ($child['centre'] ?? '').' '.$child['label']));
-            if (!$centre) throw ValidationException::withMessages(['index' => 'Kituo hakijaonekana kwenye orodha hii. Hakiki namba au fungua NECTA kwa matokeo ya shule za msingi.']);
-            $results = $this->browse($centre['key']);
-            $candidate = collect($results['candidates'])->first(fn ($row) => strtoupper($row['index']) === $index);
-            if (!$candidate) throw ValidationException::withMessages(['index' => 'Namba hii haijaonekana kwenye kituo. Hakiki mwaka, kiwango na namba ya mtihani.']);
-            return ['candidate' => $candidate, 'source' => $results['source']];
-        });
-    }
-
-    public function years(string $level): array
-    {
-        $years = Cache::remember('necta:years:'.$level, 3600, function () use ($level) {
+        return Cache::remember('necta:school-link:v1:'.$level.':'.$year.':'.$school, 3600, function () use ($level, $year, $school, $primary) {
             $base = 'https://www.necta.go.tz/results/view/'.$level;
-            $doc = $this->document($base);
-            $years = [];
-            foreach ($doc->query('//a[@href]') as $anchor) {
-                $url = (string) UriResolver::resolve(new Uri($base), new Uri($anchor->getAttribute('href')));
-                if (preg_match('~/results/(20\d{2})/~i', $url, $match) && str_contains(strtolower($url), $level)) {
-                    $years[$match[1]] = ['year' => (int) $match[1], 'key' => $this->rememberUrl($url), 'url' => $url];
+            $yearUrl = null;
+            foreach ($this->links($base) as $link) {
+                if (preg_match('~/results/'.preg_quote((string) $year, '~').'/'.preg_quote($level, '~').'/~i', $link['url'])) {
+                    $yearUrl = $link['url']; break;
                 }
             }
-            krsort($years);
-            return array_values($years);
+            if (!$yearUrl) throw ValidationException::withMessages(['year' => 'Mwaka huu haujaonekana kwenye orodha rasmi ya NECTA.']);
+            $links = $this->links($yearUrl);
+            if ($primary) {
+                // Follow published region/district links matching the school code.
+                $region = substr($school, 2, 2);
+                $district = substr($school, 2, 4);
+                $regionLink = collect($links)->first(fn ($link) => preg_match('~^reg_(?:ps)?'.preg_quote($region, '~').'\.html?$~i', $link['file']));
+                if ($regionLink) {
+                    $districtLink = collect($this->links($regionLink['url']))->first(fn ($link) => preg_match('~^distr_(?:ps)?'.preg_quote($district, '~').'\.html?$~i', $link['file']));
+                    if ($districtLink) $links = $this->links($districtLink['url']);
+                }
+            }
+            foreach ($links as $link) {
+                if (preg_match('~^(?:shl_)?'.preg_quote($school, '~').'\.html?$~i', $link['file'])) return $link['url'];
+            }
+            throw ValidationException::withMessages(['school' => 'Shule hii haijaonekana kwenye matokeo ya mwaka na kiwango ulichochagua. Hakiki namba ya shule.']);
         });
-        foreach ($years as $year) $this->rememberUrl($year['url']);
-        return $years;
     }
 
-    private function rememberUrl(string $url): string
+    private function links(string $base): array
     {
-        $key = hash('sha256', $url);
-        Cache::put('necta:url:'.$key, $url, 86400);
-        return $key;
-    }
-
-    public function resultSummary(array $cells): array
-    {
-        $division = null; $points = null; $status = 'Not available';
-        foreach ($cells as $position => $cell) {
-            if (!in_array(strtoupper(trim($cell)), ['M', 'F'], true)) continue;
-            $aggregate = trim($cells[$position + 1] ?? '');
-            $reportedDivision = strtoupper(trim($cells[$position + 2] ?? ''));
-            if (!in_array($reportedDivision, ['I', 'II', 'III', 'IV', '0'], true)) continue;
-            $division = $reportedDivision;
-            $points = is_numeric($aggregate) ? (float) $aggregate : null;
-            $status = $division === '0' ? 'Failed' : 'Passed';
-            break;
-        }
-        if ($division === null) {
-            foreach ($cells as $cell) {
-                if (preg_match('/^ABS(?:ENT)?$/i', trim($cell))) $status = 'Absent';
-                elseif (preg_match('/^(W[\/ -]?H|WITHHELD)$/i', trim($cell))) $status = 'Withheld';
-            }
-        }
-        return ['division' => $division, 'points' => $points, 'status' => $status];
-    }
-
-    public function browse(string $key): array
-    {
-        $url = Cache::get('necta:url:'.$key);
-        if (!$url) throw ValidationException::withMessages(['key' => 'Chagua mwaka tena; orodha imeisha muda.']);
-        $doc = $this->document($url);
-        $candidates = [];
-        // Some NECTA pages omit opening <tr> tags. Read cells in table order
-        // and start each candidate at its examination number instead.
-        foreach ($doc->query('//table[not(.//table)]') as $table) {
-            $groups = []; $cells = [];
-            foreach ($doc->query('.//td', $table) as $cell) {
-                $text = trim(preg_replace('/\s+/u', ' ', $cell->textContent));
-                if (preg_match('~^[SP]\d{4}/\d{4}$|^PS\d+[/-]\d+$~i', $text)) {
-                    if ($cells) $groups[] = $cells;
-                    $cells = [$text];
-                } elseif ($cells) { $cells[] = $text; }
-            }
-            if ($cells) $groups[] = $cells;
-            foreach ($groups as $cells) {
-                $grades = [];
-                preg_match_all("/([A-Z][A-Z\/._]{1,30}(?:\s+(?:STUD|SCIENCE|KNOW))?)\s*[-:]\s*['’]?([A-FS]\+?)['’]?/", implode(' ', $cells), $matches, PREG_SET_ORDER);
-                foreach ($matches as $grade) $grades[trim($grade[1])] = $grade[2];
-                $candidates[] = ['index' => $cells[0], 'cells' => $cells, 'grades' => $grades, 'summary' => $this->resultSummary($cells)];
-            }
-        }
         $links = [];
-        if (!$candidates) {
-            foreach ($doc->query('//a[@href]') as $anchor) {
-                $href = $anchor->getAttribute('href');
-                $next = (string) UriResolver::resolve(new Uri($url), new Uri($href));
-                $label = trim(preg_replace('/\s+/u', ' ', $anchor->textContent));
-                if (!$label || $next === $url || !preg_match('~\.(?:html?|php)(?:\?.*)?$~i', $next) || !in_array(parse_url($next, PHP_URL_HOST), self::HOSTS, true) || !str_contains($next, '/results/')) continue;
-                if (strlen($label) < 3) continue;
-                $links[$next] = ['label' => $label, 'centre' => strtoupper(pathinfo(parse_url($next, PHP_URL_PATH), PATHINFO_FILENAME)), 'key' => $this->rememberUrl($next)];
-            }
+        foreach ($this->document($base)->query('//a[@href]') as $anchor) {
+            $url = (string) UriResolver::resolve(new Uri($base), new Uri($anchor->getAttribute('href')));
+            if (parse_url($url, PHP_URL_SCHEME) !== 'https' || !in_array(strtolower(parse_url($url, PHP_URL_HOST) ?? ''), self::HOSTS, true) || parse_url($url, PHP_URL_PORT) || parse_url($url, PHP_URL_USER) || parse_url($url, PHP_URL_PASS)) continue;
+            $path = parse_url($url, PHP_URL_PATH) ?? '';
+            if (!str_contains($path, '/results/')) continue;
+            $links[] = ['url' => $url, 'file' => basename($path)];
         }
-        return ['source' => $url, 'children' => array_values($links), 'candidates' => $candidates];
+        return $links;
     }
 }

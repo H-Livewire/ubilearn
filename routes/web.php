@@ -57,10 +57,7 @@ Route::middleware(['web'])->group(function () {
     });
 
     Route::get('necta-result', [\App\Http\Controllers\NectaController::class, 'index'])->name('necta.index');
-    Route::get('necta-result/lookup', [\App\Http\Controllers\NectaController::class, 'lookup'])->middleware('throttle:30,1');
-    Route::get('necta-result/years', [\App\Http\Controllers\NectaController::class, 'years'])->middleware('throttle:30,1');
-    Route::post('necta-result/guidance', [\App\Http\Controllers\NectaController::class, 'guidance'])->middleware('throttle:30,1');
-    Route::get('necta-result/browse', [\App\Http\Controllers\NectaController::class, 'browse'])->middleware('throttle:30,1');
+    Route::get('necta-result/school', [\App\Http\Controllers\NectaController::class, 'school'])->middleware('throttle:30,1');
 
     Route::get('online-examination', fn () => redirect('/examinations'))->name('online-examination');
     Route::get('examinations', [\App\Http\Controllers\ExamPaperController::class, 'index'])->name('examinations.index');

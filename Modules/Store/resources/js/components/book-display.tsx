@@ -5,7 +5,7 @@ import {
 } from '@/components/ui/carousel';
 import type { CarouselApi } from '@/components/ui/carousel';
 import { cn } from '@/lib/utils';
-import { details } from '@/routes/products';
+import { details, shop } from '@/routes/products';
 import { Link } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -50,7 +50,9 @@ export function BookTile({
    book: Product;
    compact?: boolean;
 }) {
-   const href = details({ slug: book.slug, id: book.id });
+   const href = book.is_sample
+      ? shop.url({ category: 'all' }, { query: { browse: 1 } })
+      : details({ slug: book.slug, id: book.id });
 
    if (compact) {
       return (
@@ -65,7 +67,10 @@ export function BookTile({
             </Link>
             <div className="min-w-0">
                <p className="mb-2 text-xs text-muted-foreground">
-                  {book.instructor?.user?.name || book.product_category?.title}
+                  {book.is_sample
+                     ? 'Sample book'
+                     : book.instructor?.user?.name ||
+                       book.product_category?.title}
                </p>
                <Link
                   href={href}
@@ -82,9 +87,11 @@ export function BookTile({
    return (
       <article className="ubi-book-tile h-full px-4 text-center sm:px-6">
          <p className="mb-3 truncate text-xs text-muted-foreground">
-            {book.instructor?.user?.name ||
-               book.product_category?.title ||
-               'UbiLearn'}
+            {book.is_sample
+               ? 'Sample book'
+               : book.instructor?.user?.name ||
+                 book.product_category?.title ||
+                 'UbiLearn'}
          </p>
          <Link href={href} className="mb-5 block">
             <img

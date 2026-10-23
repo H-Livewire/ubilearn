@@ -28,6 +28,11 @@ import { BookPrice, BookShelf, BookTile } from '../../components/book-display';
 import BookHeroCarousel from '../../components/book-hero-carousel';
 import SampleBooks, { schoolBookSamples } from '../../components/sample-books';
 import ProductWishlistHandler from '../../components/wishlist-handler';
+import {
+   sampleBooks,
+   sampleOffers,
+   withBookSamples,
+} from '../../lib/sample-books';
 
 const Index = ({
    products,
@@ -41,21 +46,31 @@ const Index = ({
    const [tab, setTab] = useState<'new_arrivals' | 'featured' | 'most_viewed'>(
       'new_arrivals',
    );
+   const displayShelves = {
+      ...shelves,
+      new_arrivals: withBookSamples(shelves.new_arrivals),
+      featured: withBookSamples(shelves.featured, [...sampleBooks].reverse()),
+      most_viewed: withBookSamples(shelves.most_viewed, [
+         ...sampleBooks.slice(2),
+         ...sampleBooks.slice(0, 2),
+      ]),
+      best_sellers: withBookSamples(shelves.best_sellers),
+      children: withBookSamples(shelves.children),
+   };
+   const offers = withBookSamples(shelves.special_offers, sampleOffers);
    const [offerIndex, setOfferIndex] = useState(0);
    const [search, setSearch] = useState(params.products_search || '');
    const [offerPaused, setOfferPaused] = useState(false);
    const [offerAutoplay, setOfferAutoplay] = useState(true);
-   const offerActive = shelves.special_offers.length
-      ? offerIndex % shelves.special_offers.length
-      : 0;
-   const offer = shelves.special_offers[offerActive];
+   const offerActive = offers.length ? offerIndex % offers.length : 0;
+   const offer = offers[offerActive];
    useEffect(() => {
       const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
       if (
          offerPaused ||
          !offerAutoplay ||
-         shelves.special_offers.length < 2 ||
+         offers.length < 2 ||
          motion.matches
       ) {
          return;
@@ -63,9 +78,7 @@ const Index = ({
 
       const timer = window.setInterval(() => {
          if (!document.hidden) {
-            setOfferIndex(
-               (index) => (index + 1) % shelves.special_offers.length,
-            );
+            setOfferIndex((index) => (index + 1) % offers.length);
          }
       }, 7000);
       const stop = () => {
@@ -79,7 +92,7 @@ const Index = ({
          window.clearInterval(timer);
          motion.removeEventListener('change', stop);
       };
-   }, [offerPaused, offerAutoplay, shelves.special_offers.length]);
+   }, [offerPaused, offerAutoplay, offers.length]);
    const browsing = params.browse === '1' || Boolean(params.products_search);
 
    return (
@@ -213,7 +226,7 @@ const Index = ({
                         <h1 className="bg-emerald-700 px-4 py-3 text-2xl font-semibold text-white">
                            Special offer
                         </h1>
-                        {shelves.special_offers.length > 1 && (
+                        {offers.length > 1 && (
                            <button
                               type="button"
                               className="absolute top-3 right-3 rounded-full p-1.5 text-white hover:bg-black/15"
@@ -240,24 +253,40 @@ const Index = ({
                               aria-live={offerPaused ? 'polite' : 'off'}
                            >
                               <p className="mb-3 text-xs text-muted-foreground">
-                                 {offer.instructor?.user?.name ||
-                                    offer.product_category?.title}
+                                 {offer.is_sample
+                                    ? 'Sample offer'
+                                    : offer.instructor?.user?.name ||
+                                      offer.product_category?.title}
                               </p>
                               <Link
-                                 href={details({
-                                    slug: offer.slug,
-                                    id: offer.id,
-                                 })}
+                                 href={
+                                    offer.is_sample
+                                       ? shop.url(
+                                            { category: 'all' },
+                                            { query: { browse: 1 } },
+                                         )
+                                       : details({
+                                            slug: offer.slug,
+                                            id: offer.id,
+                                         })
+                                 }
                                  className="mb-6 block text-xl font-semibold"
                               >
                                  {offer.title}
                               </Link>
                               <div className="relative mx-auto max-w-64">
                                  <Link
-                                    href={details({
-                                       slug: offer.slug,
-                                       id: offer.id,
-                                    })}
+                                    href={
+                                       offer.is_sample
+                                          ? shop.url(
+                                               { category: 'all' },
+                                               { query: { browse: 1 } },
+                                            )
+                                          : details({
+                                               slug: offer.slug,
+                                               id: offer.id,
+                                            })
+                                    }
                                  >
                                     <img
                                        src={
@@ -269,25 +298,38 @@ const Index = ({
                                     />
                                  </Link>
                                  <div className="absolute bottom-5 left-1/2 flex -translate-x-1/2 items-center bg-background shadow-lg">
-                                    <Button
-                                       asChild
-                                       variant="ghost"
-                                       size="icon"
-                                       aria-label="Buy offer"
-                                    >
-                                       <Link
-                                          href={details({
-                                             slug: offer.slug,
-                                             id: offer.id,
-                                          })}
+                                    {!offer.is_sample && (
+                                       <Button
+                                          asChild
+                                          variant="ghost"
+                                          size="icon"
+                                          aria-label="Buy offer"
                                        >
-                                          <ShoppingBag className="h-4 w-4" />
-                                       </Link>
-                                    </Button>
-                                    <ProductWishlistHandler
-                                       product={offer}
-                                       wishlists={wishlists}
-                                    />
+                                          <Link
+                                             href={
+                                                offer.is_sample
+                                                   ? shop.url(
+                                                        { category: 'all' },
+                                                        {
+                                                           query: { browse: 1 },
+                                                        },
+                                                     )
+                                                   : details({
+                                                        slug: offer.slug,
+                                                        id: offer.id,
+                                                     })
+                                             }
+                                          >
+                                             <ShoppingBag className="h-4 w-4" />
+                                          </Link>
+                                       </Button>
+                                    )}
+                                    {!offer.is_sample && (
+                                       <ProductWishlistHandler
+                                          product={offer}
+                                          wishlists={wishlists}
+                                       />
+                                    )}
                                     <Button
                                        asChild
                                        variant="ghost"
@@ -295,10 +337,17 @@ const Index = ({
                                        aria-label="View offer"
                                     >
                                        <Link
-                                          href={details({
-                                             slug: offer.slug,
-                                             id: offer.id,
-                                          })}
+                                          href={
+                                             offer.is_sample
+                                                ? shop.url(
+                                                     { category: 'all' },
+                                                     { query: { browse: 1 } },
+                                                  )
+                                                : details({
+                                                     slug: offer.slug,
+                                                     id: offer.id,
+                                                  })
+                                          }
                                        >
                                           <Eye className="h-4 w-4" />
                                        </Link>
@@ -309,10 +358,12 @@ const Index = ({
                                  <BookPrice book={offer} />
                               </div>
                               <p className="mx-auto mt-7 max-w-64 border px-4 py-4 text-sm text-muted-foreground">
-                                 Download after purchase
+                                 {offer.is_sample
+                                    ? 'Sample price · preview only'
+                                    : 'Download after purchase'}
                               </p>
                               <div className="mt-7 flex justify-center gap-2">
-                                 {shelves.special_offers.map((book, index) => (
+                                 {offers.map((book, index) => (
                                     <button
                                        key={book.id}
                                        type="button"
@@ -373,16 +424,17 @@ const Index = ({
                            ))}
                         </div>
                         <div
+                           key={tab}
                            id="collection-panel"
                            role="tabpanel"
                            aria-labelledby={`tab-${tab}`}
-                           className="grid gap-x-9 sm:grid-cols-2"
+                           className="ubi-book-collection grid gap-x-9 sm:grid-cols-2"
                         >
-                           {shelves[tab].slice(0, 8).map((book) => (
+                           {displayShelves[tab].slice(0, 8).map((book) => (
                               <BookTile compact key={book.id} book={book} />
                            ))}
                         </div>
-                        {!shelves[tab].length && (
+                        {!displayShelves[tab].length && (
                            <p className="py-20 text-center text-sm text-muted-foreground">
                               No books in this collection yet.
                            </p>
@@ -390,13 +442,18 @@ const Index = ({
                      </div>
                   </div>
                </section>
-               <BookShelf title="Best sellers" books={shelves.best_sellers} />
+               <BookShelf
+                  title="Best sellers"
+                  books={displayShelves.best_sellers}
+               />
+               <div aria-hidden="true" className="h-10 bg-white md:h-16" />
                <BookShelf
                   title="Children’s books"
-                  books={shelves.children}
+                  books={displayShelves.children}
                   background
                   backgroundImage="/assets/images/books-children-reading.jpeg"
                />
+               <div aria-hidden="true" className="h-10 bg-white md:h-16" />
                {shelves.school.length > 0 ? (
                   <BookShelf
                      title="School books"
@@ -412,9 +469,10 @@ const Index = ({
                   />
                )}
 
+               <div aria-hidden="true" className="h-10 bg-white md:h-16" />
                <BookShelf
                   title="Best seller books"
-                  books={shelves.best_sellers}
+                  books={displayShelves.best_sellers}
                   background
                />
                <div className="container py-8 text-center">

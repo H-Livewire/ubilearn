@@ -33,4 +33,4 @@ Test a book purchase with the configured payment gateway before offering paid bo
 
 Book prices are entered and displayed in Tanzanian shillings (`TSh`). This is formatting, not an exchange-rate conversion. Set **Settings → System → Selling currency** to **TZS** before accepting book payments. Checkout rejects a different selling currency so the displayed shilling amount cannot be charged in dollars or another unit.
 
-When there are no published books, the uploaded sample covers are displayed with their titles and “Bei itawekwa (TSh)”. They are not purchasable products and have no database records. Upload the actual book and set its price to replace the samples with real offers.
+When there are no published books, the uploaded sample covers are displayed with their titles and illustrative sample prices (TSh 2,000, 4,000, 15,000, 30,000 and 10,000). These example prices do not create payment offers. The samples are not purchasable products and have no database records. Upload the actual book and set its price to replace the samples with real offers.

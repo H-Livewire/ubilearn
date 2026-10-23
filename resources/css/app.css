@@ -1059,3 +1059,22 @@ button.rte-button.rte-button--primary.\!mt-3.\!w-full.cursor-pointer {
       transition: none;
    }
 }
+
+.ubi-book-collection {
+   animation: ubi-collection-enter 0.4s cubic-bezier(0.2, 0.65, 0.25, 1) both;
+}
+@keyframes ubi-collection-enter {
+   from {
+      opacity: 0;
+      transform: translateY(8px);
+   }
+   to {
+      opacity: 1;
+      transform: translateY(0);
+   }
+}
+@media (prefers-reduced-motion: reduce) {
+   .ubi-book-collection {
+      animation: none;
+   }
+}

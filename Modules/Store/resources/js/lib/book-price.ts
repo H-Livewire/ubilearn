@@ -10,7 +10,7 @@ export function formatBookAmount(
       value === '' ||
       !Number.isFinite(Number(value))
    ) {
-      return 'Bei itawekwa (TSh)';
+      return 'TSh —';
    }
 
    return `TSh ${formatter.format(Number(value))}`;

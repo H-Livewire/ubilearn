@@ -1,4 +1,5 @@
 import { formatBookAmount } from '../lib/book-price';
+import { samplePrices } from '../lib/sample-books';
 import { ShelfHeading } from './book-display';
 
 type SampleCover = [title: string, file: string];
@@ -17,7 +18,7 @@ const samples: SampleCover[] = [
    ['Book collection', 'book-collection.jpeg'],
 ];
 
-/** Visual samples only: no orders, fabricated prices or database records. */
+/** Illustrative samples only; never purchasable and never stored as products. */
 export default function SampleBooks({
    title = 'Books',
    covers = samples,
@@ -56,7 +57,7 @@ export default function SampleBooks({
             <div
                className={`mx-auto grid grid-cols-1 gap-7 min-[420px]:grid-cols-2 md:grid-cols-3 ${covers.length <= 3 ? 'max-w-4xl lg:grid-cols-3' : 'lg:grid-cols-5'}`}
             >
-               {covers.map(([title, file]) => (
+               {covers.map(([title, file], index) => (
                   <article
                      key={file}
                      className="ubi-book-tile border-r px-4 text-center"
@@ -74,7 +75,9 @@ export default function SampleBooks({
                      </div>
                      <h3 className="text-base font-semibold">{title}</h3>
                      <p className="mt-3 text-lg font-bold text-emerald-700 dark:text-emerald-400">
-                        {formatBookAmount(null)}
+                        {formatBookAmount(
+                           samplePrices[index % samplePrices.length],
+                        )}
                      </p>
                   </article>
                ))}

@@ -80,6 +80,7 @@ interface ProductOrder extends TableCommon {
 }
 
 interface Product extends TableCommon {
+   is_sample?: boolean;
    title: string;
    slug: string;
    status: 'draft' | 'pending' | 'approved' | 'rejected';

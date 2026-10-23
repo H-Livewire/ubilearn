@@ -1,10 +1,12 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import DashboardLayout from '@/layouts/dashboard/layout';
+import CircularProgress from './components/circular-progress';
+import PreparePdfUpload from './components/prepare-pdf-upload';
 import type { Paper, Page, Options } from './types';
 const blank = {
    title: '',
@@ -18,7 +20,6 @@ const blank = {
    source_name: '',
    question_file: null as File | null,
    marking_file: null as File | null,
-   instructions_file: null as File | null,
    published: true,
 };
 export default function Manage({
@@ -28,19 +29,33 @@ export default function Manage({
    papers: Page<Paper>;
    options: Options;
 }) {
+   const { system } = usePage<SharedData>().props;
+   const logoUrl =
+      system?.fields?.logo_dark || '/assets/icons/ubi-learn-logo-v2.png';
+   const [revision, setRevision] = useState(0);
+   const [pending, setPending] = useState({
+      question_file: false,
+      marking_file: false,
+   });
+   const awaitingReview = pending.question_file || pending.marking_file;
+   function clearUploads() {
+      setRevision((value) => value + 1);
+      setPending({ question_file: false, marking_file: false });
+   }
    const formRef = useRef<HTMLFormElement>(null);
    const [id, setId] = useState<number | null>(null);
-   const { data, setData, post, errors, processing, reset } = useForm(blank);
+   const { data, setData, post, errors, processing, reset, progress } =
+      useForm(blank);
    const fields: [keyof typeof blank, string][] = [
       ['title', 'Jina la mtihani'],
-      ['class_name', 'Darasa (mfano Form 4)'],
       ['subject', 'Somo'],
       ['year', 'Mwaka'],
       ['organizer', 'Shule / Mwandaaji'],
-      ['source_name', 'Jina la chanzo'],
    ];
+   const classOptions = options.classes?.[data.education] || {};
    function edit(p: Paper) {
       formRef.current?.reset();
+      clearUploads();
       setId(p.id);
       setData({
          ...blank,
@@ -58,10 +73,10 @@ export default function Manage({
 
    return (
       <>
-         <Head title="Past papers" />
+         <Head title="Past Papers" />
          <div className="mx-auto max-w-5xl space-y-6 p-4">
             <div className="flex justify-between">
-               <h1 className="text-2xl font-bold">Past papers</h1>
+               <h1 className="text-2xl font-bold">Past Papers</h1>
                <Link href="/examinations" className="underline">
                   Ona catalogue ↗
                </Link>
@@ -71,19 +86,25 @@ export default function Manage({
                className="rounded-lg border bg-card p-5"
                onSubmit={(e) => {
                   e.preventDefault();
+
+                  if (awaitingReview || processing) {
+return;
+}
+
                   post(`/dashboard/examination-papers${id ? `/${id}` : ''}`, {
                      forceFormData: true,
                      preserveScroll: true,
                      onSuccess: () => {
                         formRef.current?.reset();
                         reset();
+                        clearUploads();
                         setId(null);
                      },
                   });
                }}
             >
                <h2 className="mb-4 font-semibold">
-                  {id ? 'Hariri mtihani' : 'Ongeza mtihani'}
+                  {id ? 'Edit Past Paper' : 'Add Past Paper'}
                </h2>
                <div className="grid gap-4 sm:grid-cols-2">
                   {fields.map(([key, label]) => (
@@ -91,7 +112,7 @@ export default function Manage({
                         <Label htmlFor={key}>{label}</Label>
                         <Input
                            id={key}
-                           required={key === 'title'}
+                           required={['title', 'subject', 'year'].includes(key)}
                            type={
                               key === 'year'
                                  ? 'number'
@@ -112,6 +133,7 @@ export default function Manage({
                   {(
                      [
                         ['education', 'Kiwango cha elimu', options.education],
+                        ['class_name', 'Darasa / Class', classOptions],
                         [
                            'region',
                            'Mkoa',
@@ -122,7 +144,19 @@ export default function Manage({
                         [
                            'exam_type',
                            'Aina',
-                           Object.fromEntries(options.types.map((r) => [r, r])),
+                           Object.fromEntries(
+                              options.types.map((r) => [
+                                 r,
+                                 (
+                                    {
+                                       Annual: 'Annual Examination',
+                                       Mock: 'Mock Examination',
+                                       Joint: 'Joint Examination',
+                                       'Pre-NECTA': 'Pre-National Examination',
+                                    } as Record<string, string>
+                                 )[r] || r,
+                              ]),
+                           ),
                         ],
                      ] as [keyof typeof blank, string, Record<string, string>][]
                   ).map(([key, label, items]) => (
@@ -132,11 +166,43 @@ export default function Manage({
                            id={key}
                            className="h-10 w-full rounded-md border bg-background px-3"
                            value={String(data[key])}
-                           onChange={(e) => setData(key, e.target.value)}
+                           required={
+                              (key === 'class_name' || key === 'exam_type') &&
+                              data.education !== 'college'
+                           }
+                           onChange={(e) => {
+                              if (key === 'education') {
+                                 setData({
+                                    ...data,
+                                    education: e.target.value,
+                                    class_name: '',
+                                    region: '',
+                                    exam_type:
+                                       e.target.value === 'college'
+                                          ? ''
+                                          : data.exam_type,
+                                 });
+                              } else {
+                                 setData(key, e.target.value);
+                              }
+                           }}
                         >
                            {key !== 'education' && (
-                              <option value="">Kitaifa / Haijawekwa</option>
+                              <option value="">
+                                 {key === 'class_name'
+                                    ? 'Chagua darasa'
+                                    : key === 'region'
+                                      ? 'All regions / Kitaifa'
+                                      : 'Chagua aina'}
+                              </option>
                            )}
+                           {key === 'class_name' &&
+                              data.class_name &&
+                              !items[data.class_name] && (
+                                 <option value={data.class_name}>
+                                    {data.class_name}
+                                 </option>
+                              )}
                            {Object.entries(items).map(([value, title]) => (
                               <option key={value} value={value}>
                                  {title}
@@ -151,37 +217,35 @@ export default function Manage({
                      </div>
                   ))}
                </div>
-               <div className="my-5 grid gap-4 sm:grid-cols-3">
+               <div className="my-5 grid gap-4 sm:grid-cols-2">
                   {(
                      [
-                        ['question_file', 'PDF ya maswali', 'has_pdf'],
+                        ['question_file', 'Question Paper PDF', 'has_pdf'],
                         [
                            'marking_file',
-                           'Marking scheme / Majibu',
+                           'Marking Scheme PDF (optional)',
                            'has_marking',
                         ],
-                        ['instructions_file', 'Maelekezo', 'has_instructions'],
                      ] as const
                   ).map(([key, label, flag]) => (
                      <div className="space-y-2" key={key}>
-                        <Label htmlFor={key}>{label}</Label>
-                        <Input
+                        <PreparePdfUpload
+                           key={`${key}-${revision}`}
                            id={key}
-                           type="file"
-                           accept="application/pdf,.pdf"
-                           required={
-                              key === 'question_file' &&
-                              !papers.data.find((p) => p.id === id)?.has_pdf
-                           }
-                           onChange={(e) =>
-                              setData(key, e.target.files?.[0] ?? null)
+                           label={label}
+                           existing={Boolean(
+                              papers.data.find((p) => p.id === id)?.[flag],
+                           )}
+                           required={key === 'question_file'}
+                           logoUrl={logoUrl}
+                           onChange={(file) => setData(key, file)}
+                           onPendingChange={(value) =>
+                              setPending((current) => ({
+                                 ...current,
+                                 [key]: value,
+                              }))
                            }
                         />
-                        {papers.data.find((p) => p.id === id)?.[flag] && (
-                           <p className="text-sm text-primary">
-                              PDF ipo. Chagua nyingine kuibadilisha.
-                           </p>
-                        )}
                         {errors[key] && (
                            <p className="text-sm text-destructive">
                               {errors[key]}
@@ -190,6 +254,20 @@ export default function Manage({
                      </div>
                   ))}
                </div>
+               {progress && (
+                  <div className="mb-4">
+                     <CircularProgress
+                        value={progress.percentage || 0}
+                        label="Uploading prepared PDFs…"
+                     />
+                  </div>
+               )}
+               {awaitingReview && (
+                  <p role="status" className="mb-4 text-sm text-emerald-700">
+                     Prepare and review selected PDFs, then click “Use prepared
+                     PDF” before saving.
+                  </p>
+               )}
                <p className="mb-4 text-sm text-muted-foreground">
                   PDF tu · hadi 10 MB kwa faili.
                </p>
@@ -203,7 +281,7 @@ export default function Manage({
                </label>
                <div className="flex gap-3">
                   <Button
-                     disabled={processing}
+                     disabled={processing || awaitingReview}
                      className="bg-black text-white hover:bg-black/85"
                   >
                      {processing ? 'Inahifadhi…' : 'Hifadhi'}
@@ -215,6 +293,7 @@ export default function Manage({
                         onClick={() => {
                            formRef.current?.reset();
                            reset();
+                           clearUploads();
                            setId(null);
                         }}
                      >
@@ -226,7 +305,7 @@ export default function Manage({
             <div className="space-y-2">
                {papers.data.map((p) => (
                   <div
-                     className="flex items-center justify-between gap-4 rounded-lg border p-3"
+                     className="flex flex-wrap items-center justify-between gap-4 rounded-lg border p-3"
                      key={p.id}
                   >
                      <div>
@@ -237,12 +316,46 @@ export default function Manage({
                               : p.published
                                 ? 'Published'
                                 : 'Hidden'}{' '}
-                           · {p.region || 'Kitaifa'}
+                           ·{' '}
+                           {[
+                              options.education[p.education],
+                              p.class_name,
+                              p.subject,
+                              p.year,
+                              p.exam_type,
+                              p.region || 'All regions',
+                           ]
+                              .filter(Boolean)
+                              .join(' · ')}
                         </p>
                      </div>
-                     <Button variant="outline" onClick={() => edit(p)}>
-                        Hariri
-                     </Button>
+                     <div className="flex shrink-0 flex-wrap gap-2">
+                        {p.has_pdf && (
+                           <Button asChild variant="outline">
+                              <a
+                                 href={`/examinations/${p.id}/files/question`}
+                                 target="_blank"
+                                 rel="noopener noreferrer"
+                              >
+                                 View PDF
+                              </a>
+                           </Button>
+                        )}
+                        {p.has_marking && (
+                           <Button asChild variant="outline">
+                              <a
+                                 href={`/examinations/${p.id}/files/marking`}
+                                 target="_blank"
+                                 rel="noopener noreferrer"
+                              >
+                                 Marking Scheme
+                              </a>
+                           </Button>
+                        )}
+                        <Button variant="outline" onClick={() => edit(p)}>
+                           Edit
+                        </Button>
+                     </div>
                   </div>
                ))}
             </div>

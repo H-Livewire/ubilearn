@@ -15,11 +15,14 @@ function check($ok,$message){if(!$ok)throw new RuntimeException($message);}
 function results($c,$query=[]){$r=Request::create('/examinations','GET',$query);$r->headers->set('X-Inertia','true');return json_decode($c->index($r)->toResponse($r)->getContent(),true)['props']['papers'];}
 Storage::fake('local');$c=new ExamPaperController;
 check(results($c)['total']===0,'External source records must stay hidden');
-$data=['title'=>'Owned practice paper','education'=>'primary','class_name'=>'Standard 7','region'=>'Dar es Salaam','subject'=>'Science','year'=>2026,'published'=>true];
+$data=['title'=>'Owned practice paper','education'=>'primary','class_name'=>'Standard 7','region'=>'Dar es Salaam','subject'=>'Science','exam_type'=>'Annual','year'=>2026,'published'=>true];
 $pdf="%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF";
 try{
 $c->save(Request::create('/dashboard/examination-papers','POST',$data,[],['question_file'=>UploadedFile::fake()->createWithContent('questions.pdf',$pdf),'marking_file'=>UploadedFile::fake()->createWithContent('answers.pdf',$pdf)]));
 $p=ExamPaper::where('title',$data['title'])->firstOrFail();
+try{$c->save(Request::create('/dashboard/examination-papers','POST',array_merge($data,['class_name'=>'Form 4']),[],['question_file'=>UploadedFile::fake()->createWithContent('bad-class.pdf',$pdf)]));throw new RuntimeException('Mismatched class accepted');}catch(Illuminate\Validation\ValidationException $e){check(isset($e->errors()['class_name']),'Invalid class rejected');}
+check(results($c,['education'=>'primary','class_name'=>'Standard 7','exam_type'=>'Annual','region'=>'Dar es Salaam'])['total']===1,'Admin metadata appears in matching student filters');
+
 check($p->has_pdf && $p->has_marking && $p->has_answers,'Upload metadata');
 check(results($c,['education'=>'primary','class_name'=>'Class 7'])['total']===1,'Class labels match Standard records');
 check(results($c,['education'=>'primary','class_name'=>'Standard 4'])['total']===0,'Different primary classes remain isolated');

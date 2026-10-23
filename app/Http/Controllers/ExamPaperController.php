@@ -8,10 +8,11 @@ use Illuminate\Validation\ValidationException;
 class ExamPaperController extends Controller
 {
     public const EDUCATION = ['nursery'=>'Awali','primary'=>'Primary','olevel'=>'O-Level','alevel'=>'A-Level','college'=>'College / University'];
+    public const CLASSES = ['primary'=>['Standard 2'=>'Class 2','Standard 4'=>'Class 4','Standard 7'=>'Class 7'],'olevel'=>['Form 2'=>'Form 2','Form 4'=>'Form 4'],'alevel'=>['Form 5'=>'Form 5','Form 6'=>'Form 6'],'college'=>['Certificate'=>'Certificate','Diploma'=>'Diploma','Degree'=>'Degree'],'nursery'=>['Baby class'=>'Baby class','Middle class'=>'Middle class','Pre-unit'=>'Pre-unit']];
     public const REGIONS = ['Arusha','Dar es Salaam','Dodoma','Geita','Iringa','Kagera','Katavi','Kigoma','Kilimanjaro','Lindi','Manyara','Mara','Mbeya','Morogoro','Mtwara','Mwanza','Njombe','Pwani','Rukwa','Ruvuma','Shinyanga','Simiyu','Singida','Songwe','Tabora','Tanga','Kaskazini Pemba','Kaskazini Unguja','Kusini Pemba','Kusini Unguja','Mjini Magharibi'];
     public const TYPES = ['NECTA','Mock','Pre-Mock','Pre-NECTA','Joint','Monthly','Midterm','Terminal','Annual','Practice'];
     private function options(): array {
-        return ['education'=>self::EDUCATION,'regions'=>self::REGIONS,'types'=>self::TYPES];
+        return ['education'=>self::EDUCATION,'regions'=>self::REGIONS,'types'=>self::TYPES,'classes'=>self::CLASSES];
     }
     public function index(Request $request) {
         $filters=$request->validate(['q'=>'nullable|string|max:120','education'=>'nullable|in:'.implode(',',array_keys(self::EDUCATION)), 'class_name'=>'nullable|string|max:80','region'=>'nullable|in:'.implode(',',self::REGIONS),'subject'=>'nullable|string|max:80','year'=>'nullable|integer|between:1900,2100','exam_type'=>'nullable|in:'.implode(',',self::TYPES),'answers'=>'nullable|in:yes,no']);
@@ -53,7 +54,15 @@ class ExamPaperController extends Controller
 
     public function manage(){return Inertia::render('examinations/manage',['papers'=>ExamPaper::orderByDesc('id')->paginate(20),'options'=>$this->options()]);}
     public function save(Request $request, ?ExamPaper $paper=null){
-        $data=$request->validate(['title'=>'required|string|max:255','education'=>'required|in:'.implode(',',array_keys(self::EDUCATION)),'class_name'=>'nullable|string|max:80','region'=>'nullable|in:'.implode(',',self::REGIONS),'subject'=>'nullable|string|max:80','year'=>'nullable|integer|between:1900,2100','exam_type'=>'nullable|in:'.implode(',',self::TYPES),'organizer'=>'nullable|string|max:120','source_name'=>'nullable|string|max:120','published'=>'required|boolean']);
+        $data=$request->validate(['title'=>'required|string|max:255','education'=>'required|in:'.implode(',',array_keys(self::EDUCATION)),'class_name'=>'nullable|string|max:80','region'=>'nullable|in:'.implode(',',self::REGIONS),'subject'=>'nullable|string|max:80','year'=>'nullable|integer|between:1900,2100','exam_type'=>[!$paper && $request->input('education')!=='college'?'required':'nullable','in:'.implode(',',self::TYPES)],'organizer'=>'nullable|string|max:120','source_name'=>'nullable|string|max:120','published'=>'required|boolean']);
+        $class=trim($data['class_name']??'');
+        if($data['education']==='primary' && preg_match('/^(?:class|standard)\s+(2|4|7)$/i',$class,$match)) $class='Standard '.$match[1];
+        if(in_array($data['education'],['olevel','alevel'],true) && preg_match('/^form\s+(2|4|5|6)$/i',$class,$match)) $class='Form '.$match[1];
+        $legacy=$paper && $paper->education===$data['education'] && $paper->class_name===$class;
+        if(!$legacy && ($class!=='' || $data['education']!=='college') && !array_key_exists($class,self::CLASSES[$data['education']])) {
+            throw ValidationException::withMessages(['class_name'=>'Chagua darasa linalolingana na kiwango cha elimu.']);
+        }
+        $data['class_name']=$class?:null;
         $request->validate([
             'question_file'=>'nullable|file|mimes:pdf|max:10240',
             'marking_file'=>'nullable|file|mimes:pdf|max:10240',

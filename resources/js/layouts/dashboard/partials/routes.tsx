@@ -159,11 +159,11 @@ const getDashboardRoutes = (page: SharedData): DashboardRoute[] => {
             },
             {
                Icon: Book,
-               name: 'Past papers',
+               name: 'Past Papers',
                path: '/dashboard/examination-papers',
                slug: 'examination-papers',
                active: true,
-               access: ['admin', 'collaborative', 'administrative'],
+               access: ['admin'],
                children: [],
             },
             {

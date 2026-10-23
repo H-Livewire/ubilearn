@@ -1,0 +1,25 @@
+// Run with: node --experimental-strip-types scripts/check-past-paper-preparation.mjs
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { PDFDocument } from 'pdf-lib';
+import { preparePaperPdf } from '../resources/js/pages/examinations/lib/prepare-pdf.ts';
+const original = await PDFDocument.create();
+original.addPage([595, 842]);
+original.addPage([595, 842]);
+const field = original.getForm().createTextField('answer');
+field.setText('Preserved answer');
+field.addToPage(original.getPages()[0], { x: 40, y: 600, width: 200, height: 30 });
+const input = await original.save();
+const logo = new Uint8Array(await readFile(new URL('../public/assets/icons/ubi-learn-logo-v2.png', import.meta.url)));
+const percentages = [];
+const output = await preparePaperPdf(input, logo, [{ page: 1, x: 20, y: 760, width: 550, height: 65 }], .12, (value) => percentages.push(value));
+const prepared = await PDFDocument.load(output);
+assert.equal(prepared.getPageCount(), 2);
+assert.equal(prepared.getForm().getTextField('answer').getText(), 'Preserved answer');
+assert.equal(percentages.at(-1), 100);
+assert.ok(percentages.every((value, i) => value >= 0 && value <= 100 && (!i || value >= percentages[i - 1])));
+await assert.rejects(preparePaperPdf(input, logo, [], .12, () => {}, () => true), /cancelled/);
+const tooMany = await PDFDocument.create();
+for (let i = 0; i < 101; i++) tooMany.addPage();
+await assert.rejects(preparePaperPdf(await tooMany.save(), logo, [], .12, () => {}), /100/);
+console.log('PASS: watermark preparation, multiple pages, preserved form state, monotonic progress, cancellation and page limit.');

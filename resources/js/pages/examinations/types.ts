@@ -19,6 +19,7 @@ export interface Paper {
    published: boolean;
 }
 export interface Options {
+   classes?: Record<string, Record<string, string>>;
    education: Record<string, string>;
    regions: string[];
    types: string[];

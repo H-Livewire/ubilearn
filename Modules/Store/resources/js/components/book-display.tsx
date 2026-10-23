@@ -1,10 +1,9 @@
 import {
    Carousel,
    CarouselContent,
-   CarouselItem
-
+   CarouselItem,
 } from '@/components/ui/carousel';
-import type {CarouselApi} from '@/components/ui/carousel';
+import type { CarouselApi } from '@/components/ui/carousel';
 import { cn, systemCurrency } from '@/lib/utils';
 import { details } from '@/routes/products';
 import { Link, usePage } from '@inertiajs/react';
@@ -54,8 +53,8 @@ export function BookTile({
    const href = details({ slug: book.slug, id: book.id });
 
    if (compact) {
-return (
-         <article className="flex min-w-0 items-center gap-5 py-5 md:gap-7">
+      return (
+         <article className="ubi-book-tile flex min-w-0 items-center gap-5 py-5 md:gap-7">
             <Link href={href} className="w-24 shrink-0 sm:w-28">
                <img
                   src={book.thumbnail || '/assets/images/blank-image.jpg'}
@@ -78,10 +77,10 @@ return (
             </div>
          </article>
       );
-}
+   }
 
    return (
-      <article className="h-full px-4 text-center sm:px-6">
+      <article className="ubi-book-tile h-full px-4 text-center sm:px-6">
          <p className="mb-3 truncate text-xs text-muted-foreground">
             {book.instructor?.user?.name ||
                book.product_category?.title ||
@@ -119,18 +118,20 @@ export function BookShelf({
    title,
    books,
    background = false,
+   backgroundImage = '/assets/images/books-reading-background.png',
 }: {
    title: string;
    books: Product[];
    background?: boolean;
+   backgroundImage?: string;
 }) {
    const [api, setApi] = useState<CarouselApi>();
    const [selected, setSelected] = useState(0);
    const [snaps, setSnaps] = useState<number[]>([]);
    useEffect(() => {
       if (!api) {
-return;
-}
+         return;
+      }
 
       const update = () => {
          setSnaps(api.scrollSnapList());
@@ -156,8 +157,7 @@ return;
                   aria-hidden="true"
                   className="absolute inset-0 bg-cover bg-center opacity-25 dark:opacity-10"
                   style={{
-                     backgroundImage:
-                        "url('/assets/images/books-reading-background.png')",
+                     backgroundImage: `url("${backgroundImage}")`,
                   }}
                />
                <div

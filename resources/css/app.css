@@ -93,7 +93,7 @@
    The default border color has changed to `currentColor` in Tailwind CSS v4,
    so we've added these compatibility styles to make sure everything still
    looks the same as it did with Tailwind CSS v3.
- 
+
    If we ever want to remove these styles, we need to add an explicit border
    color utility to any element that depends on these defaults.
  */
@@ -728,4 +728,267 @@ button.rte-button.rte-button--primary.\!mt-3.\!w-full.cursor-pointer {
    color: #b42318;
    font-size: 12px;
    line-height: 1.6;
+}
+
+/* BookGlow: five real covers, stable DOM positions and GPU-only movement. */
+.bookglow {
+   position: relative;
+   isolation: isolate;
+   overflow: hidden;
+   min-height: 640px;
+   border-radius: 12px;
+   background: #10251c;
+   color: #fff8e8;
+   outline-offset: 4px;
+}
+.bookglow-background {
+   position: absolute;
+   inset: 0;
+   width: 100%;
+   height: 100%;
+   object-fit: cover;
+   transition: opacity 1200ms ease;
+   z-index: -3;
+}
+.bookglow-shade {
+   position: absolute;
+   inset: 0;
+   z-index: -2;
+   background:
+      radial-gradient(ellipse at 50% 53%, #dcb76624, transparent 55%),
+      linear-gradient(0deg, #07170fed, #122519a6 60%, #122519e8);
+}
+.bookglow-heading {
+   text-align: center;
+   padding: 30px 20px 0;
+}
+.bookglow-heading > span {
+   font-size: 10px;
+   text-transform: uppercase;
+   letter-spacing: 0.25em;
+   color: #dfc384;
+}
+.bookglow-heading h1 {
+   margin: 6px 0;
+   font-size: clamp(24px, 3vw, 36px);
+   font-weight: 600;
+   letter-spacing: -0.03em;
+}
+.bookglow-heading h1 span {
+   color: #e1c585;
+}
+.bookglow-heading p {
+   font-size: 12px;
+   color: #e9e1cfb3;
+}
+.bookglow-stage {
+   height: 350px;
+   position: relative;
+   perspective: 1200px;
+   --gap: clamp(85px, 15vw, 200px);
+}
+.bookglow-item {
+   position: absolute;
+   top: 28px;
+   left: 50%;
+   width: clamp(140px, 19vw, 210px);
+   height: 300px;
+   transform: translateX(calc(-50% + var(--slot) * var(--gap)))
+      translateY(calc(var(--depth) * 16px)) rotateY(calc(var(--slot) * -12deg))
+      scale(calc(1 - var(--depth) * 0.14));
+   opacity: calc(1 - var(--depth) * 0.18);
+   transition:
+      transform 850ms cubic-bezier(0.22, 0.68, 0.15, 1),
+      opacity 850ms ease,
+      filter 400ms ease;
+   filter: drop-shadow(0 24px 18px #0009);
+   transform-style: preserve-3d;
+}
+.bookglow-item img {
+   width: 100%;
+   height: 100%;
+   object-fit: contain;
+   border-radius: 3px 6px 6px 3px;
+}
+.bookglow-item.is-active {
+   filter: drop-shadow(0 24px 22px #000b) drop-shadow(0 0 18px #e1c58544);
+}
+.bookglow-item:hover,
+.bookglow-item:focus-visible {
+   filter: drop-shadow(0 20px 24px #000b) drop-shadow(0 0 22px #e1c58588);
+}
+.bookglow-item:focus-visible {
+   outline: 2px solid #e1c585;
+   outline-offset: 6px;
+}
+.bookglow-spine {
+   position: absolute;
+   left: 0;
+   top: 0;
+   bottom: 0;
+   width: 6px;
+   border-radius: 3px;
+   background: linear-gradient(90deg, #0005, #fff2, transparent);
+   pointer-events: none;
+}
+.bookglow-caption {
+   position: relative;
+   text-align: center;
+   padding: 4px 55px 55px;
+}
+.bookglow-caption > p {
+   font-size: 17px;
+   font-weight: 600;
+}
+.bookglow-caption a {
+   display: inline-flex;
+   align-items: center;
+   gap: 12px;
+   margin-top: 13px;
+   padding: 10px 22px;
+   border: 1px solid #d9ba737a;
+   color: #edd49e;
+   border-radius: 4px;
+   font-size: 12px;
+   font-weight: 600;
+   transition: background 0.2s;
+}
+.bookglow-caption a:hover {
+   background: #d9ba731c;
+}
+.bookglow-arrow,
+.bookglow-pause {
+   position: absolute;
+   display: grid;
+   place-items: center;
+   border: 1px solid #d9ba7366;
+   border-radius: 50%;
+   background: #0b1e16b3;
+   color: #edd49e;
+   transition:
+      background 0.2s,
+      transform 0.2s;
+}
+.bookglow-arrow {
+   top: 51%;
+   width: 42px;
+   height: 42px;
+}
+.bookglow-arrow:hover {
+   background: #83652c;
+}
+.bookglow-prev {
+   left: 18px;
+}
+.bookglow-next {
+   right: 18px;
+}
+.bookglow-pause {
+   bottom: 19px;
+   right: 22px;
+   width: 34px;
+   height: 34px;
+}
+.bookglow-dots {
+   position: absolute;
+   bottom: 17px;
+   left: 50%;
+   transform: translateX(-50%);
+   display: flex;
+}
+.bookglow-dots button {
+   width: 30px;
+   height: 30px;
+   display: grid;
+   place-items: center;
+}
+.bookglow-dots span {
+   width: 7px;
+   height: 7px;
+   border-radius: 50%;
+   background: #e7d7b75c;
+   transition:
+      transform 0.3s,
+      background 0.3s;
+}
+.bookglow-dots [aria-current='true'] span {
+   background: #e1c585;
+   transform: scale(1.4);
+   box-shadow: 0 0 12px #e1c58577;
+}
+.bookglow-empty {
+   padding: 70px 20px;
+   display: flex;
+   align-items: center;
+   flex-direction: column;
+   gap: 16px;
+   color: #e1c585;
+}
+.ubi-book-tile img {
+   transition:
+      transform 0.4s ease,
+      filter 0.4s ease;
+}
+.ubi-book-tile:hover img {
+   transform: translateY(-7px) rotate(-1deg);
+   filter: drop-shadow(0 16px 10px #0003);
+}
+.ubi-book-tile a {
+   transition: color 0.2s;
+}
+.ubi-offer-content {
+   animation: ubi-offer-enter 0.65s ease both;
+}
+@keyframes ubi-offer-enter {
+   from {
+      opacity: 0.25;
+      transform: translateY(10px);
+   }
+   to {
+      opacity: 1;
+      transform: translateY(0);
+   }
+}
+@media (max-width: 640px) {
+   .bookglow {
+      min-height: 575px;
+   }
+   .bookglow-stage {
+      height: 310px;
+      --gap: 95px;
+   }
+   .bookglow-item {
+      top: 30px;
+      height: 260px;
+      width: 155px;
+   }
+   .bookglow-heading {
+      padding-top: 24px;
+   }
+   .bookglow-caption > p {
+      font-size: 14px;
+   }
+   .bookglow-arrow {
+      width: 32px;
+      height: 32px;
+   }
+   .bookglow-prev {
+      left: 8px;
+   }
+   .bookglow-next {
+      right: 8px;
+   }
+}
+@media (prefers-reduced-motion: reduce) {
+   .bookglow *,
+   .ubi-book-tile img {
+      transition: none !important;
+      animation: none !important;
+   }
+   .ubi-offer-content {
+      animation: none;
+   }
+   .ubi-book-tile:hover img {
+      transform: none;
+   }
 }

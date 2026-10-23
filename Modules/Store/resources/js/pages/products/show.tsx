@@ -1,7 +1,6 @@
 import { Renderer } from '@/components/rich-editor';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import LandingLayout from '@/layouts/landing';
 import { systemCurrency } from '@/lib/utils';
@@ -9,16 +8,17 @@ import payments from '@/routes/payments';
 import { store as storeProductOrder } from '@/routes/product-orders';
 import { shop } from '@/routes/products';
 import productFiles from '@/routes/products/files';
-import { Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Star, Download, ShoppingBag } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
+import ProductCard from '../../components/product-card';
 import ProductWishlistHandler from '../../components/wishlist-handler';
 import Reviews from './partials/reviews';
 
 const Show = () => {
    const { props } = usePage<ProductDetailsProps>();
-   const { product, order, wishlists, auth } = props;
+   const { product, order, wishlists, auth, relatedBooks = [] } = props;
    const { amount } = systemCurrency(props.system.fields['selling_currency']);
    const [activeImage, setActiveImage] = useState(
       product.thumbnail || product.images?.[0]?.url,
@@ -30,11 +30,12 @@ const Show = () => {
       product.inventory <= 0;
 
    return (
-      <div className="container py-6">
+      <div className="container py-8 md:py-12">
+         <Head title={product.title} />
          <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
             <Link href="/">Home</Link>
             <span>/</span>
-            <Link href={shop.url()}>Store</Link>
+            <Link href={shop.url()}>Books</Link>
             {product.product_category && (
                <>
                   <span>/</span>
@@ -43,13 +44,13 @@ const Show = () => {
             )}
          </div>
 
-         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:gap-16">
             <div>
-               <div className="relative h-[380px] overflow-hidden rounded-xl bg-muted">
+               <div className="relative flex h-[420px] items-center justify-center overflow-hidden rounded-2xl border bg-muted/30 p-6 md:h-[560px] md:p-10">
                   <img
                      src={activeImage || '/assets/images/blank-image.jpg'}
                      alt={product.title}
-                     className="h-full w-full object-cover"
+                     className="h-full max-w-full object-contain drop-shadow-xl"
                   />
                </div>
                {product.images && product.images.length > 0 && (
@@ -77,8 +78,18 @@ const Show = () => {
                )}
             </div>
 
-            <div>
-               <h1 className="text-2xl font-bold md:text-3xl">
+            <div className="py-2 md:py-6">
+               {product.product_category && (
+                  <Link
+                     href={shop.url({
+                        category: product.product_category.slug,
+                     })}
+                     className="mb-4 inline-block text-sm font-semibold text-emerald-700 dark:text-emerald-400"
+                  >
+                     {product.product_category.title}
+                  </Link>
+               )}
+               <h1 className="text-2xl font-bold md:text-4xl">
                   {product.title}
                </h1>
 
@@ -98,10 +109,12 @@ const Show = () => {
 
                <div className="mt-4 flex items-center gap-3">
                   {product.pricing_type === 'free' ? (
-                     <span className="text-2xl font-bold">Free</span>
+                     <span className="text-3xl font-bold text-emerald-700 dark:text-emerald-400">
+                        Free
+                     </span>
                   ) : product.discount ? (
                      <>
-                        <span className="text-2xl font-bold">
+                        <span className="text-3xl font-bold text-emerald-700 dark:text-emerald-400">
                            {amount(product.discount_price as number)}
                         </span>
                         <span className="text-lg text-muted-foreground line-through">
@@ -109,18 +122,35 @@ const Show = () => {
                         </span>
                      </>
                   ) : (
-                     <span className="text-2xl font-bold">
+                     <span className="text-3xl font-bold text-emerald-700 dark:text-emerald-400">
                         {amount(product.price as number)}
                      </span>
                   )}
                </div>
 
-               <Separator className="my-4" />
+               <dl className="my-6 space-y-3 border-y py-5 text-sm">
+                  <div className="flex justify-between gap-5">
+                     <dt className="text-muted-foreground">Availability</dt>
+                     <dd className="font-medium">
+                        {outOfStock ? 'Out of stock' : 'Available'}
+                     </dd>
+                  </div>
+                  <div className="flex justify-between gap-5">
+                     <dt className="text-muted-foreground">Delivery</dt>
+                     <dd className="font-medium">Digital download</dd>
+                  </div>
+                  {product.specifications?.map((spec) => (
+                     <div key={spec.id} className="flex justify-between gap-5">
+                        <dt className="text-muted-foreground">{spec.title}</dt>
+                        <dd className="text-right font-medium">{spec.value}</dd>
+                     </div>
+                  ))}
+               </dl>
 
                {order ? (
                   <div className="space-y-3">
-                     <div className="rounded-lg border border-emerald-500 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700">
-                        You own this product
+                     <div className="rounded-lg border border-emerald-600/30 bg-emerald-600/10 px-4 py-2 text-sm font-medium text-emerald-700 dark:text-emerald-400">
+                        This book is in your library
                      </div>
 
                      {product.files && product.files.length > 0 ? (
@@ -164,8 +194,19 @@ const Show = () => {
                               {outOfStock ? 'Out of Stock' : 'Get for Free'}
                            </Button>
                         ) : (
-                           <Button asChild size="lg" disabled={outOfStock}>
+                           <Button
+                              asChild
+                              size="lg"
+                              className="bg-black font-bold text-white hover:bg-black/85 dark:border dark:border-white/20"
+                              disabled={outOfStock}
+                           >
                               <a
+                                 aria-disabled={outOfStock}
+                                 onClick={(event) => {
+                                    if (outOfStock) {
+                                       event.preventDefault();
+                                    }
+                                 }}
                                  href={payments.index.url({
                                     from: 'web',
                                     item: 'product',
@@ -173,7 +214,7 @@ const Show = () => {
                                  })}
                               >
                                  <ShoppingBag className="mr-2 h-4 w-4" />
-                                 {outOfStock ? 'Out of Stock' : 'Buy Now'}
+                                 {outOfStock ? 'Out of Stock' : 'Buy this book'}
                               </a>
                            </Button>
                         )
@@ -291,6 +332,30 @@ const Show = () => {
                </TabsContent>
             </Tabs>
          </Card>
+         {relatedBooks.length > 0 && (
+            <section className="mt-14" aria-labelledby="related-books">
+               <div className="mb-6 flex items-center justify-between border-b pb-4">
+                  <h2 id="related-books" className="text-2xl font-bold">
+                     Related books
+                  </h2>
+                  <Link
+                     href={shop.url()}
+                     className="text-sm font-semibold text-emerald-700 dark:text-emerald-400"
+                  >
+                     Browse all
+                  </Link>
+               </div>
+               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                  {relatedBooks.map((book) => (
+                     <ProductCard
+                        key={book.id}
+                        product={book}
+                        wishlists={wishlists}
+                     />
+                  ))}
+               </div>
+            </section>
+         )}
       </div>
    );
 };

@@ -1,14 +1,9 @@
 import { Button } from '@/components/ui/button';
-import {
-   Card,
-   CardContent,
-   CardFooter,
-   CardHeader,
-} from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { cn, systemCurrency } from '@/lib/utils';
 import { details } from '@/routes/products';
 import { Link, usePage } from '@inertiajs/react';
-import { Star } from 'lucide-react';
+import { ArrowUpRight, Star } from 'lucide-react';
 import ProductWishlistHandler from './wishlist-handler';
 
 interface Props {
@@ -20,107 +15,94 @@ interface Props {
 const ProductCard = ({ product, className, wishlists }: Props) => {
    const { props } = usePage<SharedData>();
    const { amount } = systemCurrency(props.system.fields['selling_currency']);
+   const href = details({ slug: product.slug, id: product.id });
+   const saving =
+      product.discount && Number(product.price) > Number(product.discount_price)
+         ? Math.round(
+              (1 - Number(product.discount_price) / Number(product.price)) *
+                 100,
+           )
+         : 0;
 
    return (
-      <Card className={cn('group p-0', className)}>
-         <CardHeader className="p-0">
-            <div className="relative">
-               <div className="p-2 pb-0">
-                  <Link href={details({ slug: product.slug, id: product.id })}>
-                     <div className="relative h-[190px] overflow-hidden rounded-lg">
-                        <img
-                           src={
-                              product.thumbnail ||
-                              '/assets/images/blank-image.jpg'
-                           }
-                           alt={product.title}
-                           className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
-                           onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = '/assets/images/blank-image.jpg';
-                           }}
-                        />
-                     </div>
-                  </Link>
-               </div>
-
-               <ProductWishlistHandler
-                  product={product}
-                  wishlists={wishlists}
-                  className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100"
-               />
-            </div>
-         </CardHeader>
-
-         <CardContent className="p-4">
-            <div className="mb-1 flex items-center gap-2 text-xs text-secondary-foreground">
-               <div className="flex items-center gap-1">
-                  {product.instructor?.user?.photo ? (
-                     <img
-                        src={product.instructor.user.photo}
-                        alt={product.instructor.user.name}
-                        className="h-4 w-4 rounded-full object-cover"
-                     />
-                  ) : null}
-                  <span>{product.instructor?.user?.name}</span>
-               </div>
-               {product.product_category && (
-                  <>
-                     <span>in</span>
-                     <span>{product.product_category.title}</span>
-                  </>
-               )}
-            </div>
-
-            <Link href={details({ slug: product.slug, id: product.id })}>
-               <p className="mb-2 font-semibold hover:text-secondary-foreground">
-                  {product.title}
-               </p>
-
-               <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                  <span>
-                     {product.average_rating
-                        ? Number(product.average_rating).toFixed(2)
-                        : '0.00'}
-                  </span>
-                  <span>({product.reviews_count || 0})</span>
-               </p>
-            </Link>
-         </CardContent>
-
-         <CardFooter className="flex w-full items-center justify-between p-4 pt-0">
-            <p className="capitalize">
-               {product.pricing_type === 'free' ? (
-                  <span className="font-semibold">Free</span>
-               ) : product.discount ? (
-                  <>
-                     <span className="font-semibold">
-                        {amount(product.discount_price as number)}
-                     </span>
-                     <span className="ml-2 text-sm font-medium text-muted-foreground line-through">
-                        {amount(product.price as number)}
-                     </span>
-                  </>
-               ) : (
-                  <span className="font-semibold">
-                     {amount(product.price as number)}
-                  </span>
-               )}
-            </p>
-
-            <Button
-               asChild
-               variant="outline"
-               className="border-secondary-100 px-2.5 hover:border-primary hover:bg-background"
+      <Card
+         className={cn(
+            'group flex h-full flex-col gap-0 overflow-hidden p-0 transition-shadow hover:shadow-lg',
+            className,
+         )}
+      >
+         <div className="relative bg-muted/40 p-5 sm:p-6">
+            <Link
+               href={href}
+               aria-label={`View ${product.title}`}
+               className="block"
             >
-               <Link href={details({ slug: product.slug, id: product.id })}>
-                  View
-               </Link>
-            </Button>
-         </CardFooter>
+               <img
+                  src={product.thumbnail || '/assets/images/blank-image.jpg'}
+                  alt={product.title}
+                  loading="lazy"
+                  className="mx-auto h-64 max-w-full object-contain drop-shadow-lg transition-transform duration-300 group-hover:-translate-y-1 motion-reduce:transform-none"
+               />
+            </Link>
+            {saving > 0 && (
+               <span className="absolute top-3 left-3 rounded-full bg-emerald-700 px-2.5 py-1 text-xs font-bold text-white">
+                  Save {saving}%
+               </span>
+            )}
+            <ProductWishlistHandler
+               product={product}
+               wishlists={wishlists}
+               className="absolute top-3 right-3"
+            />
+         </div>
+         <div className="flex flex-1 flex-col p-5">
+            <p className="mb-2 truncate text-xs font-medium text-emerald-700 dark:text-emerald-400">
+               {product.product_category?.title || 'Digital book'}
+            </p>
+            <Link
+               href={href}
+               className="line-clamp-2 text-lg leading-snug font-bold hover:text-emerald-700 dark:hover:text-emerald-400"
+            >
+               {product.title}
+            </Link>
+            {product.instructor?.user?.name && (
+               <p className="mt-2 truncate text-sm text-muted-foreground">
+                  {product.instructor.user.name}
+               </p>
+            )}
+            <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+               <Star className="h-3.5 w-3.5 fill-emerald-600 text-emerald-600" />
+               {Number(product.average_rating || 0).toFixed(1)} (
+               {product.reviews_count || 0})
+            </p>
+            <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-5">
+               <div>
+                  <p className="font-bold text-emerald-700 dark:text-emerald-400">
+                     {product.pricing_type === 'free'
+                        ? 'Free'
+                        : amount(
+                             Number(
+                                product.discount
+                                   ? product.discount_price
+                                   : product.price,
+                             ),
+                          )}
+                  </p>
+                  {saving > 0 && (
+                     <p className="text-xs text-muted-foreground line-through">
+                        {amount(Number(product.price))}
+                     </p>
+                  )}
+               </div>
+               <Button asChild size="sm" variant="outline">
+                  <Link href={href}>
+                     View book
+                     <ArrowUpRight className="ml-1 h-4 w-4" />
+                  </Link>
+               </Button>
+            </div>
+         </div>
       </Card>
    );
 };
-
 export default ProductCard;

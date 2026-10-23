@@ -117,6 +117,13 @@ class ProductController extends Controller
         ]));
         $totalReviews = $this->reviewService->totalReviews($product->id);
         $metaTags = $this->metaTagsAction->forSingleProduct($product);
+        $relatedBooks = Product::approved()->whereKeyNot($product->id)
+            ->where('product_category_id', $product->product_category_id)
+            ->whereHas('media', fn ($q) => $q->where('collection_name', Product::FILES_COLLECTION)->where('disk', 'books')->whereIn('mime_type', ['application/pdf', 'application/epub+zip']))
+            ->with(['instructor.user:id,name', 'product_category:id,title,slug'])
+            ->withCount('reviews')->withAvg('reviews as average_rating', 'rating')
+            ->latest()->limit(4)->get();
+
 
         return Inertia::render('Store/products/show', [
             'product' => $product,
@@ -124,6 +131,7 @@ class ProductController extends Controller
             'wishlists' => $wishlists,
             'reviews' => $reviews,
             'totalReviews' => $totalReviews,
+            'relatedBooks' => $relatedBooks,
         ])->withViewData($metaTags);
     }
 

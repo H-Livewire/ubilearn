@@ -27,6 +27,12 @@ const ProductWishlistHandler = ({ product, wishlists, className }: Props) => {
    );
 
    const handleWishlist = () => {
+      if (!user) {
+         router.visit('/login');
+
+         return;
+      }
+
       if (isWishlisted) {
          router.delete(productWishlists.destroy(isWishlisted.id), {
             showProgress: false,
@@ -56,11 +62,17 @@ const ProductWishlistHandler = ({ product, wishlists, className }: Props) => {
    return (
       <TooltipProvider delayDuration={0}>
          <Tooltip>
-            <TooltipTrigger className={className}>
+            <TooltipTrigger asChild>
                <Button
                   size="icon"
                   variant="ghost"
-                  className="bg-white/80 hover:bg-white"
+                  className={cn(
+                     'bg-background/90 text-foreground shadow-sm hover:bg-background',
+                     className,
+                  )}
+                  aria-label={
+                     isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'
+                  }
                   onClick={handleWishlist}
                >
                   <Heart

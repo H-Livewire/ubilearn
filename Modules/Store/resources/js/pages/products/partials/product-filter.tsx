@@ -17,9 +17,9 @@ const ProductFilter = ({ setOpen }: ProductFilterProps) => {
       newParams: Record<string, string>,
       categorySlug?: string,
    ) => {
-      const updatedParams = { ...urlParams, ...newParams };
+      const updatedParams = { ...urlParams, ...newParams, products_page: '1' };
 
-      if (!newParams.products_search && 'products_search' in updatedParams) {
+      if ('products_search' in newParams && !newParams.products_search) {
          delete updatedParams.products_search;
       }
 
@@ -48,7 +48,7 @@ const ProductFilter = ({ setOpen }: ProductFilterProps) => {
             <RadioGroup value={category?.slug || 'all'}>
                <p
                   className="flex items-center"
-                  onClick={() => filterHandler({}, '')}
+                  onClick={() => filterHandler({}, 'all')}
                >
                   <RadioGroupItem
                      className="cursor-pointer"

@@ -10,6 +10,7 @@ interface ProductsIndexProps extends SharedData {
 }
 
 interface ProductDetailsProps extends SharedData {
+   relatedBooks: Product[];
    product: Product;
    order: ProductOrder | null;
    wishlists: ProductWishlist[];

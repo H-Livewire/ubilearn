@@ -41,6 +41,10 @@ try{$book->addMedia(UploadedFile::fake()->createWithContent('bad.txt','not a boo
 // Simulate a legacy public book, then verify migration preserves ID and bytes.
 $path=$file->getPathRelativeToRoot();Storage::disk('public')->put($path,$pdf);Storage::disk('books')->delete($path);$file->disk='public';$file->save();
 check(Artisan::call('books:secure-files')===0,'Legacy migration command');$file->refresh();check($file->disk==='books' && Storage::disk('books')->get($path)===$pdf && !Storage::disk('public')->exists($path),'Legacy public copy secured');
+$popular=Product::create(['title'=>'Popular book','slug'=>'popular-book','summary'=>'Test','status'=>'approved','pricing_type'=>'paid','price'=>1000,'views'=>20,'instructor_id'=>1,'product_category_id'=>1]);
+$popular->addMedia(UploadedFile::fake()->createWithContent('popular.pdf',$pdf))->toMediaCollection(Product::FILES_COLLECTION);
+check($service->getProducts(['books_only'=>true,'status'=>'approved','sort'=>'most_viewed'])->first()->id===$popular->id,'Most viewed sort uses actual views');
+$popular->update(['featured'=>true]);check($service->getProducts(['books_only'=>true,'status'=>'approved','featured'=>true])->count()===1,'Featured filter');
 check(str_contains(route('products.shop',[],false),'/books'),'Books catalog URL');
 check(str_contains(route('products.edit',['product'=>$book->id],false),'/edit'),'Upload redirect URL');
 $disabled=new App\Http\Middleware\OnlineExamsDisabled;

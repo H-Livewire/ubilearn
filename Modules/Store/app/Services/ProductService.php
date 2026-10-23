@@ -126,6 +126,7 @@ class ProductService extends MediaService
             })
             ->when(array_key_exists('sort', $data) && $data['sort'], function ($query) use ($data) {
                 return match ($data['sort']) {
+                    'most_viewed' => $query->orderByDesc('views'),
                     'expensive' => $query->orderBy('price', 'desc'),
                     'inexpensive' => $query->orderBy('price', 'asc'),
                     'bestsellers' => $query->withCount('orders')->orderBy('orders_count', 'desc'),
@@ -163,9 +164,10 @@ class ProductService extends MediaService
     public function getGuestProductById(string $id): Product
     {
         $product = Product::where('id', $id)
-            ->withCount('orders')
+            ->withCount(['orders', 'reviews'])
             ->withAvg('reviews as average_rating', 'rating')
             ->with([
+                'product_category:id,title,slug',
                 'faqs' => function ($query) {
                     $query->select(['id', 'product_id', 'question', 'answer', 'sort']);
                 },
@@ -177,7 +179,7 @@ class ProductService extends MediaService
                         ->with('user:id,name,email,photo');
                 },
             ])
-            ->first();
+            ->firstOrFail();
 
         // Only the gallery is safe to expose pre-purchase; downloadable
         // files are served through the purchase-gated download route.

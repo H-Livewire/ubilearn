@@ -23,6 +23,27 @@ $p=ExamPaper::where('title',$data['title'])->firstOrFail();
 check($p->has_pdf && $p->has_marking && $p->has_answers,'Upload metadata');
 check(Storage::disk('local')->exists($p->files['question']['path']),'Stored question PDF');
 check(results($c,['region'=>'Dar es Salaam','answers'=>'yes'])['total']===1,'Region and answer filters');
+// Each landing shelf must query its level independently of the global paginator.
+$extra=[];
+for($i=0;$i<8;$i++){$copy=$p->replicate();$copy->education='olevel';$copy->exam_type='Mock';$copy->title='O-Level '.$i;$copy->save();$extra[]=$copy->id;}
+$r=Request::create('/examinations','GET');$r->headers->set('X-Inertia','true');
+$props=json_decode($c->index($r)->toResponse($r)->getContent(),true)['props'];
+check(count($props['levels']['primary'])===1 && count($props['levels']['olevel'])===6,'Independent bounded level shelves');
+check($props['levels']['college']===[],'Empty university shelf');
+check(results($c,['education'=>'olevel'])['total']===8,'View more includes all level papers');
+check(results($c,['education'=>'olevel','region'=>'Arusha'])['total']===0,'Level filters remain combined');
+$r=Request::create('/examinations','GET',['education'=>'olevel','exam_type'=>'Mock','region'=>'Dar es Salaam']);$r->headers->set('Accept','application/json');
+$json=json_decode($c->index($r)->getContent(),true);
+check($json['papers']['total']===8 && $json['papers']['data'][0]['education']==='olevel','Live level/type/region JSON filtering');
+check(count($json['papers']['data'])===6 && $json['papers']['next_page_url']!==null,'First six papers have a next page');
+$r=Request::create('/examinations','GET',['education'=>'olevel','exam_type'=>'Mock','region'=>'Dar es Salaam','page'=>2]);$r->headers->set('Accept','application/json');
+$last=json_decode($c->index($r)->getContent(),true)['papers'];
+check(count($last['data'])===2 && $last['next_page_url']===null,'Last page contains remaining papers only');
+check(count(array_intersect(array_column($json['papers']['data'],'id'),array_column($last['data'],'id')))===0,'Load more pages do not overlap');
+check(!isset($json['papers']['data'][0]['files']),'Live results do not expose storage metadata');
+$r=Request::create('/examinations','GET',['education'=>'primary','exam_type'=>'Mock']);$r->headers->set('Accept','application/json');
+check(json_decode($c->index($r)->getContent(),true)['papers']['total']===0,'Live filtering isolates levels');
+ExamPaper::whereIn('id',$extra)->delete();
 check(!isset($p->toArray()['files']) && !isset($p->toArray()['source_url']),'Private metadata hidden');
 foreach([false,true] as $download){$r=Request::create('/files','GET',['download'=>$download]);$response=$c->document($r,$p,'question');check(str_starts_with($response->headers->get('Content-Disposition'),$download?'attachment':'inline'),'Inline/download disposition');check($response->headers->get('Content-Type')==='application/pdf','PDF content type');ob_start();$response->sendContent();$body=ob_get_clean();check($body===$pdf,'PDF bytes');}
 $old=$p->files['question']['path'];$c->save(Request::create('/admin','POST',$data,[],['question_file'=>UploadedFile::fake()->createWithContent('replacement.pdf',$pdf)]),$p);check(!Storage::disk('local')->exists($old),'Old file cleaned after replacement');

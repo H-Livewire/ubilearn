@@ -1093,3 +1093,11 @@ button.rte-button.rte-button--primary.\!mt-3.\!w-full.cursor-pointer {
 @keyframes premium-tab-child { from { opacity:0; translate:0 8px; } to { opacity:1; translate:0 0; } }
 @keyframes premium-tab-out { to { opacity:0; transform:translateY(-12px); } }
 @media (prefers-reduced-motion:reduce) { .premium-tab-content, .premium-tab-content > * { animation:none !important; } .premium-tabs-indicator { transition:none; } }
+
+/* Three bouncing dots matching the supplied loader recording. */
+.paper-dot-loader { display:flex; align-items:center; gap:12px; height:64px; }
+.paper-dot-loader span { display:block; width:22px; height:22px; border-radius:50%; background:#047857; animation:paper-dot-bounce 450ms ease-in-out infinite alternate; }
+.paper-dot-loader span:nth-child(2) { animation-delay:75ms; }
+.paper-dot-loader span:nth-child(3) { animation-delay:150ms; }
+@keyframes paper-dot-bounce { from { transform:translateY(10px); } to { transform:translateY(-12px); } }
+@media (prefers-reduced-motion:reduce) { .paper-dot-loader span { animation:none; } }

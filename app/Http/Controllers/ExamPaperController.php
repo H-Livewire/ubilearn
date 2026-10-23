@@ -19,10 +19,20 @@ class ExamPaperController extends Controller
         foreach(['education','class_name','region','subject','year','exam_type'] as $field) if(!empty($filters[$field]))$query->where($field,$filters[$field]);
         if(!empty($filters['answers']))$query->where('has_answers',$filters['answers']==='yes');
         if(!empty($filters['q']))$query->where(function($q)use($filters){foreach(['title','subject','region','organizer'] as $field)$q->orWhere($field,'like','%'.$filters['q'].'%');});
+        if($request->expectsJson()) {
+            return response()->json(['papers'=>$query->orderByDesc('year')->orderBy('title')->paginate(6, ['*'], 'page', max(1, $request->integer('page', 1)))->withQueryString()]);
+        }
         $available=ExamPaper::where('published',true)->whereNotNull('files->question->path');
+        $levels=[];$levelTotals=[];
+        if(empty($filters['education'])) {
+            foreach(array_keys(self::EDUCATION) as $level) {
+                $levelTotals[$level]=(clone $query)->where('education',$level)->count();
+                $levels[$level]=(clone $query)->where('education',$level)->orderByDesc('year')->orderBy('title')->limit(6)->get();
+            }
+        }
         return Inertia::render('examinations/index',[
-            'papers'=>$query->orderByDesc('year')->orderBy('title')->paginate(12)->withQueryString(),
-            'filters'=>$filters,'options'=>$this->options(),
+            'papers'=>$query->orderByDesc('year')->orderBy('title')->paginate(6, ['*'], 'page', max(1, $request->integer('page', 1)))->withQueryString(),
+            'filters'=>$filters,'options'=>$this->options(),'levels'=>$levels,'levelTotals'=>$levelTotals,
             'subjects'=>(clone $available)->whereNotNull('subject')->distinct()->orderBy('subject')->pluck('subject'),
             'years'=>(clone $available)->whereNotNull('year')->distinct()->orderByDesc('year')->pluck('year'),
         ]);

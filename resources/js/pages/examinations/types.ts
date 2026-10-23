@@ -24,6 +24,7 @@ export interface Options {
    types: string[];
 }
 export interface Page<T> {
+   current_page?: number;
    data: T[];
    total: number;
    links: { url: string | null; label: string; active: boolean }[];

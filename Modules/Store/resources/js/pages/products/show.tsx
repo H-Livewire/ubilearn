@@ -9,10 +9,17 @@ import { store as storeProductOrder } from '@/routes/product-orders';
 import { shop } from '@/routes/products';
 import productFiles from '@/routes/products/files';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Star, Download, ShoppingBag } from 'lucide-react';
+import {
+   Star,
+   Download,
+   ShoppingBag,
+   Facebook,
+   Linkedin,
+   MessageCircle,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
-import ProductCard from '../../components/product-card';
+import { BookShelf } from '../../components/book-display';
 import ProductWishlistHandler from '../../components/wishlist-handler';
 import Reviews from './partials/reviews';
 
@@ -44,9 +51,9 @@ const Show = () => {
             )}
          </div>
 
-         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:gap-16">
+         <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:gap-24">
             <div>
-               <div className="relative flex h-[420px] items-center justify-center overflow-hidden rounded-2xl border bg-muted/30 p-6 md:h-[560px] md:p-10">
+               <div className="relative mx-auto flex h-[420px] max-w-lg items-center justify-center bg-muted/40 p-3 shadow-lg md:h-[620px]">
                   <img
                      src={activeImage || '/assets/images/blank-image.jpg'}
                      alt={product.title}
@@ -89,24 +96,32 @@ const Show = () => {
                      {product.product_category.title}
                   </Link>
                )}
-               <h1 className="text-2xl font-bold md:text-4xl">
+               <h1 className="text-2xl font-bold md:text-3xl">
                   {product.title}
                </h1>
 
-               <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                     <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                     {product.average_rating
-                        ? Number(product.average_rating).toFixed(2)
-                        : '0.00'}{' '}
-                     ({product.reviews_count || 0})
-                  </span>
-                  <span>by {product.instructor?.user?.name}</span>
-                  <span>{product.orders_count || 0} Sales</span>
-               </div>
-
-               <p className="mt-4 text-muted-foreground">{product.summary}</p>
-
+               <dl className="my-6 space-y-2 text-base">
+                  {product.specifications?.map((spec) => (
+                     <div key={spec.id}>
+                        <dt className="inline">{spec.title}: </dt>
+                        <dd className="inline text-emerald-700 dark:text-emerald-400">
+                           {spec.value}
+                        </dd>
+                     </div>
+                  ))}
+                  <div>
+                     <dt className="inline">Availability: </dt>
+                     <dd className="inline text-emerald-700 dark:text-emerald-400">
+                        {outOfStock ? 'Out of stock' : 'In stock'}
+                     </dd>
+                  </div>
+                  <div>
+                     <dt className="inline">Delivery: </dt>
+                     <dd className="inline text-emerald-700 dark:text-emerald-400">
+                        Digital download
+                     </dd>
+                  </div>
+               </dl>
                <div className="mt-4 flex items-center gap-3">
                   {product.pricing_type === 'free' ? (
                      <span className="text-3xl font-bold text-emerald-700 dark:text-emerald-400">
@@ -128,25 +143,22 @@ const Show = () => {
                   )}
                </div>
 
-               <dl className="my-6 space-y-3 border-y py-5 text-sm">
-                  <div className="flex justify-between gap-5">
-                     <dt className="text-muted-foreground">Availability</dt>
-                     <dd className="font-medium">
-                        {outOfStock ? 'Out of stock' : 'Available'}
-                     </dd>
-                  </div>
-                  <div className="flex justify-between gap-5">
-                     <dt className="text-muted-foreground">Delivery</dt>
-                     <dd className="font-medium">Digital download</dd>
-                  </div>
-                  {product.specifications?.map((spec) => (
-                     <div key={spec.id} className="flex justify-between gap-5">
-                        <dt className="text-muted-foreground">{spec.title}</dt>
-                        <dd className="text-right font-medium">{spec.value}</dd>
-                     </div>
+               <div className="my-7 flex items-center gap-1.5 text-sm text-muted-foreground">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                     <Star
+                        key={star}
+                        className={
+                           star <=
+                           Math.round(Number(product.average_rating || 0))
+                              ? 'h-4 w-4 fill-emerald-700 text-emerald-700'
+                              : 'h-4 w-4'
+                        }
+                     />
                   ))}
-               </dl>
-
+                  <span className="ml-2">
+                     ({product.reviews_count || 0} Reviews)
+                  </span>
+               </div>
                {order ? (
                   <div className="space-y-3">
                      <div className="rounded-lg border border-emerald-600/30 bg-emerald-600/10 px-4 py-2 text-sm font-medium text-emerald-700 dark:text-emerald-400">
@@ -178,7 +190,14 @@ const Show = () => {
                      )}
                   </div>
                ) : (
-                  <div className="flex gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                     <span className="text-sm text-muted-foreground">Qty</span>
+                     <span
+                        className="flex h-12 w-12 items-center justify-center rounded-full bg-muted font-semibold"
+                        aria-label="One digital copy"
+                     >
+                        1
+                     </span>
                      {auth.user ? (
                         product.pricing_type === 'free' ? (
                            <Button
@@ -230,9 +249,39 @@ const Show = () => {
                      />
                   </div>
                )}
+               <div className="mt-7 flex gap-3" aria-label="Share book">
+                  <a
+                     aria-label="Share on Facebook"
+                     target="_blank"
+                     rel="noopener noreferrer"
+                     href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`}
+                     className="rounded-full bg-emerald-700 p-3 text-white"
+                  >
+                     <Facebook className="h-5 w-5" />
+                  </a>
+                  <a
+                     aria-label="Share on LinkedIn"
+                     target="_blank"
+                     rel="noopener noreferrer"
+                     href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`}
+                     className="rounded-full bg-emerald-700 p-3 text-white"
+                  >
+                     <Linkedin className="h-5 w-5" />
+                  </a>
+                  <a
+                     aria-label="Share on WhatsApp"
+                     target="_blank"
+                     rel="noopener noreferrer"
+                     href={`https://wa.me/?text=${encodeURIComponent(product.title + ' ' + (typeof window !== 'undefined' ? window.location.href : ''))}`}
+                     className="rounded-full bg-emerald-700 p-3 text-white"
+                  >
+                     <MessageCircle className="h-5 w-5" />
+                  </a>
+               </div>
             </div>
          </div>
 
+         <BookShelf title="Related books" books={relatedBooks} />
          <Card className="mt-10 p-4 md:p-6">
             <Tabs defaultValue="description">
                <TabsList className="w-full justify-start overflow-x-auto">
@@ -332,30 +381,6 @@ const Show = () => {
                </TabsContent>
             </Tabs>
          </Card>
-         {relatedBooks.length > 0 && (
-            <section className="mt-14" aria-labelledby="related-books">
-               <div className="mb-6 flex items-center justify-between border-b pb-4">
-                  <h2 id="related-books" className="text-2xl font-bold">
-                     Related books
-                  </h2>
-                  <Link
-                     href={shop.url()}
-                     className="text-sm font-semibold text-emerald-700 dark:text-emerald-400"
-                  >
-                     Browse all
-                  </Link>
-               </div>
-               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                  {relatedBooks.map((book) => (
-                     <ProductCard
-                        key={book.id}
-                        product={book}
-                        wishlists={wishlists}
-                     />
-                  ))}
-               </div>
-            </section>
-         )}
       </div>
    );
 };

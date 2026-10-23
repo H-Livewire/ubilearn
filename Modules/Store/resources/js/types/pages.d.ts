@@ -2,7 +2,16 @@ interface ProductCategoriesIndexProps extends SharedData {
    categories: ProductCategory[];
 }
 
+interface BookShelves {
+   new_arrivals: Product[];
+   featured: Product[];
+   most_viewed: Product[];
+   best_sellers: Product[];
+   children: Product[];
+   special_offers: Product[];
+}
 interface ProductsIndexProps extends SharedData {
+   shelves: BookShelves;
    category?: ProductCategory | null;
    products: Pagination<Product>;
    categories: ProductCategory[];

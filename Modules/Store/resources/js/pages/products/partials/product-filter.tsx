@@ -17,7 +17,7 @@ const ProductFilter = ({ setOpen }: ProductFilterProps) => {
       newParams: Record<string, string>,
       categorySlug?: string,
    ) => {
-      const updatedParams = { ...urlParams, ...newParams, products_page: '1' };
+      const updatedParams: Record<string, string> = { ...urlParams, ...newParams, products_page: '1' };
 
       if ('products_search' in newParams && !newParams.products_search) {
          delete updatedParams.products_search;

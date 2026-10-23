@@ -11,7 +11,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\{Request,UploadedFile};
 use Modules\Store\Models\{Product,ProductOrder};
 function check($ok,$message){if(!$ok)throw new RuntimeException($message);}
-foreach(['users','instructors','product_categories','product_category_children'] as $table){Schema::create($table,function(Blueprint $t){$t->id();$t->timestamps();});DB::table($table)->insert(['id'=>1]);}
+foreach(['users','instructors','product_categories','product_category_children'] as $table){Schema::create($table,function(Blueprint $t){$t->id();$t->string('title')->nullable();$t->string('slug')->nullable();$t->string('name')->nullable();$t->unsignedBigInteger('user_id')->nullable();$t->timestamps();});DB::table($table)->insert(['id'=>1]);}
 DB::table('users')->insert(['id'=>2]);
 foreach(['database/migrations/2025_02_08_095546_create_media_table.php','Modules/Store/database/migrations/2026_08_05_145118_create_products_table.php','Modules/Store/database/migrations/2026_08_05_145128_create_product_orders_table.php'] as $path){(require dirname(__DIR__).'/'.$path)->up();}
 Storage::fake('books');Storage::fake('public');
@@ -45,6 +45,9 @@ $popular=Product::create(['title'=>'Popular book','slug'=>'popular-book','summar
 $popular->addMedia(UploadedFile::fake()->createWithContent('popular.pdf',$pdf))->toMediaCollection(Product::FILES_COLLECTION);
 check($service->getProducts(['books_only'=>true,'status'=>'approved','sort'=>'most_viewed'])->first()->id===$popular->id,'Most viewed sort uses actual views');
 $popular->update(['featured'=>true]);check($service->getProducts(['books_only'=>true,'status'=>'approved','featured'=>true])->count()===1,'Featured filter');
+DB::table('product_categories')->where('id',1)->update(['title'=>'Children’s books','slug'=>'children']);
+$popular->update(['discount'=>true,'discount_price'=>800]);
+$shelves=$service->getBookShelves();check($shelves['best_sellers']->first()->id===$book->id,'Shelf ranks completed purchases');check($shelves['special_offers']->count()===1,'Only real discounts appear as offers');check($shelves['children']->count()===2,'Children shelf matches category');check($shelves['featured']->count()===1,'Featured shelf');check($service->getBookShelves(999)['new_arrivals']->isEmpty(),'Shelves respect selected category');
 check(str_contains(route('products.shop',[],false),'/books'),'Books catalog URL');
 check(str_contains(route('products.edit',['product'=>$book->id],false),'/edit'),'Upload redirect URL');
 $disabled=new App\Http\Middleware\OnlineExamsDisabled;

@@ -13,6 +13,26 @@ use Modules\Store\Notifications\ProductApprovalNotification;
 
 class ProductService extends MediaService
 {
+    public function getBookShelves(?int $categoryId = null): array
+    {
+        $base = Product::withoutGlobalScope('order')->approved()
+            ->whereHas('media', fn ($q) => $q->where('collection_name', Product::FILES_COLLECTION)->where('disk', 'books')->whereIn('mime_type', ['application/pdf', 'application/epub+zip']))
+            ->when($categoryId, fn ($q) => $q->where('product_category_id', $categoryId))
+            ->with(['instructor.user:id,name', 'product_category:id,title,slug']);
+        $latest = (clone $base)->latest()->limit(10)->get();
+        $best = (clone $base)->withCount('orders')->orderByDesc('orders_count')->latest()->limit(10)->get();
+        return [
+            'new_arrivals' => $latest,
+            'featured' => (clone $base)->featured()->latest()->limit(8)->get(),
+            'most_viewed' => (clone $base)->orderByDesc('views')->latest()->limit(8)->get(),
+            'best_sellers' => $best,
+            'children' => (clone $base)->whereHas('product_category', fn ($q) => $q->where(function ($q) {
+                foreach (['%child%', '%kids%', '%watoto%'] as $term) $q->orWhereRaw('LOWER(title) LIKE ?', [$term]);
+            }))->latest()->limit(10)->get(),
+            'special_offers' => (clone $base)->where('pricing_type', 'paid')->where('discount', true)->where('discount_price', '>', 0)->whereColumn('discount_price', '<', 'price')->latest()->limit(5)->get(),
+        ];
+    }
+
     public function getCheckoutProduct(string $id): Product
     {
         return Product::where('status', 'approved')->whereHas('media', fn ($q) => $q->where('collection_name', Product::FILES_COLLECTION)->where('disk', 'books')->whereIn('mime_type', ['application/pdf','application/epub+zip']))->findOrFail($id);

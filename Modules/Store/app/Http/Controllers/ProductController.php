@@ -72,6 +72,7 @@ class ProductController extends Controller
         return Inertia::render('Store/products/index', [
             'products' => $products,
             'categories' => $categories,
+            'shelves' => $this->productService->getBookShelves($categoryModel?->id),
             'category' => $categoryModel,
             'wishlists' => $wishlists,
         ])->withViewData($metaTags);
@@ -122,7 +123,7 @@ class ProductController extends Controller
             ->whereHas('media', fn ($q) => $q->where('collection_name', Product::FILES_COLLECTION)->where('disk', 'books')->whereIn('mime_type', ['application/pdf', 'application/epub+zip']))
             ->with(['instructor.user:id,name', 'product_category:id,title,slug'])
             ->withCount('reviews')->withAvg('reviews as average_rating', 'rating')
-            ->latest()->limit(4)->get();
+            ->latest()->limit(10)->get();
 
 
         return Inertia::render('Store/products/show', [

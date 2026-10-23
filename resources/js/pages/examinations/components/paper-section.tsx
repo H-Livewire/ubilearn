@@ -348,7 +348,7 @@ export default function PaperSection({
                         role="status"
                      >
                         <img
-                           src="/assets/images/past-papers-empty.jpg"
+                           src="/assets/images/past-papers-empty-transparent.png"
                            alt=""
                            width={160}
                            height={160}

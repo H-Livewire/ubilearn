@@ -20,14 +20,15 @@ import {
    Eye,
    Search,
    ShoppingBag,
-   Pause,
-   Play,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { BookPrice, BookShelf, BookTile } from '../../components/book-display';
 import BookHeroCarousel from '../../components/book-hero-carousel';
-import SampleBooks, { schoolBookSamples } from '../../components/sample-books';
+import SampleBooks, {
+   FreeOnlineBooks,
+   schoolBookSamples,
+} from '../../components/sample-books';
 import ProductWishlistHandler from '../../components/wishlist-handler';
 import {
    sampleBooks,
@@ -62,7 +63,6 @@ const Index = ({
    const [offerIndex, setOfferIndex] = useState(0);
    const [search, setSearch] = useState(params.products_search || '');
    const [offerPaused, setOfferPaused] = useState(false);
-   const [offerAutoplay, setOfferAutoplay] = useState(true);
    const offerActive = offers.length ? offerIndex % offers.length : 0;
    const offer = offers[offerActive];
    useEffect(() => {
@@ -70,7 +70,6 @@ const Index = ({
 
       if (
          offerPaused ||
-         !offerAutoplay ||
          offers.length < 2 ||
          motion.matches
       ) {
@@ -93,7 +92,7 @@ const Index = ({
          window.clearInterval(timer);
          motion.removeEventListener('change', stop);
       };
-   }, [offerPaused, offerAutoplay, offers.length]);
+   }, [offerPaused, offers.length]);
    const browsing = params.browse === '1' || Boolean(params.products_search);
 
    return (
@@ -227,26 +226,6 @@ const Index = ({
                         <h1 className="bg-emerald-700 px-4 py-3 text-2xl font-semibold text-white">
                            Special offer
                         </h1>
-                        {offers.length > 1 && (
-                           <button
-                              type="button"
-                              className="absolute top-3 right-3 rounded-full p-1.5 text-white hover:bg-black/15"
-                              aria-label={
-                                 offerAutoplay
-                                    ? 'Pause special offers'
-                                    : 'Play special offers'
-                              }
-                              onClick={() =>
-                                 setOfferAutoplay((value) => !value)
-                              }
-                           >
-                              {offerAutoplay ? (
-                                 <Pause className="h-4 w-4" />
-                              ) : (
-                                 <Play className="h-4 w-4" />
-                              )}
-                           </button>
-                        )}
                         {offer ? (
                            <div
                               key={offer.id}
@@ -472,6 +451,9 @@ const Index = ({
                      backgroundImage="/assets/images/school-books-background.jpeg"
                   />
                )}
+
+               <div aria-hidden="true" className="h-10 bg-white md:h-16" />
+               <FreeOnlineBooks />
 
                <div aria-hidden="true" className="h-10 bg-white md:h-16" />
                <BookShelf

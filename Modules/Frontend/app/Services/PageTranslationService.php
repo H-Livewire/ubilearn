@@ -174,6 +174,7 @@ class PageTranslationService
      */
     private function applyLiveStats(ProjectPage $page): void
     {
+        $this->applyPartnerMarquee($page);
         $content = (string) $page->content;
 
         if (! str_contains($content, 'readers worldwide')) {
@@ -204,6 +205,81 @@ class PageTranslationService
         }
 
         $page->content = $content;
+    }
+
+    /**
+     * The static "Trusted by over 100 leading companies worldwide" logo grid is
+     * swapped, at render time only, for the live `partner-marquee` component
+     * (real count, admin-managed logos, smooth marquee). Saved content is untouched.
+     */
+    private function applyPartnerMarquee(ProjectPage $page): void
+    {
+        $content = (string) $page->content;
+
+        if (! str_contains($content, 'Trusted by')) {
+            return;
+        }
+
+        $tree = json_decode($content, true);
+
+        if (! is_array($tree)) {
+            return;
+        }
+
+        $encoded = json_encode(
+            $this->replacePartnerBlocks($tree),
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        );
+
+        if (is_string($encoded)) {
+            $page->content = $encoded;
+        }
+    }
+
+    private function isPartnerTitle(mixed $node): bool
+    {
+        if (! is_array($node) || ($node['type'] ?? null) !== 'paragraph') {
+            return false;
+        }
+
+        $text = $node['content']['innerText'] ?? '';
+
+        return is_string($text) && preg_match('/^\s*Trusted by .*compan(y|ies)\b/i', $text) === 1;
+    }
+
+    /**
+     * @param  array<int|string, mixed>  $nodes
+     * @return array<int|string, mixed>
+     */
+    private function replacePartnerBlocks(array $nodes): array
+    {
+        foreach ($nodes as $key => $node) {
+            if (! is_array($node)) {
+                continue;
+            }
+
+            $children = isset($node['content']) && is_array($node['content']) ? $node['content'] : [];
+
+            // The container that holds the title paragraph plus the logo grid.
+            if ($children && array_filter($children, fn ($child) => $this->isPartnerTitle($child))) {
+                $nodes[$key] = [
+                    'id' => 'partner-marquee-'.substr(md5((string) ($node['id'] ?? $key)), 0, 8),
+                    'name' => 'Dynamic Wrapper',
+                    'type' => 'dynamicWrapper',
+                    'styles' => [],
+                    'className' => null,
+                    'content' => ['componentRef' => 'partner-marquee'],
+                ];
+
+                continue;
+            }
+
+            if ($children) {
+                $nodes[$key]['content'] = $this->replacePartnerBlocks($children);
+            }
+        }
+
+        return $nodes;
     }
 
     private function isProofBlock(mixed $node): bool

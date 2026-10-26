@@ -56,12 +56,6 @@ class NavbarSeeder extends Seeder
             ],
             [
                 'type' => 'url',
-                'slug' => 'careers',
-                'title' => 'Careers',
-                'value' => '/careers',
-            ],
-            [
-                'type' => 'url',
                 'slug' => 'blogs',
                 'title' => 'Blogs',
                 'value' => '/blogs/all',

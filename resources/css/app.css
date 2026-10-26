@@ -1080,7 +1080,7 @@ button.rte-button.rte-button--primary.\!mt-3.\!w-full.cursor-pointer {
 }
 
 /* Shared tab transitions: keep visited panels mounted to retain form state. */
-.premium-tabs-indicator { position:absolute; left:0; bottom:0; pointer-events:none; background:var(--primary); border-radius:2px; transition:transform 320ms cubic-bezier(.22,1,.36,1),width 320ms cubic-bezier(.22,1,.36,1),opacity 160ms; }
+.premium-tabs-indicator { position:absolute; left:0; bottom:0; pointer-events:none; background:#047857; border-radius:2px; transition:transform 320ms cubic-bezier(.22,1,.36,1),width 320ms cubic-bezier(.22,1,.36,1),opacity 160ms; }
 .premium-tabs-list[data-orientation="vertical"] .premium-tabs-indicator { display:none; }
 .premium-tab-content[hidden] { display:none !important; }
 .premium-tab-content[data-transition="exit"] { animation:premium-tab-out 100ms ease-out both; pointer-events:none; }
@@ -1101,3 +1101,19 @@ button.rte-button.rte-button--primary.\!mt-3.\!w-full.cursor-pointer {
 .paper-dot-loader span:nth-child(3) { animation-delay:150ms; }
 @keyframes paper-dot-bounce { from { transform:translateY(10px); } to { transform:translateY(-12px); } }
 @media (prefers-reduced-motion:reduce) { .paper-dot-loader span { animation:none; } }
+
+/* Smooth, endless company-logo marquee (the track holds two identical halves). */
+.ubi-marquee {
+   -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+   mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.ubi-marquee-track {
+   animation: ubi-marquee linear infinite;
+   will-change: transform;
+}
+.ubi-marquee:hover .ubi-marquee-track { animation-play-state: paused; }
+@keyframes ubi-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) {
+   .ubi-marquee { overflow-x: auto; }
+   .ubi-marquee-track { animation: none; }
+}

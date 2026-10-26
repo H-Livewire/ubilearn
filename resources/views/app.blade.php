@@ -206,6 +206,9 @@
                 border-radius: 0;
                 filter: invert(1) hue-rotate(180deg);
             }
+            html.dark img[src$="/assets/icons/ubi-learn-logo-trim.png"] {
+                filter: invert(1) hue-rotate(180deg);
+            }
             html.dark .ubi-login-brand img[src$="/assets/icons/ubi-learn-logo-v2.png"] {
                 filter: none;
             }

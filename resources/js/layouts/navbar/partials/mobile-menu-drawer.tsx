@@ -7,7 +7,6 @@ import {
    Heart,
    LayoutDashboard,
    LogOut,
-   Monitor,
    Moon,
    SettingsIcon,
    Sun,
@@ -176,7 +175,12 @@ const MobileMenuDrawer = ({
                            className={menuItemClass}
                            onClick={() => langHandler(lang.code)}
                         >
-                           {lang.name}
+                           <span className="flex items-center gap-2">
+                              {lang.flag && (
+                                 <span aria-hidden="true">{lang.flag}</span>
+                              )}
+                              {lang.name}
+                           </span>
                            {lang.code === locale && (
                               <Check className="h-4 w-4" />
                            )}
@@ -303,11 +307,6 @@ const MobileMenuDrawer = ({
                      [
                         { value: 'light' as const, label: 'Light', Icon: Sun },
                         { value: 'dark' as const, label: 'Dark', Icon: Moon },
-                        {
-                           value: 'system' as const,
-                           label: 'System',
-                           Icon: Monitor,
-                        },
                      ] as const
                   ).map(({ value, label, Icon }) => (
                      <Button

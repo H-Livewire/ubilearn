@@ -1,5 +1,6 @@
 import { usePage } from '@inertiajs/react';
 import Appearance from '@/components/appearance';
+import CartButton from '@/components/cart-button';
 import Language from '@/components/language';
 import Notification from '@/components/notification';
 import ProfileToggle from '@/components/profile-toggle';
@@ -34,6 +35,8 @@ const Actions = ({ language }: { language: boolean }) => {
          <div className="hidden items-center gap-2 md:flex">
             {actionElements()}
          </div>
+
+         <CartButton />
 
          {isLoggedIn ? (
             sortedItems.map((item) => {

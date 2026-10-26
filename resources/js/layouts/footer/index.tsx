@@ -4,6 +4,9 @@ import AppLogo from '@/components/app-logo';
 import { Button } from '@/components/ui/button';
 import type { SystemProps } from '@/pages/dashboard/settings/system';
 
+const FIRST_YEAR = 2026;
+const SITE_NAME = 'Ubilearn';
+
 const Index = () => {
    const { props } = usePage<SystemProps>();
    const { footer, system } = props;
@@ -11,9 +14,6 @@ const Index = () => {
    const sortedItems = footer.footer_items.toSorted((a, b) => a.sort - b.sort);
    const listItems = sortedItems.filter(
       (item) => item.type === 'list' && item.active,
-   );
-   const copyrightItem = sortedItems.find(
-      (item) => item.type === 'copyright' && item.active,
    );
    const socialMediaItem = sortedItems.find(
       (item) => item.type === 'social_media' && item.active,
@@ -45,7 +45,7 @@ const Index = () => {
                                     key={idx}
                                     size="icon"
                                     variant="ghost"
-                                    className="rounded-full bg-muted text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
+                                    className="rounded-full bg-muted text-muted-foreground transition-colors hover:bg-[#047857] hover:text-white"
                                     asChild
                                  >
                                     <a href={socialItem.url} target="_blank">
@@ -90,13 +90,14 @@ const Index = () => {
          </div>
 
          {/* Copyright Section */}
-         {copyrightItem && (
-            <div className="px-6 py-8 text-center">
+         <div className="border-t border-border/60">
+            <div className="container py-5 text-left">
                <p className="text-sm text-muted-foreground">
-                  {copyrightItem.title}
+                  © Copyright {FIRST_YEAR}-{new Date().getFullYear()} {SITE_NAME}
+                  . All rights reserved.
                </p>
             </div>
-         )}
+         </div>
       </div>
    );
 };

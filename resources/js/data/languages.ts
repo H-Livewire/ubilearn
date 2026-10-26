@@ -637,7 +637,7 @@ const languages = [
       nativeName: 'Gĩkũyũ',
       direction: 'ltr',
       reviewed: true,
-      flag: '🇰🇪'
+      flag: '🇹🇿'
    },
    {
       code: 'rw',
@@ -1197,7 +1197,7 @@ const languages = [
       nativeName: 'Kiswahili',
       direction: 'ltr',
       reviewed: true,
-      flag: '🇰🇪'
+      flag: '🇹🇿'
    },
    {
       code: 'ss',

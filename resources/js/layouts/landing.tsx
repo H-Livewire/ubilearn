@@ -11,23 +11,13 @@ interface LayoutProps {
    language?: boolean;
 }
 
-const LandingLayout = ({ children, language = false }: LayoutProps) => {
+const LandingLayout = ({ children, language = true }: LayoutProps) => {
    const { props } = usePage<FrontendPageProps>();
    const { page, frontend } = props;
 
-   const lastSegment =
-      typeof window !== 'undefined'
-         ? window.location.href.split('/').pop()
-         : (page?.slug ?? '');
-
-   const navbarHeight =
-      lastSegment === 'careers'
-         ? false
-         : page
-           ? page.type === 'home' || page.type !== 'inner'
-              ? true
-              : false
-           : true;
+   // The navbar is fixed, so every page reserves its height; otherwise the
+   // first section slides under it (visible on Blogs and other inner pages).
+   const navbarHeight = true;
 
    const customizable = frontend
       ? false

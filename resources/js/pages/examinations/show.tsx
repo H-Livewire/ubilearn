@@ -4,8 +4,17 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import LandingLayout from '@/layouts/landing';
+import PaperComments from './components/paper-comments';
+import RelatedPapers from './components/related-papers';
+import type { RelatedPaper } from './components/related-papers';
 import type { Paper } from './types';
-export default function PaperDetails({ paper: p }: { paper: Paper }) {
+export default function PaperDetails({
+   paper: p,
+   related = [],
+}: {
+   paper: Paper;
+   related?: RelatedPaper[];
+}) {
    const [kind, setKind] = useState('question');
    const url = `/examinations/${p.id}/files/${kind}`;
 
@@ -78,9 +87,12 @@ export default function PaperDetails({ paper: p }: { paper: Paper }) {
                src={url}
                className="h-[75vh] w-full rounded-lg border bg-white"
             />
-            <p className="text-sm text-muted-foreground">
-               Ikiwa simu yako haionyeshi PDF hapa, tumia Download PDF.
-            </p>
+            <div className="pt-6">
+               <PaperComments paperId={p.id} />
+            </div>
+            <div className="pt-6">
+               <RelatedPapers papers={related} />
+            </div>
          </main>
       </>
    );

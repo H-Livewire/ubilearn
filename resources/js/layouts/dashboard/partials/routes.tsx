@@ -2,6 +2,7 @@ import {
    Award,
    Book,
    Bot,
+   Building2,
    Briefcase,
    CreditCard,
    FilePenLine,
@@ -164,6 +165,15 @@ const getDashboardRoutes = (page: SharedData): DashboardRoute[] => {
                slug: 'examination-papers',
                active: true,
                access: ['admin', 'collaborative', 'administrative'],
+               children: [],
+            },
+            {
+               Icon: Building2,
+               name: 'Company Logos',
+               path: '/dashboard/company-logos',
+               slug: 'company-logos',
+               active: true,
+               access: ['admin'],
                children: [],
             },
             {

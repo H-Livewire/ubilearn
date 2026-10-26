@@ -4,6 +4,7 @@ import CommunityProof from '@/frontend/page-jsx/dynamic/community-proof';
 import CourseSearchInput from '@/frontend/page-jsx/dynamic/course-search-input';
 import EmailSubscribeInput from '@/frontend/page-jsx/dynamic/email-subscribe-input';
 import NewBlogsCarousel from '@/frontend/page-jsx/dynamic/new-blogs-carousel';
+import PartnerMarquee from '@/frontend/page-jsx/dynamic/partner-marquee';
 import NewCourses1 from '@/frontend/page-jsx/dynamic/new-courses-1';
 import NewCoursesCarousel1 from '@/frontend/page-jsx/dynamic/new-courses-carousel-1';
 import TopCourseCategories1 from '@/frontend/page-jsx/dynamic/top-course-categories-1';
@@ -31,6 +32,7 @@ import TopTestimonialsCarousel2 from '@/frontend/page-jsx/dynamic/top-testimonia
 export const DYNAMIC_COMPONENTS: Record<string, React.ComponentType<any>> = {
    'best-course': BestCourse,
    'community-proof': CommunityProof,
+   'partner-marquee': PartnerMarquee,
    'new-blogs-carousel': NewBlogsCarousel,
    'top-courses-1': TopCourses1,
    'new-courses-1': NewCourses1,

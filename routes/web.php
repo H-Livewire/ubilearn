@@ -64,6 +64,12 @@ Route::middleware(['web'])->group(function () {
     Route::get('examinations/{paper}/files/{kind}', [\App\Http\Controllers\ExamPaperController::class, 'document'])->whereNumber('paper')->whereIn('kind',['question','marking','instructions']);
     Route::get('examinations/{paper}/cover', [\App\Http\Controllers\ExamPaperController::class, 'cover'])->whereNumber('paper');
     Route::get('examinations/{paper}', [\App\Http\Controllers\ExamPaperController::class, 'show'])->whereNumber('paper')->name('examinations.show');
+    Route::get('examinations/{paper}/comments', [\App\Http\Controllers\ExamPaperCommentController::class, 'index'])->whereNumber('paper');
+    Route::middleware('auth')->group(function () {
+        Route::post('examinations/{paper}/comments', [\App\Http\Controllers\ExamPaperCommentController::class, 'store'])->whereNumber('paper')->middleware('throttle:20,1');
+        Route::delete('examination-comments/{comment}', [\App\Http\Controllers\ExamPaperCommentController::class, 'destroy'])->whereNumber('comment');
+        Route::post('examination-comments/{comment}/like', [\App\Http\Controllers\ExamPaperCommentController::class, 'like'])->whereNumber('comment')->middleware('throttle:60,1');
+    });
     Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::get('dashboard/examination-papers', [\App\Http\Controllers\ExamPaperController::class, 'manage']);
         Route::post('dashboard/examination-papers', [\App\Http\Controllers\ExamPaperController::class, 'save']);
@@ -72,6 +78,11 @@ Route::middleware(['web'])->group(function () {
         Route::delete('dashboard/examination-papers/{paper}/files/{kind}', [\App\Http\Controllers\ExamPaperController::class, 'destroyFile'])->whereNumber('paper')->whereIn('kind',['marking']);
         Route::post('dashboard/examination-papers/{paper}/cover', [\App\Http\Controllers\ExamPaperController::class, 'saveCover'])->whereNumber('paper');
         Route::post('dashboard/examination-papers/{paper}', [\App\Http\Controllers\ExamPaperController::class, 'save'])->whereNumber('paper');
+
+        Route::get('dashboard/company-logos', [\App\Http\Controllers\CompanyLogoController::class, 'manage']);
+        Route::post('dashboard/company-logos', [\App\Http\Controllers\CompanyLogoController::class, 'store']);
+        Route::post('dashboard/company-logos/{logo}', [\App\Http\Controllers\CompanyLogoController::class, 'update'])->whereNumber('logo');
+        Route::delete('dashboard/company-logos/{logo}', [\App\Http\Controllers\CompanyLogoController::class, 'destroy'])->whereNumber('logo');
     });
 
     // Catch-all route for inner pages

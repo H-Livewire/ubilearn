@@ -22,7 +22,7 @@ interface NavbarProps {
 }
 
 const Navbar = ({
-   language = false,
+   language = true,
    heightCover = true,
    customizable = true,
 }: NavbarProps) => {
@@ -59,7 +59,7 @@ const Navbar = ({
                   <Link
                      key={item.id}
                      href={item.value || ''}
-                     className="text-sm font-normal"
+                     className="text-sm leading-none font-normal"
                   >
                      {item.title}
                   </Link>
@@ -68,7 +68,7 @@ const Navbar = ({
             case 'dropdown':
                return (
                   <DropdownMenu key={item.id}>
-                     <DropdownMenuTrigger className="flex cursor-pointer items-center gap-1 text-sm">
+                     <DropdownMenuTrigger className="flex cursor-pointer items-center gap-1 text-sm leading-none">
                         {item.title}
                         <ChevronDown className="ml-1 h-4 w-4" />
                      </DropdownMenuTrigger>
@@ -114,10 +114,13 @@ const Navbar = ({
                   href="/"
                   className="flex shrink-0 items-center justify-center leading-none"
                >
-                  <AppLogo />
+                  <AppLogo
+                     className="h-12 md:h-[60px]"
+                     trimmedClassName="-translate-y-[26%] !w-auto !max-w-none"
+                  />
                </Link>
 
-               <div className="hidden min-w-0 flex-1 items-center justify-center gap-5 whitespace-nowrap xl:flex">
+               <div className="hidden h-full min-w-0 flex-1 items-center justify-center gap-5 whitespace-nowrap xl:flex">
                   {sortedItems.map((item) => (
                      <Fragment key={item.id}>{renderNavItems(item)}</Fragment>
                   ))}

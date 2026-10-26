@@ -1,6 +1,36 @@
+import { toast } from 'sonner';
+import { toggleWantToRead, useWantToRead } from '@/lib/book-cart';
+import { cn } from '@/lib/utils';
+import { shop } from '@/routes/products';
 import { formatBookAmount } from '../lib/book-price';
-import { samplePrices } from '../lib/sample-books';
+import { samplePrices, sampleBooks } from '../lib/sample-books';
+import { BookFavorite, BookHoverActions } from './book-actions';
 import { ShelfHeading } from './book-display';
+
+/** Stable negative id so sample covers can sit in the cart and favourites. */
+function sampleProduct(
+   title: string,
+   file: string,
+   price: number,
+): Product {
+   let hash = 0;
+
+   for (const char of file) {
+      hash = (hash * 31 + char.charCodeAt(0)) % 100000;
+   }
+
+   return {
+      ...sampleBooks[0],
+      id: -(1000 + hash),
+      title,
+      slug: `sample-${hash}`,
+      price,
+      thumbnail: `/assets/images/book-samples/${file}`,
+      is_sample: true,
+   };
+}
+
+const sampleHref = shop.url({ category: 'all' }, { query: { browse: 1 } });
 
 type SampleCover = [title: string, file: string];
 
@@ -65,12 +95,27 @@ export default function SampleBooks({
                      <p className="mb-3 text-xs text-muted-foreground">
                         Sample book
                      </p>
-                     <div className="mb-5 flex h-64 items-center justify-center">
+                     <div className="group relative mb-5 flex h-64 items-center justify-center">
                         <img
                            src={'/assets/images/book-samples/' + file}
                            alt={title}
                            loading="lazy"
                            className="h-full w-full object-contain"
+                        />
+                        <BookFavorite
+                           book={sampleProduct(
+                              title,
+                              file,
+                              samplePrices[index % samplePrices.length],
+                           )}
+                        />
+                        <BookHoverActions
+                           book={sampleProduct(
+                              title,
+                              file,
+                              samplePrices[index % samplePrices.length],
+                           )}
+                           href={sampleHref}
                         />
                      </div>
                      <h3 className="text-base font-semibold">{title}</h3>
@@ -81,6 +126,89 @@ export default function SampleBooks({
                      </p>
                   </article>
                ))}
+            </div>
+         </div>
+      </section>
+   );
+}
+
+const FREE_BACKGROUND = '/assets/images/free-online-books.jpg';
+const FREE_BACKGROUND_FALLBACK = '/assets/images/bookglow-library.jpg';
+
+/** Free online books preview with a "Want to Read" list kept in this browser. */
+export function FreeOnlineBooks() {
+   const wanted = useWantToRead();
+
+   return (
+      <section
+         className="relative isolate py-14 md:py-20"
+         aria-label="Free online books"
+      >
+         <img
+            src={FREE_BACKGROUND}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            onError={(event) => {
+               if (!event.currentTarget.src.endsWith(FREE_BACKGROUND_FALLBACK)) {
+                  event.currentTarget.src = FREE_BACKGROUND_FALLBACK;
+               }
+            }}
+            className="absolute inset-0 -z-20 h-full w-full object-cover"
+         />
+         <div
+            aria-hidden="true"
+            className="absolute inset-0 -z-10 bg-background/75 dark:bg-background/85"
+         />
+         <div className="container">
+            <ShelfHeading title="Free online books" />
+            <div className="mx-auto grid grid-cols-1 gap-7 min-[420px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+               {samples.map(([title, file]) => {
+                  const book = sampleProduct(title, file, 0);
+                  const isWanted = wanted.includes(book.id);
+
+                  return (
+                     <article
+                        key={file}
+                        className="ubi-book-tile px-4 text-center"
+                     >
+                        <p className="mb-3 text-xs text-muted-foreground">
+                           Free book
+                        </p>
+                        <div className="relative mb-5 flex h-64 items-center justify-center">
+                           <img
+                              src={'/assets/images/book-samples/' + file}
+                              alt={title}
+                              loading="lazy"
+                              className="h-full w-full object-contain"
+                           />
+                        </div>
+                        <h3 className="mb-4 line-clamp-2 min-h-12 text-base font-semibold">
+                           {title}
+                        </h3>
+                        <button
+                           type="button"
+                           aria-pressed={isWanted}
+                           onClick={() => {
+                              const on = toggleWantToRead(book.id);
+                              toast.success(
+                                 on
+                                    ? 'Added to your reading list'
+                                    : 'Removed from your reading list',
+                              );
+                           }}
+                           className={cn(
+                              'w-full rounded-full border border-[#047857] px-4 py-2 text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-[#047857] focus-visible:ring-offset-2 focus-visible:outline-none',
+                              isWanted
+                                 ? 'bg-[#047857] text-white'
+                                 : 'bg-background/80 text-[#047857] hover:bg-[#047857] hover:text-white',
+                           )}
+                        >
+                           {isWanted ? '✓ Want to Read' : 'Want to Read'}
+                        </button>
+                     </article>
+                  );
+               })}
             </div>
          </div>
       </section>

@@ -10,6 +10,7 @@ import { Link } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { formatBookAmount } from '../lib/book-price';
+import { BookFavorite, BookHoverActions } from './book-actions';
 
 export function BookPrice({ book }: { book: Product }) {
    const amount = formatBookAmount;
@@ -57,14 +58,18 @@ export function BookTile({
    if (compact) {
       return (
          <article className="ubi-book-tile flex min-w-0 items-center gap-5 py-5 md:gap-7">
-            <Link href={href} className="w-24 shrink-0 sm:w-28">
-               <img
-                  src={book.thumbnail || '/assets/images/blank-image.jpg'}
-                  alt={book.title}
-                  loading="lazy"
-                  className="h-40 w-full object-contain"
-               />
-            </Link>
+            <div className="group relative w-24 shrink-0 sm:w-28">
+               <Link href={href}>
+                  <img
+                     src={book.thumbnail || '/assets/images/blank-image.jpg'}
+                     alt={book.title}
+                     loading="lazy"
+                     className="h-40 w-full object-contain"
+                  />
+               </Link>
+               <BookFavorite book={book} />
+               <BookHoverActions book={book} href={href} />
+            </div>
             <div className="min-w-0">
                <p className="mb-2 text-xs text-muted-foreground">
                   {book.is_sample
@@ -93,14 +98,18 @@ export function BookTile({
                  book.product_category?.title ||
                  'UbiLearn'}
          </p>
-         <Link href={href} className="mb-5 block">
-            <img
-               src={book.thumbnail || '/assets/images/blank-image.jpg'}
-               alt={book.title}
-               loading="lazy"
-               className="mx-auto h-56 w-full object-contain transition-transform duration-300 hover:-translate-y-1 motion-reduce:transform-none md:h-64"
-            />
-         </Link>
+         <div className="group relative mb-5">
+            <Link href={href} className="block">
+               <img
+                  src={book.thumbnail || '/assets/images/blank-image.jpg'}
+                  alt={book.title}
+                  loading="lazy"
+                  className="mx-auto h-56 w-full object-contain transition-transform duration-300 group-hover:-translate-y-1 motion-reduce:transform-none md:h-64"
+               />
+            </Link>
+            <BookFavorite book={book} />
+            <BookHoverActions book={book} href={href} />
+         </div>
          <Link
             href={href}
             className="mb-3 line-clamp-2 flex h-12 items-center justify-center text-sm font-medium hover:text-emerald-700 dark:hover:text-emerald-400"

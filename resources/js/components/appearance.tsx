@@ -1,5 +1,5 @@
 import { usePage } from '@inertiajs/react';
-import { Monitor, Moon, Sun } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import type { HTMLAttributes } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,7 +27,7 @@ const Appearance = ({ className, buttonClass, ...props }: Props) => {
          case 'light':
             return <Sun className="!h-5 !w-5" />;
          default:
-            return <Monitor className="!h-5 !w-5" />;
+            return <Sun className="!h-5 !w-5" />;
       }
    };
 
@@ -72,15 +72,6 @@ const Appearance = ({ className, buttonClass, ...props }: Props) => {
                   <span className="flex items-center gap-2">
                      <Moon className="h-5 w-5" />
                      Dark
-                  </span>
-               </DropdownMenuItem>
-               <DropdownMenuItem
-                  onClick={() => appearanceHandler('system')}
-                  className="cursor-pointer"
-               >
-                  <span className="flex items-center gap-2">
-                     <Monitor className="h-5 w-5" />
-                     System
                   </span>
                </DropdownMenuItem>
             </DropdownMenuContent>

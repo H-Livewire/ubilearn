@@ -43,7 +43,28 @@ class ExamPaperController extends Controller
             'years'=>(clone $available)->whereNotNull('year')->distinct()->orderByDesc('year')->pluck('year'),
         ]);
     }
-    public function show(ExamPaper $paper){abort_unless($paper->published && $paper->has_pdf,404);return Inertia::render('examinations/show',['paper'=>$paper]);}
+    public function show(ExamPaper $paper){
+        abort_unless($paper->published && $paper->has_pdf,404);
+        return Inertia::render('examinations/show',['paper'=>$paper,'related'=>$this->relatedPapers($paper)]);
+    }
+    /** At least ten papers close to the one being viewed (same level, class, subject, type, region, nearby year). */
+    private function relatedPapers(ExamPaper $paper): array {
+        $candidates=ExamPaper::where('published',true)->whereNotNull('files->question->path')->where('id','!=',$paper->id)
+            ->orderByDesc('year')->limit(300)->get();
+        $score=function(ExamPaper $other) use ($paper): int {
+            $points=0;
+            if($other->education===$paper->education)$points+=8;
+            if($paper->class_name && strcasecmp((string)$other->class_name,(string)$paper->class_name)===0)$points+=6;
+            if($paper->subject && strcasecmp((string)$other->subject,(string)$paper->subject)===0)$points+=5;
+            if($paper->exam_type && $other->exam_type===$paper->exam_type)$points+=3;
+            if($paper->region && $other->region===$paper->region)$points+=2;
+            if($paper->year && $other->year)$points+=max(0,2-min(2,abs($other->year-$paper->year)));
+            return $points;
+        };
+        return $candidates->sortByDesc(fn($other)=>[$score($other),$other->year??0])->take(12)->values()
+            ->map(fn(ExamPaper $other)=>$other->only(['id','title','class_name','subject','year','exam_type','region','has_answers','has_pdf','cover_v']))
+            ->all();
+    }
     public function document(Request $request, ExamPaper $paper, string $kind) {
         abort_unless(in_array($kind,['question','marking','instructions'],true),404);
         abort_unless(($paper->published && $paper->has_pdf) || $request->user()?->role==='admin',404);

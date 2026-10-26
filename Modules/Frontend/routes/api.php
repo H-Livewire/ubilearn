@@ -6,6 +6,9 @@ use Modules\Frontend\Http\Controllers\Api\FrontendCollectionController;
 // Live community numbers + newest member photos (home page social proof)
 Route::get('community-proof', \App\Http\Controllers\CommunityProofController::class)->middleware('throttle:60,1');
 
+// Active partner company logos (home page marquee)
+Route::get('company-logos', [\App\Http\Controllers\CompanyLogoController::class, 'publicList'])->middleware('throttle:60,1');
+
 // Collection Routes
 Route::prefix('collections')->group(function () {
     // Public routes - Get collection data

@@ -22,7 +22,7 @@ class SettingsSeeder extends Seeder
                     'name' => 'Mentor Learning Management System',
                     'title' => 'Mentor Learning Management System',
                     'keywords' => 'LMS, Learning Management System, Courses, Mentor, LMS',
-                    'description' => 'Transform your learning journey with Mentor LMS - a comprehensive online learning platform connecting expert instructors with passionate learners. Discover courses, build skills, and achieve your goals.',
+                    'description' => 'Transform your learning journey with Ubilearn, connecting expert instructors with passionate learners. Discover courses, build skills, and achieve your goals.',
                     'logo_dark' => '/assets/icons/ubi-learn-logo-v2.png',
                     'logo_light' => '/assets/icons/ubi-learn-logo-v2.png',
                     'favicon' => '/favicon.ico',

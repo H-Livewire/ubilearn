@@ -31,7 +31,6 @@ class FooterSeeder extends Seeder
                 'items' => [
                     ['title' => 'About Us', 'url' => '/about-us'],
                     ['title' => 'Our Team', 'url' => '/our-team'],
-                    ['title' => 'Careers', 'url' => '/careers'],
                     ['title' => 'Contact Us', 'url' => '/contact-us'],
                 ],
             ],
@@ -81,7 +80,7 @@ class FooterSeeder extends Seeder
             [
                 'type' => 'copyright',
                 'slug' => 'copyright',
-                'title' => '© Copyright 2025 UI Lib, All rights reserved.',
+                'title' => '© Copyright 2026-2026 Ubilearn. All rights reserved.',
                 'items' => [],
             ],
         ];

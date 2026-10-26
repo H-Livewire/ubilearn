@@ -151,6 +151,8 @@ class PageTranslationService
         $locale = app()->getLocale();
 
         if ($locale === $this->defaultLocale()) {
+            $this->applyLiveStats($page);
+
             return;
         }
 
@@ -162,6 +164,94 @@ class PageTranslationService
         $pageFields = $this->getPageFields($page, $locale);
         $page->title = $pageFields['page_title'] ?? $page->title;
         $page->description = $pageFields['page_description'] ?? $page->description;
+        $this->applyLiveStats($page);
+    }
+
+    /**
+     * The static "+2000 readers worldwide" block (member photos + stars + text)
+     * is swapped, at render time only, for the live `community-proof` component
+     * (real photos, real counts, auto-updating). Saved page content is untouched.
+     */
+    private function applyLiveStats(ProjectPage $page): void
+    {
+        $content = (string) $page->content;
+
+        if (! str_contains($content, 'readers worldwide')) {
+            return;
+        }
+
+        $tree = json_decode($content, true);
+
+        if (is_array($tree)) {
+            $content = json_encode(
+                $this->replaceProofBlocks($tree),
+                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+            ) ?: $content;
+        }
+
+        // Fallback for blocks without member photos: show the real number as text.
+        if (str_contains($content, 'readers worldwide')) {
+            $count = Cache::remember(
+                'frontend.registered_users_count',
+                now()->addMinutes(10),
+                fn () => \App\Models\User::count()
+            );
+            $content = preg_replace(
+                '/\+?\d[\d,]*\+? readers worldwide/',
+                number_format($count).' registered users',
+                $content
+            ) ?? $content;
+        }
+
+        $page->content = $content;
+    }
+
+    private function isProofBlock(mixed $node): bool
+    {
+        if (! is_array($node) || ! isset($node['type'])) {
+            return false;
+        }
+
+        $json = json_encode($node, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        return is_string($json)
+            && str_contains($json, 'readers worldwide')
+            && str_contains($json, 'avatars/');
+    }
+
+    /**
+     * @param  array<int|string, mixed>  $nodes
+     * @return array<int|string, mixed>
+     */
+    private function replaceProofBlocks(array $nodes): array
+    {
+        foreach ($nodes as $key => $node) {
+            if (! is_array($node)) {
+                continue;
+            }
+
+            $children = isset($node['content']) && is_array($node['content']) ? $node['content'] : [];
+            $innerMatch = array_filter($children, fn ($child) => $this->isProofBlock($child));
+
+            if ($this->isProofBlock($node) && ! $innerMatch) {
+                $nodes[$key] = [
+                    'id' => 'community-proof-'.substr(md5((string) ($node['id'] ?? $key)), 0, 8),
+                    'name' => 'Dynamic Wrapper',
+                    'type' => 'dynamicWrapper',
+                    'styles' => [],
+                    'className' => null,
+                    'content' => ['componentRef' => 'community-proof'],
+                ];
+
+                continue;
+            }
+
+            if ($children) {
+                $nodes[$key]['content'] = $this->replaceProofBlocks($children);
+            }
+        }
+
+        return $nodes;
     }
 
     /**

@@ -52,6 +52,18 @@ class ExamPaperController extends Controller
         return $disk->response($file['path'],$file['name'],['Content-Type'=>'application/pdf','X-Content-Type-Options'=>'nosniff','Cache-Control'=>'private, no-store'], $request->boolean('download')?'attachment':'inline');
     }
 
+    public function destroy(ExamPaper $paper) {
+        foreach(($paper->files??[]) as $file){if(isset($file['disk'],$file['path']))Storage::disk($file['disk'])->delete($file['path']);}
+        $paper->delete();
+        return back()->with('success','Mtihani umefutwa.');
+    }
+    public function destroyFile(ExamPaper $paper, string $kind) {
+        abort_unless($kind==='marking',404);
+        $files=$paper->files??[]; $file=$files[$kind]??null; abort_unless($file,404);
+        Storage::disk($file['disk'])->delete($file['path']);
+        unset($files[$kind]); $paper->files=$files; $paper->has_answers=false; $paper->save();
+        return back()->with('success','Marking scheme imefutwa.');
+    }
     public function cover(Request $request, ExamPaper $paper) {
         abort_unless($paper->published || $request->user()?->role==='admin',404);
         $file=$paper->files['cover']??null; abort_unless($file,404);

@@ -1,4 +1,4 @@
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import {
    ChevronLeft,
    ChevronRight,
@@ -11,9 +11,20 @@ import {
    LoaderCircle,
    Pencil,
    Search,
+   Trash2,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import {
+   AlertDialog,
+   AlertDialogAction,
+   AlertDialogCancel,
+   AlertDialogContent,
+   AlertDialogDescription,
+   AlertDialogFooter,
+   AlertDialogHeader,
+   AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import {
    Dialog,
@@ -26,6 +37,7 @@ import {
    DropdownMenu,
    DropdownMenuContent,
    DropdownMenuItem,
+   DropdownMenuSeparator,
    DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
@@ -77,6 +89,10 @@ export default function Manage({
       kind: 'question' | 'marking';
    } | null>(null);
 
+   const [confirm, setConfirm] = useState<{
+      paper: Paper;
+      kind: 'paper' | 'marking';
+   } | null>(null);
    const [rows, setRows] = useState(papers);
    const [q, setQ] = useState(filters.q);
    const [perPage, setPerPage] = useState(filters.per_page);
@@ -140,6 +156,37 @@ export default function Manage({
             }
          }
       }, delay);
+   }
+   function remove() {
+      if (!confirm) {
+         return;
+      }
+
+      const { paper, kind } = confirm;
+      const lastOnPage = rows.data.length === 1 && rows.current_page > 1;
+      router.delete(
+         kind === 'paper'
+            ? `${BASE}/${paper.id}`
+            : `${BASE}/${paper.id}/files/marking`,
+         {
+            preserveScroll: true,
+            onSuccess: () => {
+               if (kind === 'paper' && id === paper.id) {
+                  formRef.current?.reset();
+                  reset();
+                  clearUploads();
+                  setId(null);
+               }
+
+               load({
+                  q,
+                  per_page: perPage,
+                  page: lastOnPage ? rows.current_page - 1 : rows.current_page,
+               });
+            },
+            onFinish: () => setConfirm(null),
+         },
+      );
    }
    function goto(page: number) {
       load({ q, per_page: perPage, page });
@@ -582,6 +629,31 @@ return;
                                        <DropdownMenuItem onClick={() => edit(p)}>
                                           <Pencil /> Edit
                                        </DropdownMenuItem>
+                                       <DropdownMenuSeparator />
+                                       {p.has_marking && (
+                                          <DropdownMenuItem
+                                             variant="destructive"
+                                             onClick={() =>
+                                                setConfirm({
+                                                   paper: p,
+                                                   kind: 'marking',
+                                                })
+                                             }
+                                          >
+                                             <Trash2 /> Futa Marking Scheme
+                                          </DropdownMenuItem>
+                                       )}
+                                       <DropdownMenuItem
+                                          variant="destructive"
+                                          onClick={() =>
+                                             setConfirm({
+                                                paper: p,
+                                                kind: 'paper',
+                                             })
+                                          }
+                                       >
+                                          <Trash2 /> Futa mtihani
+                                       </DropdownMenuItem>
                                     </DropdownMenuContent>
                                  </DropdownMenu>
                               </TableCell>
@@ -651,6 +723,37 @@ return;
                   </div>
                </div>
             </div>
+            <AlertDialog
+               open={Boolean(confirm)}
+               onOpenChange={(open) => !open && setConfirm(null)}
+            >
+               <AlertDialogContent>
+                  <AlertDialogHeader>
+                     <AlertDialogTitle>
+                        {confirm?.kind === 'marking'
+                           ? 'Futa Marking Scheme?'
+                           : 'Futa mtihani huu?'}
+                     </AlertDialogTitle>
+                     <AlertDialogDescription>
+                        {confirm?.kind === 'marking'
+                           ? `Marking scheme ya "${confirm.paper.title}" itafutwa. Maswali yatabaki.`
+                           : `"${confirm?.paper.title}" pamoja na PDF zake zote itafutwa kabisa. Hatua hii haiwezi kurudishwa.`}
+                     </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                     <AlertDialogCancel>Ghairi</AlertDialogCancel>
+                     <AlertDialogAction
+                        variant="destructive"
+                        onClick={(event) => {
+                           event.preventDefault();
+                           remove();
+                        }}
+                     >
+                        Futa
+                     </AlertDialogAction>
+                  </AlertDialogFooter>
+               </AlertDialogContent>
+            </AlertDialog>
             <Dialog
                open={Boolean(preview)}
                onOpenChange={(open) => !open && setPreview(null)}

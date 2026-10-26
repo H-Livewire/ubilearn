@@ -173,7 +173,7 @@ const getDashboardRoutes = (page: SharedData): DashboardRoute[] => {
                path: '/dashboard/company-logos',
                slug: 'company-logos',
                active: true,
-               access: ['admin'],
+               access: ['admin', 'collaborative', 'administrative'],
                children: [],
             },
             {

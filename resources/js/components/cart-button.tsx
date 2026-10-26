@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { toast } from 'sonner';
-import { ShoppingCart, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
    Popover,
@@ -40,7 +40,12 @@ const CartButton = () => {
                className="relative h-9 w-9 rounded-full p-0"
                aria-label={`Cart, ${count} item${count === 1 ? '' : 's'}`}
             >
-               <ShoppingCart className="!h-5 !w-5" />
+               <img
+                  src="/assets/icons/cart-icon.png"
+                  alt=""
+                  aria-hidden="true"
+                  className="h-5 w-5 object-contain dark:invert"
+               />
                <span
                   data-testid="cart-badge"
                   className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#047857] px-1 text-[10px] leading-none font-semibold text-white"

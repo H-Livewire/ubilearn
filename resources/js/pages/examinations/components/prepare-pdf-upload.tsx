@@ -16,6 +16,7 @@ type Area = {
    width: number;
    height: number;
    all: boolean;
+   erase?: boolean; // remove what is under it, without drawing the UbiLearn logo
 };
 type Point = { x: number; y: number };
 async function openPdf(bytes: Uint8Array) {
@@ -236,6 +237,7 @@ export default function PreparePdfUpload({
          original.current = loaded.document;
          setDocument(loaded.document);
          setLoaded((value) => value + 1);
+         void runScan(loaded.document, true, token);
          setPercent(100);
          setStatus('Select branding areas, then Prepare');
       } catch (e) {
@@ -267,28 +269,46 @@ export default function PreparePdfUpload({
          y: Math.max(0, Math.min(1, (event.clientY - box.top) / box.height)),
       };
    }
-   async function scanImages() {
-      if (!original.current || busy || scanning) {
-         return;
-      }
-
+   async function runScan(
+      doc: PDFDocumentProxy,
+      quiet: boolean,
+      token = job.current,
+   ) {
       setScanning(true);
-      setError('');
 
       try {
-         const found = await findImages(original.current);
+         const found = await findImages(doc);
+
+         if (token !== job.current) {
+            return;
+         }
+
          setImages(found);
-         setPicked(new Set(found.filter((item) => item.auto).map((item) => item.id)));
-         invalidate();
-         setStatus(
-            found.length
-               ? `Picha ${found.length} zimepatikana. Bonyeza kisanduku cha njano kuongeza.`
-               : 'Hakuna picha/logo iliyopatikana kwenye PDF hii.',
+         setPicked(
+            new Set(found.filter((item) => item.auto).map((item) => item.id)),
          );
+
+         if (!quiet) {
+            invalidate();
+            setStatus(
+               found.length
+                  ? `Picha ${found.length} zimepatikana. Bonyeza kisanduku cha njano kuchagua.`
+                  : 'Hakuna picha/logo iliyopatikana kwenye PDF hii.',
+            );
+         }
       } catch {
-         setError('Kutambua picha kumeshindwa. Tumia "Add branding area".');
+         if (!quiet) {
+            setError('Kutambua picha kumeshindwa. Tumia "Add branding area".');
+         }
       } finally {
-         setScanning(false);
+         if (token === job.current) {
+            setScanning(false);
+         }
+      }
+   }
+   function scanImages() {
+      if (original.current && !busy && !scanning) {
+         void runScan(original.current, false);
       }
    }
    function togglePicked(id: string) {
@@ -303,6 +323,56 @@ export default function PreparePdfUpload({
 
          return next;
       });
+      invalidate();
+   }
+   function eraseSelection() {
+      if (!selection) {
+         return;
+      }
+
+      const overlap = (view: DetectedArea['view']) => {
+         const w =
+            Math.min(view.x + view.width, selection.x + selection.width) -
+            Math.max(view.x, selection.x);
+         const h =
+            Math.min(view.y + view.height, selection.y + selection.height) -
+            Math.max(view.y, selection.y);
+
+         return w > 0 && h > 0 ? (w * h) / (view.width * view.height) : 0;
+      };
+      const hits = images.filter(
+         (item) => item.page === page && overlap(item.view) >= 0.6,
+      );
+
+      if (hits.length) {
+         // A real image sits there (e.g. a "wazaelimu.com" banner): delete it from the PDF.
+         const same = (item: DetectedArea) =>
+            allPages &&
+            hits.some(
+               (hit) =>
+                  hit.size === item.size &&
+                  Math.abs(hit.view.x - item.view.x) < 0.04 &&
+                  Math.abs(hit.view.y - item.view.y) < 0.04,
+            );
+         setPicked((current) => {
+            const next = new Set(current);
+            images.forEach((item) => {
+               if (hits.includes(item) || same(item)) {
+                  next.add(item.id);
+               }
+            });
+
+            return next;
+         });
+      } else {
+         setAreas([
+            ...areas,
+            { ...selection, page, all: allPages, erase: true },
+         ]);
+      }
+
+      setStart(null);
+      setEnd(null);
       invalidate();
    }
    async function prepare() {
@@ -342,6 +412,7 @@ export default function PreparePdfUpload({
                   y: Math.min(y1, y2),
                   width: Math.abs(x2 - x1),
                   height: Math.abs(y2 - y1),
+                  logo: !area.erase,
                });
             }
          }
@@ -506,9 +577,12 @@ export default function PreparePdfUpload({
                {!output && (
                   <>
                      <p className="text-xs text-muted-foreground">
-                        Drag kwenye preview kuchagua branding ya kufunika.
-                        Maeneo mengine hayatabadilishwa. Hii ni visual cover, si
-                        kufuta taarifa za siri ndani ya PDF.
+                        Drag kwenye preview kuchagua eneo: “Add branding area”
+                        inaweka logo ya Ubilearn, na “Futa kilichochaguliwa”
+                        inaondoa kilichopo hapo (mf. bango la wazaelimu.com)
+                        bila logo. Visanduku vya njano ni picha zilizopo,
+                        bonyeza kuchagua cha kuondoa. Maeneo mengine
+                        hayatabadilishwa.
                      </p>
                      <label className="flex items-center gap-2 text-xs">
                         <input
@@ -692,6 +766,20 @@ export default function PreparePdfUpload({
                         }}
                      >
                         Add branding area
+                     </Button>
+                     <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={
+                           busy ||
+                           !selection ||
+                           selection.width < 0.005 ||
+                           selection.height < 0.005
+                        }
+                        onClick={eraseSelection}
+                     >
+                        Futa kilichochaguliwa (bila logo)
                      </Button>
                      <Button
                         type="button"

@@ -67,6 +67,7 @@ Route::middleware(['web'])->group(function () {
     Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::get('dashboard/examination-papers', [\App\Http\Controllers\ExamPaperController::class, 'manage']);
         Route::post('dashboard/examination-papers', [\App\Http\Controllers\ExamPaperController::class, 'save']);
+        Route::delete('dashboard/examination-papers', [\App\Http\Controllers\ExamPaperController::class, 'destroyMany']);
         Route::delete('dashboard/examination-papers/{paper}', [\App\Http\Controllers\ExamPaperController::class, 'destroy'])->whereNumber('paper');
         Route::delete('dashboard/examination-papers/{paper}/files/{kind}', [\App\Http\Controllers\ExamPaperController::class, 'destroyFile'])->whereNumber('paper')->whereIn('kind',['marking']);
         Route::post('dashboard/examination-papers/{paper}/cover', [\App\Http\Controllers\ExamPaperController::class, 'saveCover'])->whereNumber('paper');

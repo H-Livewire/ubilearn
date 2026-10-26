@@ -57,6 +57,15 @@ class ExamPaperController extends Controller
         $paper->delete();
         return back()->with('success','Mtihani umefutwa.');
     }
+    public function destroyMany(Request $request) {
+        $ids=$request->validate(['ids'=>'required|array|min:1|max:200','ids.*'=>'integer'])['ids'];
+        $papers=ExamPaper::whereIn('id',$ids)->get();
+        foreach($papers as $paper){
+            foreach(($paper->files??[]) as $file){if(isset($file['disk'],$file['path']))Storage::disk($file['disk'])->delete($file['path']);}
+            $paper->delete();
+        }
+        return back()->with('success',$papers->count().' mitihani imefutwa.');
+    }
     public function destroyFile(ExamPaper $paper, string $kind) {
         abort_unless($kind==='marking',404);
         $files=$paper->files??[]; $file=$files[$kind]??null; abort_unless($file,404);

@@ -26,6 +26,7 @@ import {
    AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
    Dialog,
    DialogContent,
@@ -89,10 +90,13 @@ export default function Manage({
       kind: 'question' | 'marking';
    } | null>(null);
 
-   const [confirm, setConfirm] = useState<{
-      paper: Paper;
-      kind: 'paper' | 'marking';
-   } | null>(null);
+   const [confirm, setConfirm] = useState<
+      | { kind: 'paper' | 'marking'; paper: Paper }
+      | { kind: 'many'; count: number }
+      | null
+   >(null);
+   const [selected, setSelected] = useState<Set<number>>(new Set());
+   const [deleting, setDeleting] = useState(false);
    const [rows, setRows] = useState(papers);
    const [q, setQ] = useState(filters.q);
    const [perPage, setPerPage] = useState(filters.per_page);
@@ -158,38 +162,86 @@ export default function Manage({
       }, delay);
    }
    function remove() {
-      if (!confirm) {
+      if (!confirm || deleting) {
          return;
       }
 
-      const { paper, kind } = confirm;
-      const lastOnPage = rows.data.length === 1 && rows.current_page > 1;
+      const target = confirm;
+      const onPage = rows.data.filter((p) => selected.has(p.id)).length;
+      const emptied =
+         target.kind === 'many'
+            ? onPage >= rows.data.length
+            : rows.data.length === 1;
+      const page =
+         emptied && rows.current_page > 1
+            ? rows.current_page - 1
+            : rows.current_page;
+      const clearForm = () => {
+         formRef.current?.reset();
+         reset();
+         clearUploads();
+         setId(null);
+      };
       router.delete(
-         kind === 'paper'
-            ? `${BASE}/${paper.id}`
-            : `${BASE}/${paper.id}/files/marking`,
+         target.kind === 'many'
+            ? BASE
+            : target.kind === 'paper'
+              ? `${BASE}/${target.paper.id}`
+              : `${BASE}/${target.paper.id}/files/marking`,
          {
+            ...(target.kind === 'many'
+               ? { data: { ids: Array.from(selected) } }
+               : {}),
             preserveScroll: true,
+            onStart: () => setDeleting(true),
             onSuccess: () => {
-               if (kind === 'paper' && id === paper.id) {
-                  formRef.current?.reset();
-                  reset();
-                  clearUploads();
-                  setId(null);
+               if (target.kind === 'many') {
+                  if (id !== null && selected.has(id)) {
+                     clearForm();
+                  }
+
+                  setSelected(new Set());
+               } else if (target.kind === 'paper') {
+                  setSelected((current) => {
+                     const next = new Set(current);
+                     next.delete(target.paper.id);
+
+                     return next;
+                  });
+
+                  if (id === target.paper.id) {
+                     clearForm();
+                  }
                }
 
-               load({
-                  q,
-                  per_page: perPage,
-                  page: lastOnPage ? rows.current_page - 1 : rows.current_page,
-               });
+               load({ q, per_page: perPage, page });
             },
-            onFinish: () => setConfirm(null),
+            onFinish: () => {
+               setDeleting(false);
+               setConfirm(null);
+            },
          },
       );
    }
    function goto(page: number) {
       load({ q, per_page: perPage, page });
+   }
+   const pageIds = rows.data.map((p) => p.id);
+   const allOnPage =
+      pageIds.length > 0 && pageIds.every((value) => selected.has(value));
+   const someOnPage = pageIds.some((value) => selected.has(value));
+   function toggleRow(value: number, on: boolean) {
+      setSelected((current) => {
+         const next = new Set(current);
+
+         if (on) {
+            next.add(value);
+         } else {
+            next.delete(value);
+         }
+
+         return next;
+      });
    }
 
    const { system } = usePage<SharedData>().props;
@@ -528,9 +580,60 @@ return;
                      </select>
                   </div>
                </div>
+               {selected.size > 0 && (
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-t bg-muted/40 px-5 py-3 text-sm">
+                     <span>
+                        <strong>{selected.size}</strong> zimechaguliwa
+                     </span>
+                     <div className="flex gap-2">
+                        <Button
+                           type="button"
+                           size="sm"
+                           variant="ghost"
+                           onClick={() => setSelected(new Set())}
+                        >
+                           Ondoa uchaguzi
+                        </Button>
+                        <Button
+                           type="button"
+                           size="sm"
+                           variant="destructive"
+                           onClick={() =>
+                              setConfirm({ kind: 'many', count: selected.size })
+                           }
+                        >
+                           <Trash2 className="h-4 w-4" /> Futa zilizochaguliwa
+                        </Button>
+                     </div>
+                  </div>
+               )}
                <Table className="border-y">
                   <TableHeader>
                      <TableRow className="hover:bg-transparent">
+                        <TableHead className="h-12 w-12 px-5">
+                           <Checkbox
+                              aria-label="Chagua zote kwenye ukurasa huu"
+                              checked={
+                                 allOnPage
+                                    ? true
+                                    : someOnPage
+                                      ? 'indeterminate'
+                                      : false
+                              }
+                              onCheckedChange={(value) =>
+                                 setSelected((current) => {
+                                    const next = new Set(current);
+                                    pageIds.forEach((value_) =>
+                                       value === true
+                                          ? next.add(value_)
+                                          : next.delete(value_),
+                                    );
+
+                                    return next;
+                                 })
+                              }
+                           />
+                        </TableHead>
                         {['Aina ya mtihani', 'Jina', 'Mkoa', 'Mwaka'].map(
                            (label) => (
                               <TableHead
@@ -547,7 +650,22 @@ return;
                   <TableBody>
                      {rows.data.length ? (
                         rows.data.map((p) => (
-                           <TableRow key={p.id} className="transition-colors hover:bg-muted/50">
+                           <TableRow
+                              key={p.id}
+                              data-state={
+                                 selected.has(p.id) ? 'selected' : undefined
+                              }
+                              className="transition-colors hover:bg-muted/50"
+                           >
+                              <TableCell className="w-12 px-5 py-4">
+                                 <Checkbox
+                                    aria-label={`Chagua ${p.title}`}
+                                    checked={selected.has(p.id)}
+                                    onCheckedChange={(value) =>
+                                       toggleRow(p.id, value === true)
+                                    }
+                                 />
+                              </TableCell>
                               <TableCell className="px-5 py-4 text-sm">
                                  {p.exam_type || '—'}
                               </TableCell>
@@ -632,7 +750,7 @@ return;
                                        <DropdownMenuSeparator />
                                        {p.has_marking && (
                                           <DropdownMenuItem
-                                             variant="destructive"
+                                             className="text-red-600 focus:bg-red-50 focus:text-red-700 dark:text-red-400 dark:focus:bg-red-500/15 dark:focus:text-red-300 [&_svg]:!text-red-600 dark:[&_svg]:!text-red-400"
                                              onClick={() =>
                                                 setConfirm({
                                                    paper: p,
@@ -644,7 +762,7 @@ return;
                                           </DropdownMenuItem>
                                        )}
                                        <DropdownMenuItem
-                                          variant="destructive"
+                                          className="text-red-600 focus:bg-red-50 focus:text-red-700 dark:text-red-400 dark:focus:bg-red-500/15 dark:focus:text-red-300 [&_svg]:!text-red-600 dark:[&_svg]:!text-red-400"
                                           onClick={() =>
                                              setConfirm({
                                                 paper: p,
@@ -662,7 +780,7 @@ return;
                      ) : (
                         <TableRow>
                            <TableCell
-                              colSpan={5}
+                              colSpan={6}
                               className="h-28 text-center text-muted-foreground"
                            >
                               Hakuna mtihani uliopatikana
@@ -725,31 +843,47 @@ return;
             </div>
             <AlertDialog
                open={Boolean(confirm)}
-               onOpenChange={(open) => !open && setConfirm(null)}
+               onOpenChange={(open) => !open && !deleting && setConfirm(null)}
             >
                <AlertDialogContent>
                   <AlertDialogHeader>
                      <AlertDialogTitle>
-                        {confirm?.kind === 'marking'
-                           ? 'Futa Marking Scheme?'
-                           : 'Futa mtihani huu?'}
+                        {confirm?.kind === 'many'
+                           ? `Futa mitihani ${confirm.count}?`
+                           : confirm?.kind === 'marking'
+                             ? 'Futa Marking Scheme?'
+                             : 'Futa mtihani huu?'}
                      </AlertDialogTitle>
                      <AlertDialogDescription>
-                        {confirm?.kind === 'marking'
-                           ? `Marking scheme ya "${confirm.paper.title}" itafutwa. Maswali yatabaki.`
-                           : `"${confirm?.paper.title}" pamoja na PDF zake zote itafutwa kabisa. Hatua hii haiwezi kurudishwa.`}
+                        {confirm?.kind === 'many'
+                           ? `Mitihani ${confirm.count} uliyochagua pamoja na PDF zake zote itafutwa kabisa. Hatua hii haiwezi kurudishwa.`
+                           : confirm?.kind === 'marking'
+                             ? `Marking scheme ya "${confirm.paper.title}" itafutwa. Maswali yatabaki.`
+                             : confirm
+                               ? `"${confirm.paper.title}" pamoja na PDF zake zote itafutwa kabisa. Hatua hii haiwezi kurudishwa.`
+                               : ''}
                      </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                     <AlertDialogCancel>Ghairi</AlertDialogCancel>
+                     <AlertDialogCancel disabled={deleting}>
+                        Ghairi
+                     </AlertDialogCancel>
                      <AlertDialogAction
                         variant="destructive"
+                        disabled={deleting}
                         onClick={(event) => {
                            event.preventDefault();
                            remove();
                         }}
                      >
-                        Futa
+                        {deleting ? (
+                           <>
+                              <LoaderCircle className="h-4 w-4 animate-spin motion-reduce:animate-none" />
+                              Inafuta…
+                           </>
+                        ) : (
+                           'Futa'
+                        )}
                      </AlertDialogAction>
                   </AlertDialogFooter>
                </AlertDialogContent>

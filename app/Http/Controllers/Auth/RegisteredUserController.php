@@ -62,7 +62,10 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        $response = redirect()->route('student.index', ['tab' => 'courses']);
+        $intended = session()->pull('url.intended');
+        $response = $intended
+            ? redirect()->to($intended)
+            : redirect()->route('student.index', ['tab' => 'courses']);
 
         if (config('mail.defer_registration_verification', false)) {
             return $response->with('warning', 'Account created. Verification email is temporarily unavailable. Please resend it when email service is restored.');

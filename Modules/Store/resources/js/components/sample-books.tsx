@@ -90,7 +90,7 @@ export default function SampleBooks({
                {covers.map(([title, file], index) => (
                   <article
                      key={file}
-                     className="ubi-book-tile border-r px-4 text-center"
+                     className="ubi-book-tile border-r px-4 text-center dark:border-white/40"
                   >
                      <p className="mb-3 text-xs text-muted-foreground">
                         Sample book
@@ -158,7 +158,7 @@ export function FreeOnlineBooks() {
          />
          <div
             aria-hidden="true"
-            className="absolute inset-0 -z-10 bg-background/75 dark:bg-background/85"
+            className="absolute inset-0 -z-10 bg-background/45 dark:bg-background/65"
          />
          <div className="container">
             <ShelfHeading title="Free online books" />

@@ -64,6 +64,16 @@ Route::middleware(['web'])->group(function () {
     Route::get('examinations/{paper}/files/{kind}', [\App\Http\Controllers\ExamPaperController::class, 'document'])->whereNumber('paper')->whereIn('kind',['question','marking','instructions']);
     Route::get('examinations/{paper}/cover', [\App\Http\Controllers\ExamPaperController::class, 'cover'])->whereNumber('paper');
     Route::get('examinations/{paper}', [\App\Http\Controllers\ExamPaperController::class, 'show'])->whereNumber('paper')->name('examinations.show');
+    // Remember where the visitor was, then send them to log in; login/register return them here.
+    Route::get('auth/continue', function (\Illuminate\Http\Request $request) {
+        $to = (string) $request->query('to', '');
+
+        if (str_starts_with($to, '/') && ! str_starts_with($to, '//') && ! str_contains($to, '\\') && ! preg_match('/\\s/', $to)) {
+            session()->put('url.intended', url($to));
+        }
+
+        return redirect('/login');
+    });
     Route::get('examinations/{paper}/comments', [\App\Http\Controllers\ExamPaperCommentController::class, 'index'])->whereNumber('paper');
     Route::middleware('auth')->group(function () {
         Route::post('examinations/{paper}/comments', [\App\Http\Controllers\ExamPaperCommentController::class, 'store'])->whereNumber('paper')->middleware('throttle:20,1');

@@ -193,7 +193,7 @@ export function BookShelf({
                      {books.map((book) => (
                         <CarouselItem
                            key={book.id}
-                           className="basis-full border-r pl-0 min-[420px]:basis-1/2 md:basis-1/3 lg:basis-1/5"
+                           className="basis-full border-r dark:border-white/40 pl-0 min-[420px]:basis-1/2 md:basis-1/3 lg:basis-1/5"
                         >
                            <BookTile book={book} />
                         </CarouselItem>

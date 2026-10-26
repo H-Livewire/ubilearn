@@ -1,4 +1,4 @@
-import { Link, usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 import {
    ChevronDown,
    Heart,
@@ -32,6 +32,12 @@ interface Comment {
 }
 
 const POLL_MS = 20000;
+
+/** Sends a guest to log in and brings them back to the comment section afterwards. */
+function goLogin(): void {
+   const to = `${window.location.pathname}${window.location.search}#paper-comments`;
+   window.location.href = `/auth/continue?to=${encodeURIComponent(to)}`;
+}
 
 function xsrf(): string {
    const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
@@ -371,7 +377,7 @@ export default function PaperComments({ paperId }: { paperId: number }) {
 
    const like = async (comment: Comment) => {
       if (!me) {
-         window.location.href = '/login';
+         goLogin();
 
          return;
       }
@@ -438,13 +444,6 @@ export default function PaperComments({ paperId }: { paperId: number }) {
       const isCollapsed = collapsed.has(comment.id);
       const canDelete =
          me !== null && (me.id === comment.user.id || me.role === 'admin');
-      const staff =
-         comment.user.role === 'admin'
-            ? 'Admin'
-            : comment.user.role === 'instructor'
-              ? 'Mwalimu'
-              : null;
-
       return (
          <li
             key={comment.id}
@@ -475,11 +474,6 @@ export default function PaperComments({ paperId }: { paperId: number }) {
                <div className="min-w-0 flex-1 pb-4">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm">
                      <span className="font-semibold">{comment.user.name}</span>
-                     {staff && (
-                        <span className="rounded-full bg-emerald-700/10 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-emerald-800 uppercase dark:text-emerald-300">
-                           {staff}
-                        </span>
-                     )}
                      <span className="text-xs text-muted-foreground">
                         · {timeAgo(comment.created_at)}
                      </span>
@@ -509,7 +503,7 @@ export default function PaperComments({ paperId }: { paperId: number }) {
                         type="button"
                         onClick={() => {
                            if (!me) {
-                              window.location.href = '/login';
+                              goLogin();
 
                               return;
                            }
@@ -589,6 +583,7 @@ export default function PaperComments({ paperId }: { paperId: number }) {
 
    return (
       <section
+         id="paper-comments"
          aria-labelledby="paper-comments-title"
          className="rounded-2xl border bg-card p-4 shadow-sm md:p-6"
       >
@@ -606,10 +601,6 @@ export default function PaperComments({ paperId }: { paperId: number }) {
                      {comments.length}
                   </span>
                </h2>
-               <p className="mt-1 text-sm text-muted-foreground">
-                  Wanafunzi wanaandika maoni, wanauliza maswali au kutoa
-                  maelezo kuhusu past paper husika.
-               </p>
             </div>
          </div>
 
@@ -621,19 +612,18 @@ export default function PaperComments({ paperId }: { paperId: number }) {
                onSubmit={(text) => post(text, null)}
             />
          ) : (
-            <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed bg-muted/30 px-4 py-6 text-center sm:flex-row sm:text-left">
-               <Lock className="h-5 w-5 shrink-0 text-emerald-700" />
-               <p className="flex-1 text-sm text-muted-foreground">
-                  Ingia kwenye akaunti yako ili kuandika maoni au kujibu. Picha
-                  yako itaonekana pamoja na maoni yako.
-               </p>
-               <Link
-                  href="/login"
-                  className="rounded-full bg-[#047857] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-800"
-               >
-                  Ingia
-               </Link>
-            </div>
+            <button
+               type="button"
+               onClick={goLogin}
+               className="flex w-full items-center gap-3 text-left"
+            >
+               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                  <Lock className="h-4 w-4" />
+               </span>
+               <span className="flex-1 rounded-3xl border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+                  Andika maoni au uliza swali…
+               </span>
+            </button>
          )}
 
          <div className="mt-8">

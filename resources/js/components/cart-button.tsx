@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import { toast } from 'sonner';
 import { ShoppingCart, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -8,11 +9,27 @@ import {
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { clearCart, removeFromCart, useCart } from '@/lib/book-cart';
+import payments from '@/routes/payments';
 
 const money = new Intl.NumberFormat('en-TZ', { maximumFractionDigits: 0 });
 
+/** Payment page of a real book (sample books have none). */
+const payUrl = (id: number) =>
+   payments.index.url({ from: 'web', item: 'product', id });
+
 const CartButton = () => {
    const { items, count, total } = useCart();
+   const payable = items.filter((item) => item.id > 0);
+
+   const checkout = () => {
+      if (payable.length === 0) {
+         toast.info('Vitabu vya mfano haviuzwi. Ongeza kitabu halisi ili ulipe.');
+
+         return;
+      }
+
+      window.location.href = payUrl(payable[0].id);
+   };
 
    return (
       <Popover>
@@ -77,6 +94,14 @@ const CartButton = () => {
                                     TSh {money.format(item.price)}
                                  </p>
                               </div>
+                              {item.id > 0 && (
+                                 <a
+                                    href={payUrl(item.id)}
+                                    className="rounded-full border border-[#047857] px-2.5 py-1 text-xs font-semibold text-[#047857] transition-colors hover:bg-[#047857] hover:text-white"
+                                 >
+                                    Pay
+                                 </a>
+                              )}
                               <button
                                  type="button"
                                  aria-label={`Remove ${item.title}`}
@@ -94,6 +119,21 @@ const CartButton = () => {
                      <span className="font-semibold">
                         TSh {money.format(total)}
                      </span>
+                  </div>
+                  <div className="space-y-2 border-t p-4">
+                     <button
+                        type="button"
+                        onClick={checkout}
+                        className="w-full rounded-full bg-[#047857] py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-800"
+                     >
+                        Checkout
+                     </button>
+                     {payable.length > 1 && (
+                        <p className="text-center text-xs text-muted-foreground">
+                           Vitabu vinalipiwa kimoja kimoja — tumia “Pay” kwa
+                           kila kitabu.
+                        </p>
+                     )}
                   </div>
                </>
             )}

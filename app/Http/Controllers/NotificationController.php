@@ -31,6 +31,21 @@ class NotificationController extends Controller
     }
 
     /**
+     * Open a "what's new" item: mark it as seen, then go to the paper, blog or course.
+     */
+    public function openFeedItem(Request $request, string $kind, int $id)
+    {
+        $feed = app(\App\Services\ContentFeedService::class);
+        $url = $feed->urlFor($kind, $id);
+
+        if ($url) {
+            $feed->markRead($request->user(), $kind.'-'.$id);
+        }
+
+        return redirect($url ?? '/');
+    }
+
+    /**
      * Mark all notifications as read.
      */
     public function markAllAsRead()

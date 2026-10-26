@@ -19,6 +19,7 @@ Route::controller(InstructorController::class)->middleware(['smtpConfig', 'colla
 
 Route::resource('notifications', NotificationController::class)->only(['index', 'show']);
 Route::put('notifications/read/all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+Route::get('notifications/feed/{kind}/{id}', [NotificationController::class, 'openFeedItem'])->whereIn('kind', ['paper', 'blog', 'course'])->whereNumber('id')->name('notifications.feed');
 
 // users
 Route::delete('users/{id}', [UsersController::class, 'destroy'])->name('users.destroy');

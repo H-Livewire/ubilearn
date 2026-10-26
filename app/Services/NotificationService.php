@@ -22,9 +22,22 @@ class NotificationService extends MediaService
         return $notifications;
     }
 
+    /** Unread database notifications plus the "what's new" content feed, as plain arrays. */
+    public function unreadWithFeed(): array
+    {
+        $user = Auth::user();
+
+        return $user->unreadNotifications->toBase()
+            ->map(fn ($notification) => $notification->toArray())
+            ->concat(app(ContentFeedService::class)->forUser($user))
+            ->values()
+            ->all();
+    }
+
     public function markAllAsRead(): void
     {
         Auth::user()->unreadNotifications->markAsRead();
+        app(ContentFeedService::class)->markAllRead(Auth::user());
     }
 
     // I want to return the read notification

@@ -32,6 +32,7 @@ import SampleBooks, {
 import ProductWishlistHandler from '../../components/wishlist-handler';
 import {
    sampleBooks,
+   sampleHref,
    sampleOffers,
    withBookSamples,
 } from '../../lib/sample-books';
@@ -241,14 +242,8 @@ const Index = ({
                               <Link
                                  href={
                                     offer.is_sample
-                                       ? shop.url(
-                                            { category: 'all' },
-                                            { query: { browse: 1 } },
-                                         )
-                                       : details({
-                                            slug: offer.slug,
-                                            id: offer.id,
-                                         })
+ ? sampleHref(offer)
+ : details({ slug: offer.slug, id: offer.id })
                                  }
                                  className="mb-6 block text-xl font-semibold"
                               >
@@ -258,14 +253,8 @@ const Index = ({
                                  <Link
                                     href={
                                        offer.is_sample
-                                          ? shop.url(
-                                               { category: 'all' },
-                                               { query: { browse: 1 } },
-                                            )
-                                          : details({
-                                               slug: offer.slug,
-                                               id: offer.id,
-                                            })
+ ? sampleHref(offer)
+ : details({ slug: offer.slug, id: offer.id })
                                     }
                                  >
                                     <img
@@ -288,16 +277,8 @@ const Index = ({
                                           <Link
                                              href={
                                                 offer.is_sample
-                                                   ? shop.url(
-                                                        { category: 'all' },
-                                                        {
-                                                           query: { browse: 1 },
-                                                        },
-                                                     )
-                                                   : details({
-                                                        slug: offer.slug,
-                                                        id: offer.id,
-                                                     })
+ ? sampleHref(offer)
+ : details({ slug: offer.slug, id: offer.id })
                                              }
                                           >
                                              <ShoppingBag className="h-4 w-4" />
@@ -319,14 +300,8 @@ const Index = ({
                                        <Link
                                           href={
                                              offer.is_sample
-                                                ? shop.url(
-                                                     { category: 'all' },
-                                                     { query: { browse: 1 } },
-                                                  )
-                                                : details({
-                                                     slug: offer.slug,
-                                                     id: offer.id,
-                                                  })
+ ? sampleHref(offer)
+ : details({ slug: offer.slug, id: offer.id })
                                           }
                                        >
                                           <Eye className="h-4 w-4" />

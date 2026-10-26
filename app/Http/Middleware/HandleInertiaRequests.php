@@ -141,7 +141,7 @@ class HandleInertiaRequests extends Middleware
                         ])->filter(fn ($instructor) => !empty($instructor['name']))->values()
                     : [],
                 'footer' => $this->settingsService->getFooter('footer_1'),
-                'notifications' => $user ? $this->notificationService->notifications(['unread' => true]) : [],
+                'notifications' => $user ? $this->notificationService->unreadWithFeed() : [],
                 'langs' => $langs,
                 'locale' => $locale,
                 'direction' => $direction,

@@ -8,6 +8,8 @@ import { store as storeProductOrder } from '@/routes/product-orders';
 import { shop } from '@/routes/products';
 import productFiles from '@/routes/products/files';
 import { Head, Link, router, usePage } from '@inertiajs/react';
+import { toast } from 'sonner';
+import { addToCart, useCart } from '@/lib/book-cart';
 import {
    Star,
    Download,
@@ -27,6 +29,7 @@ const Show = () => {
    const { props } = usePage<ProductDetailsProps>();
    const { product, order, wishlists, auth, relatedBooks = [] } = props;
    const amount = formatBookAmount;
+   const { has } = useCart();
    const [activeImage, setActiveImage] = useState(
       product.thumbnail || product.images?.[0]?.url,
    );
@@ -198,6 +201,34 @@ const Show = () => {
                      >
                         1
                      </span>
+                     <Button
+                        type="button"
+                        variant="outline"
+                        size="lg"
+                        disabled={outOfStock}
+                        className="rounded-none border-2 border-[#047857] font-semibold tracking-wide text-[#047857] uppercase hover:bg-[#047857] hover:text-white"
+                        onClick={() => {
+                           const added = addToCart({
+                              id: product.id,
+                              title: product.title,
+                              thumbnail: product.thumbnail || null,
+                              price:
+                                 product.pricing_type === 'free'
+                                    ? 0
+                                    : Number(
+                                         product.discount
+                                            ? product.discount_price
+                                            : product.price,
+                                      ) || 0,
+                              href: window.location.pathname,
+                           });
+                           toast[added ? 'success' : 'info'](
+                              added ? 'Added to cart' : 'Already in your cart',
+                           );
+                        }}
+                     >
+                        {has(product.id) ? '✓ In cart' : '+ Add to cart'}
+                     </Button>
                      {auth.user ? (
                         product.pricing_type === 'free' ? (
                            <Button

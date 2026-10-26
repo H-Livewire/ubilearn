@@ -58,7 +58,11 @@ const Notification = () => {
                         return (
                            <Link
                               key={id}
-                              href={show(id)}
+                              href={
+                                 (data as { feed?: boolean; url?: string }).feed
+                                    ? ((data as { url?: string }).url as string)
+                                    : show(id)
+                              }
                               className={cn(
                                  'flex flex-col gap-1 px-4 py-2 transition-colors hover:bg-accent/50',
                               )}

@@ -5,11 +5,12 @@ import {
 } from '@/components/ui/carousel';
 import type { CarouselApi } from '@/components/ui/carousel';
 import { cn } from '@/lib/utils';
-import { details, shop } from '@/routes/products';
+import { details } from '@/routes/products';
 import { Link } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { formatBookAmount } from '../lib/book-price';
+import { sampleHref } from '../lib/sample-books';
 import { BookFavorite, BookHoverActions } from './book-actions';
 
 export function BookPrice({ book }: { book: Product }) {
@@ -52,7 +53,7 @@ export function BookTile({
    compact?: boolean;
 }) {
    const href = book.is_sample
-      ? shop.url({ category: 'all' }, { query: { browse: 1 } })
+      ? sampleHref(book)
       : details({ slug: book.slug, id: book.id });
 
    if (compact) {

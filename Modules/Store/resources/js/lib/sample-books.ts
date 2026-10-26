@@ -6,8 +6,57 @@ const covers = [
    ['Book collection', 'book-collection.jpeg'],
 ];
 export const samplePrices = [2000, 4000, 15000, 30000, 10000];
+
+/** Stable negative id per cover, so a sample can sit in the cart and favourites. */
+export function sampleId(file: string): number {
+   let hash = 0;
+
+   for (const char of file) {
+      hash = (hash * 31 + char.charCodeAt(0)) % 100000;
+   }
+
+   return -(1000 + hash);
+}
+
+/** URL part identifying a sample cover: its file name without extension. */
+export const sampleKey = (file: string) => file.replace(/\.[^.]+$/, '');
+
+export const schoolCovers: [title: string, file: string][] = [
+   ['Comprehensive Biology — Form Two', 'comprehensive-biology-form-two.jpeg'],
+   ['Biology for Secondary Schools — Form Two', 'biology-form-two.jpeg'],
+   ['Biology for Secondary Schools — Form One', 'biology-form-one.jpeg'],
+];
+
+/** Detail page of a sample book (derived from its thumbnail file). */
+export function sampleHref(book: Product): string {
+   const file = (book.thumbnail || '').split('/').pop() || '';
+
+   return `/books/sample/${sampleKey(file)}`;
+}
+
+/** Looks a sample cover up by its URL key. */
+export function findSample(key: string): Product | null {
+   const all = [...covers, ...schoolCovers];
+   const index = all.findIndex(([, file]) => sampleKey(file) === key);
+
+   if (index < 0) {
+      return null;
+   }
+
+   const [title, file] = all[index];
+
+   return {
+      ...sampleBooks[0],
+      id: sampleId(file),
+      title,
+      slug: `sample-${sampleKey(file)}`,
+      price: samplePrices[index % samplePrices.length],
+      thumbnail: `/assets/images/book-samples/${file}`,
+      is_sample: true,
+   };
+}
 export const sampleBooks: Product[] = covers.map(([title, file], index) => ({
-   id: -(index + 1),
+   id: sampleId(covers[index][1]),
    title,
    slug: `sample-${index + 1}`,
    summary: 'Sample book',

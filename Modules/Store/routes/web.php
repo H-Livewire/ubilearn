@@ -23,6 +23,7 @@ Route::controller(ProductController::class)->group(function () {
     // catch-all — module routes load after it, so a single-segment route
     // here would be shadowed. Only the 3-segment detail route is safe here.
     Route::get('books/details/{slug}/{id}', 'show')->name('products.details');
+    Route::get('books/sample/{key}', fn (string $key) => \Inertia\Inertia::render('Store/products/sample', ['sampleKey' => $key]))->name('products.sample');
     Route::get('products/details/{slug}/{id}', fn(string $slug,string $id)=>redirect('/books/details/'.rawurlencode($slug).'/'.$id));
 });
 

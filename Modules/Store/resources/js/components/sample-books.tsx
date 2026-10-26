@@ -1,44 +1,37 @@
 import { toast } from 'sonner';
 import { toggleWantToRead, useWantToRead } from '@/lib/book-cart';
 import { cn } from '@/lib/utils';
-import { shop } from '@/routes/products';
 import { formatBookAmount } from '../lib/book-price';
-import { samplePrices, sampleBooks } from '../lib/sample-books';
+import {
+   sampleBooks,
+   sampleId,
+   sampleKey,
+   samplePrices,
+   schoolCovers,
+} from '../lib/sample-books';
 import { BookFavorite, BookHoverActions } from './book-actions';
 import { ShelfHeading } from './book-display';
 
-/** Stable negative id so sample covers can sit in the cart and favourites. */
 function sampleProduct(
    title: string,
    file: string,
    price: number,
 ): Product {
-   let hash = 0;
-
-   for (const char of file) {
-      hash = (hash * 31 + char.charCodeAt(0)) % 100000;
-   }
-
    return {
       ...sampleBooks[0],
-      id: -(1000 + hash),
+      id: sampleId(file),
       title,
-      slug: `sample-${hash}`,
+      slug: `sample-${sampleKey(file)}`,
       price,
       thumbnail: `/assets/images/book-samples/${file}`,
       is_sample: true,
    };
 }
 
-const sampleHref = shop.url({ category: 'all' }, { query: { browse: 1 } });
 
 type SampleCover = [title: string, file: string];
 
-export const schoolBookSamples: SampleCover[] = [
-   ['Comprehensive Biology — Form Two', 'comprehensive-biology-form-two.jpeg'],
-   ['Biology for Secondary Schools — Form Two', 'biology-form-two.jpeg'],
-   ['Biology for Secondary Schools — Form One', 'biology-form-one.jpeg'],
-];
+export const schoolBookSamples: SampleCover[] = schoolCovers;
 
 const samples: SampleCover[] = [
    ['Unanswered Cries', 'unanswered-cries.jpeg'],
@@ -115,7 +108,7 @@ export default function SampleBooks({
                               file,
                               samplePrices[index % samplePrices.length],
                            )}
-                           href={sampleHref}
+                           href={`/books/sample/${sampleKey(file)}`}
                         />
                      </div>
                      <h3 className="text-base font-semibold">{title}</h3>
@@ -158,7 +151,7 @@ export function FreeOnlineBooks() {
          />
          <div
             aria-hidden="true"
-            className="absolute inset-0 -z-10 bg-background/45 dark:bg-background/65"
+            className="absolute inset-0 -z-10 bg-background/85 dark:bg-background/90"
          />
          <div className="container">
             <ShelfHeading title="Free online books" />

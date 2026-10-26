@@ -1,10 +1,12 @@
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import LandingLayout from '@/layouts/landing';
+import { useT } from '@/lib/i18n';
 import PaperComments from './components/paper-comments';
+import PdfViewer, { needsPdfJs } from './components/pdf-viewer';
 import RelatedPapers from './components/related-papers';
 import type { RelatedPaper } from './components/related-papers';
 import type { Paper } from './types';
@@ -15,7 +17,10 @@ export default function PaperDetails({
    paper: Paper;
    related?: RelatedPaper[];
 }) {
+   const t = useT();
    const [kind, setKind] = useState('question');
+   const [useViewer, setUseViewer] = useState(false);
+   useEffect(() => setUseViewer(needsPdfJs()), []);
    const url = `/examinations/${p.id}/files/${kind}`;
 
    return (
@@ -29,7 +34,7 @@ export default function PaperDetails({
             >
                <Link href="/examinations">
                   <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1 motion-reduce:transform-none" />
-                  Previous
+                  {t('Previous')}
                </Link>
             </Button>
             <h1 className="text-2xl font-bold">{p.title}</h1>
@@ -66,27 +71,31 @@ export default function PaperDetails({
                               : ''
                         }
                      >
-                        {label}
+                        {t(label)}
                      </Button>
                   ))}
                <Button
                   asChild
                   className="bg-black text-white hover:bg-black/85"
                >
-                  <a href={`${url}?download=1`}>Download PDF</a>
+                  <a href={`${url}?download=1`}>{t('Download PDF')}</a>
                </Button>
             </div>
             {!p.has_marking && (
                <p className="text-sm text-muted-foreground">
-                  Marking scheme bado haijawekwa.
+                  {t('The marking scheme has not been added yet.')}
                </p>
             )}
-            <iframe
-               key={kind}
-               title={`${p.title} — ${kind}`}
-               src={url}
-               className="h-[75vh] w-full rounded-lg border bg-white"
-            />
+            {useViewer ? (
+               <PdfViewer key={kind} url={url} title={`${p.title} — ${kind}`} />
+            ) : (
+               <iframe
+                  key={kind}
+                  title={`${p.title} — ${kind}`}
+                  src={url}
+                  className="h-[75vh] w-full rounded-lg border bg-white"
+               />
+            )}
             <div className="pt-6">
                <PaperComments paperId={p.id} />
             </div>

@@ -2,6 +2,7 @@ import { usePage } from '@inertiajs/react';
 import { useEffect } from 'react';
 import type { PropsWithChildren } from 'react';
 import { toast } from 'sonner';
+import DomTranslator from '@/components/dom-translator';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import setGlobalColorTheme from '@/lib/theme-colors';
@@ -77,6 +78,7 @@ const Main = ({ children }: PropsWithChildren) => {
    return (
       <>
          <Toaster />
+         <DomTranslator />
 
          <TooltipProvider>{children}</TooltipProvider>
       </>

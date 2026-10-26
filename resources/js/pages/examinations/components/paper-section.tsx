@@ -11,6 +11,7 @@ import {
    DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
 import type { Paper } from '../types';
+import { useT } from '@/lib/i18n';
 import PaperRow from './paper-row';
 import PdfCover from './pdf-cover';
 
@@ -40,6 +41,7 @@ export default function PaperSection({
    initialTotal?: number;
    initialPage?: number;
 }) {
+   const t = useT();
    const accordionId = useId();
    const [expandedType, setExpandedType] = useState(filters.exam_type || '');
    const [items, setItems] = useState(initial);
@@ -148,7 +150,7 @@ export default function PaperSection({
          }
       } catch {
          if (!controller.signal.aborted) {
-            setError('Mitihani imeshindwa kupakia. Tafadhali jaribu tena.');
+            setError(t('Papers could not be loaded. Please try again.'));
          }
       } finally {
          if (!controller.signal.aborted) {
@@ -177,7 +179,7 @@ export default function PaperSection({
                   onClick={() => load('', '', '1', false, '')}
                >
                   <Check size={14} className="text-emerald-700" />
-                  All
+                  {t('All')}
                </Button>
             ) : (
                <DropdownMenu>
@@ -186,9 +188,9 @@ export default function PaperSection({
                         variant="outline"
                         aria-label={`${title} examination type`}
                      >
-                        {types.find(([value]) => value === type)?.[1] || 'All'}
+                        {t(types.find(([value]) => value === type)?.[1] || 'All')}
                         {className &&
-                           ` · ${classes.find(([value]) => value === className)?.[1] || className}`}
+                           ` · ${t(classes.find(([value]) => value === className)?.[1] || className)}`}
                         <ChevronDown size={16} />
                      </Button>
                   </DropdownMenuTrigger>
@@ -210,7 +212,7 @@ export default function PaperSection({
                                  className="absolute left-2 text-emerald-700"
                               />
                            )}
-                           All
+                           {t('All')}
                         </DropdownMenuRadioItem>
                      </DropdownMenuRadioGroup>
                      {types.slice(1).map(([value, label]) =>
@@ -233,7 +235,7 @@ export default function PaperSection({
                                        className="absolute left-2 text-emerald-700"
                                     />
                                  )}
-                                 {label}
+                                 {t(label)}
                                  <ChevronDown
                                     size={14}
                                     className={`ml-4 transition-transform duration-200 motion-reduce:transition-none ${expandedType === value ? 'rotate-180' : ''}`}
@@ -274,7 +276,7 @@ export default function PaperSection({
                                                          className="absolute left-2 text-emerald-700"
                                                       />
                                                    )}
-                                                {classLabel}
+                                                {t(classLabel)}
                                              </DropdownMenuRadioItem>
                                           ),
                                        )}
@@ -291,7 +293,7 @@ export default function PaperSection({
                               }
                            >
                               <DropdownMenuRadioItem value={value}>
-                                 {label}
+                                 {t(label)}
                               </DropdownMenuRadioItem>
                            </DropdownMenuRadioGroup>
                         ),
@@ -310,7 +312,7 @@ export default function PaperSection({
                      onClick={() => load(type, value)}
                      className={`shrink-0 snap-start border-b-2 px-1 py-3 text-sm font-medium whitespace-nowrap transition-colors hover:text-emerald-700 ${region === value ? 'border-emerald-700 text-emerald-700 dark:text-emerald-400' : 'border-transparent text-black dark:text-white'}`}
                   >
-                     {value || 'All'}
+                     {value || t('All')}
                   </button>
                ))}
             </PaperRow>
@@ -327,7 +329,7 @@ export default function PaperSection({
                      <span />
                      <span />
                   </div>
-                  <span className="sr-only">Loading papers…</span>
+                  <span className="sr-only">{t('Loading papers…')}</span>
                </div>
             ) : error && !items.length ? (
                <div className="py-16 text-center" role="alert">
@@ -337,7 +339,7 @@ export default function PaperSection({
                      onClick={() => load(type, region)}
                      className="mt-4"
                   >
-                     Try again
+                     {t('Try again')}
                   </Button>
                </div>
             ) : (
@@ -355,18 +357,23 @@ export default function PaperSection({
                            className="h-40 w-40 object-contain"
                         />
                         <p className="text-lg font-semibold text-emerald-700 dark:text-emerald-400">
-                           Empty
+                           {t('Empty')}
                         </p>
                      </div>
                   )}
                   <PaperRow title={title} grid>
-                     {items.map((p) => (
+                     {items.map((p, index) => (
                         <article
                            key={p.id}
                            className={`group flex w-full shrink-0 snap-start flex-col bg-background px-4 py-5 text-center`}
                         >
                            <div className="relative mx-auto h-72 w-full max-w-56 overflow-hidden bg-white shadow-sm transition-transform duration-300 group-hover:-translate-y-1 group-hover:shadow-lg motion-reduce:transform-none">
-                              <PdfCover id={p.id} title={p.title} coverV={p.cover_v} />
+                              <PdfCover
+                                 id={p.id}
+                                 title={p.title}
+                                 coverV={p.cover_v}
+                                 priority={index < 4}
+                              />
                               <Link
                                  href={`/examinations/${p.id}`}
                                  className="absolute inset-0 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
@@ -392,24 +399,24 @@ export default function PaperSection({
                                     ]
                                        .filter(Boolean)
                                        .join(' · ')}
-                                    {p.has_answers ? ' · Yenye majibu' : ''}
+                                    {p.has_answers ? ` · ${t('With answers')}` : ''}
                                  </p>
                                  <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-400">
                                     {p.region
-                                       ? `Mkoa: ${p.region}`
+                                       ? t('Region: :v', { v: p.region })
                                        : p.exam_type === 'NECTA'
-                                         ? 'Kitaifa'
-                                         : 'Mikoa yote'}
+                                         ? t('National')
+                                         : t('All regions')}
                                     {p.organizer ? ` · ${p.organizer}` : ''}
                                     {p.source_name
-                                       ? ` · Chanzo: ${p.source_name}`
+                                       ? ` · ${t('Source: :v', { v: p.source_name })}`
                                        : ''}
                                  </p>
                               </div>
                               <div className="flex flex-wrap justify-center gap-2">
                                  <Button asChild variant="outline">
                                     <Link href={`/examinations/${p.id}`}>
-                                       View PDF
+                                       {t('View PDF')}
                                     </Link>
                                  </Button>
                                  {p.has_pdf && (
@@ -420,7 +427,7 @@ export default function PaperSection({
                                        <a
                                           href={`/examinations/${p.id}/files/question?download=1`}
                                        >
-                                          Download PDF
+                                          {t('Download PDF')}
                                        </a>
                                     </Button>
                                  )}
@@ -456,7 +463,7 @@ export default function PaperSection({
                      variant="outline"
                      onClick={() => load(type, region, String(page + 1), true)}
                   >
-                     View more
+                     {t('View more')}
                   </Button>
                )
             )}
@@ -464,7 +471,7 @@ export default function PaperSection({
          {grid && (
             <div className="text-center">
                <Link href="/examinations" className="text-sm underline">
-                  All levels
+                  {t('All levels')}
                </Link>
             </div>
          )}

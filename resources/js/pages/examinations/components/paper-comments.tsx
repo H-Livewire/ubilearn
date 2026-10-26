@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { translate, useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 interface CommentUser {
@@ -63,14 +64,16 @@ async function api<T>(url: string, method: string, body?: unknown): Promise<T> {
       const message =
          data?.errors?.body?.[0] ||
          data?.message ||
-         'Imeshindikana. Tafadhali jaribu tena.';
+         'Something went wrong. Please try again.';
       throw new Error(message);
    }
 
    return response.json();
 }
 
-function timeAgo(iso: string | null): string {
+function timeAgo(iso: string | null, locale: string): string {
+   const t = (key: string, vars?: Record<string, string | number>) =>
+      translate(locale, key, vars);
    if (!iso) {
       return '';
    }
@@ -81,28 +84,28 @@ function timeAgo(iso: string | null): string {
    );
 
    if (seconds < 45) {
-      return 'sasa hivi';
+      return t('just now');
    }
 
    const minutes = Math.round(seconds / 60);
 
    if (minutes < 60) {
-      return `dakika ${minutes} zilizopita`;
+      return t(':n minutes ago', { n: minutes });
    }
 
    const hours = Math.round(minutes / 60);
 
    if (hours < 24) {
-      return `saa ${hours} zilizopita`;
+      return t(':n hours ago', { n: hours });
    }
 
    const days = Math.round(hours / 24);
 
    if (days < 30) {
-      return `siku ${days} zilizopita`;
+      return t(':n days ago', { n: days });
    }
 
-   return new Date(iso).toLocaleDateString('sw-TZ', {
+   return new Date(iso).toLocaleDateString(locale === 'sw' ? 'sw-TZ' : 'en-GB', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
@@ -175,6 +178,7 @@ function Composer({
    onCancel?: () => void;
    compact?: boolean;
 }) {
+   const t = useT();
    const [text, setText] = useState('');
    const area = useRef<HTMLTextAreaElement>(null);
 
@@ -230,7 +234,7 @@ function Composer({
                   type="button"
                   onClick={() => void send()}
                   disabled={!text.trim() || submitting}
-                  aria-label="Tuma"
+                  aria-label={t('Send')}
                   className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#047857] text-white transition-colors hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-40"
                >
                   {submitting ? (
@@ -246,7 +250,7 @@ function Composer({
                   onClick={onCancel}
                   className="mt-1 ml-3 text-xs text-muted-foreground hover:text-foreground"
                >
-                  Ghairi
+                  {t('Cancel')}
                </button>
             )}
          </div>
@@ -255,7 +259,9 @@ function Composer({
 }
 
 export default function PaperComments({ paperId }: { paperId: number }) {
-   const { auth } = usePage<SharedData>().props;
+   const { auth, locale: pageLocale } = usePage<SharedData>().props;
+   const locale = pageLocale ?? 'en';
+   const t = useT();
    const user = auth?.user as
       | { id: number; name: string; photo?: string | null; role?: string }
       | undefined;
@@ -412,7 +418,7 @@ export default function PaperComments({ paperId }: { paperId: number }) {
    };
 
    const remove = async (comment: Comment) => {
-      if (!window.confirm('Futa maoni haya pamoja na majibu yake?')) {
+      if (!window.confirm(t('Delete this comment and its replies?'))) {
          return;
       }
 
@@ -433,9 +439,9 @@ export default function PaperComments({ paperId }: { paperId: number }) {
 
       try {
          await navigator.clipboard.writeText(url);
-         toast.success('Kiungo kimenakiliwa');
+         toast.success(t('Link copied'));
       } catch {
-         toast.error('Imeshindwa kunakili kiungo');
+         toast.error(t('Could not copy the link'));
       }
    };
 
@@ -459,7 +465,7 @@ export default function PaperComments({ paperId }: { paperId: number }) {
                   {replies.length > 0 && !isCollapsed && (
                      <button
                         type="button"
-                        aria-label="Ficha majibu"
+                        aria-label={t('Hide replies')}
                         onClick={() =>
                            setCollapsed((current) =>
                               new Set(current).add(comment.id),
@@ -475,7 +481,7 @@ export default function PaperComments({ paperId }: { paperId: number }) {
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm">
                      <span className="font-semibold">{comment.user.name}</span>
                      <span className="text-xs text-muted-foreground">
-                        · {timeAgo(comment.created_at)}
+                        · {timeAgo(comment.created_at, locale)}
                      </span>
                   </div>
                   <p className="mt-1 text-sm leading-relaxed [overflow-wrap:anywhere] whitespace-pre-wrap">
@@ -497,7 +503,7 @@ export default function PaperComments({ paperId }: { paperId: number }) {
                               comment.liked && 'fill-rose-600',
                            )}
                         />
-                        {comment.likes > 0 ? comment.likes : 'Penda'}
+                        {comment.likes > 0 ? comment.likes : t('Like')}
                      </button>
                      <button
                         type="button"
@@ -515,7 +521,7 @@ export default function PaperComments({ paperId }: { paperId: number }) {
                         className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 transition-colors hover:bg-muted hover:text-foreground"
                      >
                         <Reply className="h-4 w-4" />
-                        Jibu
+                        {t('Reply')}
                      </button>
                      <button
                         type="button"
@@ -523,13 +529,13 @@ export default function PaperComments({ paperId }: { paperId: number }) {
                         className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 transition-colors hover:bg-muted hover:text-foreground"
                      >
                         <Share2 className="h-4 w-4" />
-                        Shiriki
+                        {t('Share')}
                      </button>
                      {canDelete && (
                         <button
                            type="button"
                            onClick={() => void remove(comment)}
-                           aria-label="Futa maoni"
+                           aria-label={t('Delete comment')}
                            className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30"
                         >
                            <Trash2 className="h-4 w-4" />
@@ -544,7 +550,7 @@ export default function PaperComments({ paperId }: { paperId: number }) {
                            compact
                            autoFocus
                            submitting={submitting}
-                           placeholder={`Jibu ${comment.user.name}…`}
+                           placeholder={t('Reply to :name…', { name: comment.user.name })}
                            onSubmit={(text) => post(text, comment.id)}
                            onCancel={() => setReplyTo(null)}
                         />
@@ -566,7 +572,7 @@ export default function PaperComments({ paperId }: { paperId: number }) {
                            className="mt-2 flex items-center gap-1 text-xs font-medium text-emerald-700 hover:underline dark:text-emerald-400"
                         >
                            <ChevronDown className="h-3.5 w-3.5" />
-                           Onyesha majibu {replies.length}
+                           {t('Show replies :n', { n: replies.length })}
                         </button>
                      ) : (
                         <ul className="mt-4 space-y-0">
@@ -596,7 +602,7 @@ export default function PaperComments({ paperId }: { paperId: number }) {
                   id="paper-comments-title"
                   className="flex items-center gap-2 text-xl font-bold"
                >
-                  Comments
+                  {t('Comments')}
                   <span className="rounded-full bg-emerald-700/10 px-2.5 py-0.5 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
                      {comments.length}
                   </span>
@@ -608,7 +614,7 @@ export default function PaperComments({ paperId }: { paperId: number }) {
             <Composer
                me={me}
                submitting={submitting && replyTo === null}
-               placeholder="Andika maoni au uliza swali…"
+               placeholder={t('Write a comment or ask a question…')}
                onSubmit={(text) => post(text, null)}
             />
          ) : (
@@ -621,7 +627,7 @@ export default function PaperComments({ paperId }: { paperId: number }) {
                   <Lock className="h-4 w-4" />
                </span>
                <span className="flex-1 rounded-3xl border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
-                  Andika maoni au uliza swali…
+                  {t('Write a comment or ask a question…')}
                </span>
             </button>
          )}
@@ -633,18 +639,18 @@ export default function PaperComments({ paperId }: { paperId: number }) {
                </div>
             ) : failed && comments.length === 0 ? (
                <p className="py-8 text-center text-sm text-muted-foreground">
-                  Maoni hayajapakia.{' '}
+                  {t('Comments could not be loaded.')}{' '}
                   <button
                      type="button"
                      onClick={() => void load()}
                      className="font-medium text-emerald-700 underline"
                   >
-                     Jaribu tena
+                     {t('Try again')}
                   </button>
                </p>
             ) : roots.length === 0 ? (
                <p className="py-8 text-center text-sm text-muted-foreground">
-                  Bado hakuna maoni. Kuwa wa kwanza kuuliza au kutoa maelezo!
+                  {t('No comments yet. Be the first to ask or share an explanation!')}
                </p>
             ) : (
                <ul className="space-y-1">

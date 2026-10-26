@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import AppLogo from '@/components/app-logo';
 import GoogleAnalytics from '@/components/google-analytics';
+import Language from '@/components/language';
 import MetaPixel from '@/components/meta-pixel';
 import Main from './main';
 
@@ -25,6 +26,10 @@ const AuthLayout = ({
       <Main>
          <MetaPixel />
          <GoogleAnalytics />
+
+         <div className="absolute top-3 right-3 z-20">
+            <Language />
+         </div>
 
          <div className="mx-auto flex min-h-svh max-w-[1480px]">
             {/* Middle: Headline + Subtitle */}

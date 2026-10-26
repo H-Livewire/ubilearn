@@ -1,8 +1,32 @@
 import { FileText, LoaderCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { useT } from '@/lib/i18n';
+
+/** Browser-side fallback renders run two at a time so a long list never freezes the phone. */
+let active = 0;
+const waiting: Array<() => void> = [];
+function limit(task: () => Promise<void>): Promise<void> {
+   return new Promise((resolve) => {
+      const start = () => {
+         active += 1;
+         void task().finally(() => {
+            active -= 1;
+            waiting.shift()?.();
+            resolve();
+         });
+      };
+
+      if (active < 2) {
+         start();
+      } else {
+         waiting.push(start);
+      }
+   });
+}
 
 /** Render only the first page; native PDF embeds do not show covers on many phones. */
 function RenderedCover({ id, title }: { id: number; title: string }) {
+   const t = useT();
    const host = useRef<HTMLDivElement>(null);
    const canvas = useRef<HTMLCanvasElement>(null);
    const [status, setStatus] = useState<'loading' | 'ready' | 'error'>(
@@ -18,7 +42,7 @@ function RenderedCover({ id, title }: { id: number; title: string }) {
             }
 
             observer.disconnect();
-            void (async () => {
+            void limit(async () => {
                try {
                   const pdfjs = await import('pdfjs-dist');
                   const worker =
@@ -54,7 +78,7 @@ function RenderedCover({ id, title }: { id: number; title: string }) {
 
                   const base = page.getViewport({ scale: 1 });
                   const viewport = page.getViewport({
-                     scale: 480 / base.width,
+                     scale: 360 / base.width,
                   });
                   const target = canvas.current;
                   target.width = Math.ceil(viewport.width);
@@ -72,7 +96,7 @@ function RenderedCover({ id, title }: { id: number; title: string }) {
                      setStatus('error');
                   }
                }
-            })();
+            });
          },
          { rootMargin: '200px' },
       );
@@ -111,8 +135,8 @@ function RenderedCover({ id, title }: { id: number; title: string }) {
                )}
                <span className="px-3 text-center text-xs">
                   {status === 'loading'
-                     ? 'Loading cover…'
-                     : 'View PDF to open paper'}
+                     ? t('Loading cover…')
+                     : t('View PDF to open paper')}
                </span>
             </div>
          )}
@@ -125,20 +149,24 @@ export default function PdfCover({
    id,
    title,
    coverV,
+   priority = false,
 }: {
    id: number;
    title: string;
    coverV?: string | null;
+   priority?: boolean;
 }) {
    const [failed, setFailed] = useState(false);
 
-   if (coverV && !failed) {
+   // Papers without a stored cover get one built on the server at the first request.
+   if (!failed) {
       return (
          <div className="flex h-full w-full items-center justify-center bg-white p-2">
             <img
-               src={`/examinations/${id}/cover?v=${coverV}`}
+               src={`/examinations/${id}/cover${coverV ? `?v=${coverV}` : ''}`}
                alt={`First page of ${title}`}
-               loading="lazy"
+               loading={priority ? 'eager' : 'lazy'}
+               fetchPriority={priority ? 'high' : 'auto'}
                decoding="async"
                className="max-h-full max-w-full object-contain"
                onError={() => setFailed(true)}

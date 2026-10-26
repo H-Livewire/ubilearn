@@ -96,9 +96,11 @@ class ExamPaperController extends Controller
     }
     public function cover(Request $request, ExamPaper $paper) {
         abort_unless($paper->published || $request->user()?->role==='admin',404);
-        $file=$paper->files['cover']??null; abort_unless($file,404);
+        $file=$paper->files['cover']??null;
+        if(!$file && $paper->has_pdf)$file=\App\Services\ExamCoverService::generate($paper);
+        if(!$file)return response('',404,['Cache-Control'=>'no-store']);
         $disk=Storage::disk($file['disk']); abort_unless($disk->exists($file['path']),404);
-        return $disk->response($file['path'],'cover.webp',['Content-Type'=>$file['mime']??'image/webp','Cache-Control'=>'public, max-age=31536000, immutable','X-Content-Type-Options'=>'nosniff']);
+        return $disk->response($file['path'],'cover.'.(($file['mime']??'')==='image/jpeg'?'jpg':'webp'),['Content-Type'=>$file['mime']??'image/webp','Cache-Control'=>'public, max-age=31536000, immutable','X-Content-Type-Options'=>'nosniff']);
     }
     public function saveCover(Request $request, ExamPaper $paper) {
         $request->validate(['cover'=>'required|file|mimes:webp,jpg,jpeg,png|max:512']);

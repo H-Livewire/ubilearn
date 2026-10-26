@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import { useT } from '@/lib/i18n';
 import Autoplay from 'embla-carousel-autoplay';
 import { useRef } from 'react';
 import {
@@ -23,6 +24,7 @@ export interface RelatedPaper {
 
 /** Auto-scrolling strip of papers close to the one being viewed. */
 export default function RelatedPapers({ papers }: { papers: RelatedPaper[] }) {
+   const t = useT();
    const autoplay = useRef(
       Autoplay({ delay: 2600, stopOnInteraction: false, stopOnMouseEnter: true }),
    );
@@ -38,7 +40,7 @@ export default function RelatedPapers({ papers }: { papers: RelatedPaper[] }) {
                id="related-papers-title"
                className="text-xl font-bold text-emerald-700 dark:text-emerald-400"
             >
-               Related papers
+               {t('Related papers')}
             </h2>
             <span
                aria-hidden="true"

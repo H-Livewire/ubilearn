@@ -3,6 +3,7 @@ import { Search } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import LandingLayout from '@/layouts/landing';
+import { useT } from '@/lib/i18n';
 import PaperSection from './components/paper-section';
 import type { Options, Page, Paper } from './types';
 export default function Examinations({
@@ -20,6 +21,7 @@ export default function Examinations({
    levels?: Record<string, Paper[]>;
    levelTotals?: Record<string, number>;
 }) {
+   const t = useT();
    const [values, setValues] = useState<Record<string, string>>(filters);
    const [busy, setBusy] = useState(false);
    function apply(extra: Record<string, string> = {}) {
@@ -36,10 +38,10 @@ export default function Examinations({
 
    return (
       <>
-         <Head title="Past Papers" />
+         <Head title={t('Past Papers')} />
          <main className="container mx-auto max-w-6xl space-y-5 px-4 py-8 sm:py-10">
             <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-4">
-               <h1 className="text-3xl font-bold">Past Papers</h1>
+               <h1 className="text-3xl font-bold">{t('Past Papers')}</h1>
                <div className="flex items-center gap-5">
                   <form
                      onSubmit={(e) => {
@@ -49,8 +51,8 @@ export default function Examinations({
                      className="flex items-center gap-2 border-b"
                   >
                      <input
-                        aria-label="Search past papers"
-                        placeholder="Search past papers"
+                        aria-label={t('Search past papers')}
+                        placeholder={t('Search past papers')}
                         className="w-44 bg-transparent py-2 text-sm outline-none"
                         value={values.q || ''}
                         onChange={(e) =>
@@ -58,7 +60,7 @@ export default function Examinations({
                         }
                      />
                      <button
-                        aria-label="Search"
+                        aria-label={t('Search')}
                         type="submit"
                         className="p-2"
                         disabled={busy}
@@ -75,7 +77,7 @@ export default function Examinations({
                fetchPriority="high"
             />
             <div className="flex justify-between text-sm text-muted-foreground">
-               <p>{busy ? 'Inatafuta…' : `${papers.total} mitihani`}</p>
+               <p>{busy ? t('Searching…') : t(':n papers', { n: papers.total })}</p>
             </div>
             {(filters.education
                ? [
@@ -86,10 +88,10 @@ export default function Examinations({
                     },
                  ]
                : [
-                    ['primary', 'Primary'],
-                    ['olevel', 'O-Level'],
-                    ['alevel', 'Advanced'],
-                    ['college', 'University'],
+                    ['primary', t('Primary')],
+                    ['olevel', t('O-Level')],
+                    ['alevel', t('Advanced')],
+                    ['college', t('University')],
                     ...(levels.nursery?.length ? [['nursery', 'Awali']] : []),
                  ].map(([key, title]) => ({
                     key,

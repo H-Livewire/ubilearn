@@ -8,6 +8,7 @@ import {
    PopoverTrigger,
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useT } from '@/lib/i18n';
 import { clearCart, removeFromCart, useCart } from '@/lib/book-cart';
 import payments from '@/routes/payments';
 
@@ -18,12 +19,13 @@ const payUrl = (id: number) =>
    payments.index.url({ from: 'web', item: 'product', id });
 
 const CartButton = () => {
+   const t = useT();
    const { items, count, total } = useCart();
    const payable = items.filter((item) => item.id > 0);
 
    const checkout = () => {
       if (payable.length === 0) {
-         toast.info('Vitabu vya mfano haviuzwi. Ongeza kitabu halisi ili ulipe.');
+         toast.info(t('Sample books cannot be bought. Add a real book to pay.'));
 
          return;
       }
@@ -38,7 +40,7 @@ const CartButton = () => {
                size="icon"
                variant="ghost"
                className="relative h-9 w-9 rounded-full p-0"
-               aria-label={`Cart, ${count} item${count === 1 ? '' : 's'}`}
+               aria-label={`${t('Cart')}, ${count}`}
             >
                <img
                   src="/assets/icons/cart-icon.png"
@@ -56,20 +58,20 @@ const CartButton = () => {
          </PopoverTrigger>
          <PopoverContent align="end" className="w-80 p-0">
             <div className="flex items-center justify-between border-b px-4 py-3">
-               <h4 className="font-semibold">Cart ({count})</h4>
+               <h4 className="font-semibold">{t('Cart')} ({count})</h4>
                {count > 0 && (
                   <button
                      type="button"
                      onClick={clearCart}
                      className="text-xs text-muted-foreground hover:text-foreground"
                   >
-                     Clear
+                     {t('Clear')}
                   </button>
                )}
             </div>
             {count === 0 ? (
                <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-                  Your cart is empty.
+                  {t('Your cart is empty.')}
                </p>
             ) : (
                <>
@@ -104,12 +106,12 @@ const CartButton = () => {
                                     href={payUrl(item.id)}
                                     className="rounded-full border border-[#047857] px-2.5 py-1 text-xs font-semibold text-[#047857] transition-colors hover:bg-[#047857] hover:text-white"
                                  >
-                                    Pay
+                                    {t('Pay')}
                                  </a>
                               )}
                               <button
                                  type="button"
-                                 aria-label={`Remove ${item.title}`}
+                                 aria-label={`${t('Remove from cart')}: ${item.title}`}
                                  onClick={() => removeFromCart(item.id)}
                                  className="rounded p-1 text-muted-foreground hover:text-foreground"
                               >
@@ -120,7 +122,7 @@ const CartButton = () => {
                      </ul>
                   </ScrollArea>
                   <div className="flex items-center justify-between border-t px-4 py-3 text-sm">
-                     <span className="text-muted-foreground">Total</span>
+                     <span className="text-muted-foreground">{t('Total')}</span>
                      <span className="font-semibold">
                         TSh {money.format(total)}
                      </span>
@@ -131,12 +133,11 @@ const CartButton = () => {
                         onClick={checkout}
                         className="w-full rounded-full bg-[#047857] py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-800"
                      >
-                        Checkout
+                        {t('Checkout')}
                      </button>
                      {payable.length > 1 && (
                         <p className="text-center text-xs text-muted-foreground">
-                           Vitabu vinalipiwa kimoja kimoja — tumia “Pay” kwa
-                           kila kitabu.
+                           {t('Books are paid for one at a time. Use Pay on each book.')}
                         </p>
                      )}
                   </div>

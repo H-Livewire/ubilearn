@@ -1,0 +1,266 @@
+import { usePage } from '@inertiajs/react';
+
+/**
+ * Tiny UI translator for pages that have no server-side language files.
+ * Keys are the English text; unknown keys (or the English locale) return
+ * the key itself. Placeholders look like `:name`.
+ */
+const sw: Record<string, string> = {
+   // Past papers
+   'Past Papers': 'Mitihani Iliyopita',
+   'Search past papers': 'Tafuta mitihani iliyopita',
+   Search: 'Tafuta',
+   'Searching…': 'Inatafuta…',
+   ':n papers': 'Mitihani :n',
+   Primary: 'Msingi',
+   'O-Level': 'Kidato cha 1-4 (O-Level)',
+   Advanced: 'Kidato cha 5-6 (A-Level)',
+   University: 'Chuo Kikuu',
+   All: 'Zote',
+   'Annual Examination': 'Mtihani wa Mwaka',
+   'Mock Examination': 'Mtihani wa Majaribio (Mock)',
+   'Joint Examination': 'Mtihani wa Pamoja',
+   'Pre-National Examination': 'Mtihani wa Kabla ya Taifa',
+   'Class 2': 'Darasa la 2',
+   'Class 4': 'Darasa la 4',
+   'Class 7': 'Darasa la 7',
+   'Form 2': 'Kidato cha 2',
+   'Form 4': 'Kidato cha 4',
+   'Form 5': 'Kidato cha 5',
+   'Form 6': 'Kidato cha 6',
+   'View PDF': 'Tazama PDF',
+   'Download PDF': 'Pakua PDF',
+   'View more': 'Tazama zaidi',
+   'All levels': 'Ngazi zote',
+   'Try again': 'Jaribu tena',
+   Empty: 'Hakuna mitihani',
+   'Loading papers…': 'Inapakia mitihani…',
+   'Loading cover…': 'Inapakia cover…',
+   'View PDF to open paper': 'Fungua PDF kuona mtihani',
+   'With answers': 'Yenye majibu',
+   'Region: :v': 'Mkoa: :v',
+   National: 'Kitaifa',
+   'All regions': 'Mikoa yote',
+   'Source: :v': 'Chanzo: :v',
+   'Papers could not be loaded. Please try again.':
+      'Mitihani imeshindwa kupakia. Tafadhali jaribu tena.',
+   Previous: 'Rudi nyuma',
+   Next: 'Mbele',
+   'Question Paper': 'Karatasi ya Maswali',
+   'Marking Scheme': 'Mwongozo wa Kusahihisha',
+   'The marking scheme has not been added yet.':
+      'Mwongozo wa kusahihisha bado haujawekwa.',
+   'Related papers': 'Mitihani inayohusiana',
+   pages: 'kurasa',
+   'Zoom in': 'Kuza',
+   'Zoom out': 'Punguza',
+   'Could not load the PDF.': 'PDF imeshindwa kupakia.',
+   Open: 'Fungua',
+   // Comments
+   Comments: 'Maoni',
+   'Write a comment or ask a question…': 'Andika maoni au uliza swali…',
+   'No comments yet. Be the first to ask or share an explanation!':
+      'Bado hakuna maoni. Kuwa wa kwanza kuuliza au kutoa maelezo!',
+   Send: 'Tuma',
+   Cancel: 'Ghairi',
+   Reply: 'Jibu',
+   Share: 'Shiriki',
+   'Hide replies': 'Ficha majibu',
+   'Delete comment': 'Futa maoni',
+   'Link copied': 'Kiungo kimenakiliwa',
+   'Could not copy the link': 'Imeshindwa kunakili kiungo',
+   // Cart & store
+   'Your cart is empty.': 'Kikapu chako ni tupu.',
+   Clear: 'Futa vyote',
+   Total: 'Jumla',
+   Checkout: 'Lipa sasa',
+   Pay: 'Lipa',
+   Cart: 'Kikapu',
+   'Add to cart': 'Weka kikapuni',
+   'Added to cart': 'Imewekwa kikapuni',
+   'Remove from cart': 'Ondoa kikapuni',
+   View: 'Tazama',
+   'Sample books cannot be bought. Add a real book to pay.':
+      'Vitabu vya mfano haviuzwi. Ongeza kitabu halisi ili ulipe.',
+   'Free Online Books': 'Vitabu vya Bure Mtandaoni',
+   'Want to Read': 'Nataka Kusoma',
+   'On your reading list': 'Kwenye orodha yako ya kusoma',
+   'Add to favorites': 'Weka kwenye vipendwa',
+   'Remove from favorites': 'Ondoa kwenye vipendwa',
+   'School Books': 'Vitabu vya Shule',
+   Reviews: 'Maoni ya wasomaji',
+   Related: 'Vinavyohusiana',
+   // Marquee
+   'Trusted by :n leading company worldwide':
+      'Inaaminiwa na kampuni :n inayoongoza duniani',
+   'Trusted by :n leading companies worldwide':
+      'Inaaminiwa na kampuni :n zinazoongoza duniani',
+   // Notifications
+   Notifications: 'Arifa',
+   'Mark all as read': 'Weka zote kuwa zimesomwa',
+   'No notifications': 'Hakuna arifa',
+   Language: 'Lugha',
+   // Comments (extra)
+   'just now': 'sasa hivi',
+   ':n minutes ago': 'dakika :n zilizopita',
+   ':n hours ago': 'saa :n zilizopita',
+   ':n days ago': 'siku :n zilizopita',
+   Like: 'Penda',
+   'Show replies :n': 'Onyesha majibu :n',
+   'Reply to :name…': 'Jibu :name…',
+   'Delete this comment and its replies?':
+      'Futa maoni haya pamoja na majibu yake?',
+   'Comments could not be loaded.': 'Maoni hayajapakia.',
+   'Something went wrong. Please try again.':
+      'Imeshindikana. Tafadhali jaribu tena.',
+   'Books are paid for one at a time. Use Pay on each book.':
+      'Vitabu vinalipiwa kimoja kimoja. Tumia “Lipa” kwa kila kitabu.',
+   // Store & books
+   Home: 'Mwanzo',
+   Books: 'Vitabu',
+   'Book categories': 'Makundi ya vitabu',
+   'Browse book categories': 'Vinjari makundi ya vitabu',
+   'Book collections': 'Mkusanyiko wa vitabu',
+   'All books': 'Vitabu vyote',
+   'Search books': 'Tafuta vitabu',
+   'Back to books': 'Rudi kwenye vitabu',
+   'No books found.': 'Hakuna vitabu vilivyopatikana.',
+   'Special offer': 'Ofa maalum',
+   'Special offers will appear here when discounted':
+      'Ofa maalum zitaonekana hapa kukiwa na punguzo',
+   'Best sellers': 'Vinavyouzwa zaidi',
+   'Best seller books': 'Vitabu vinavyouzwa zaidi',
+   'Children’s books': 'Vitabu vya watoto',
+   'School books': 'Vitabu vya shule',
+   'Browse all books': 'Tazama vitabu vyote',
+   'Sample book': 'Kitabu cha mfano',
+   Sample: 'Mfano',
+   'Free book': 'Kitabu cha bure',
+   'Free online books': 'Vitabu vya bure mtandaoni',
+   'In stock': 'Kipo',
+   'Out of stock': 'Kimeisha',
+   'Out of Stock': 'Kimeisha',
+   'Digital download': 'Upakuaji wa kidijitali',
+   Qty: 'Idadi',
+   'In your wish list': 'Kipo kwenye vipendwa vyako',
+   'Add to wish list': 'Weka kwenye vipendwa',
+   'Product details': 'Maelezo ya bidhaa',
+   'Share your experience with this book':
+      'Shiriki uzoefu wako kuhusu kitabu hiki',
+   'Submit Review': 'Tuma maoni',
+   Login: 'Ingia',
+   'No reviews yet.': 'Bado hakuna maoni.',
+   'Related products': 'Bidhaa zinazohusiana',
+   'Related books': 'Vitabu vinavyohusiana',
+   'This book is in your library': 'Kitabu hiki kipo kwenye maktaba yako',
+   'The book file is not available yet.':
+      'Faili la kitabu bado halipatikani.',
+   'Get for Free': 'Pata bure',
+   'Buy this book': 'Nunua kitabu hiki',
+   'Login to Purchase': 'Ingia ili Ununue',
+   Description: 'Maelezo',
+   Specifications: 'Vipimo',
+   FAQ: 'Maswali ya mara kwa mara',
+   Seller: 'Muuzaji',
+   'No description provided.': 'Hakuna maelezo yaliyowekwa.',
+   'No specifications provided.': 'Hakuna vipimo vilivyowekwa.',
+   'Share on Facebook': 'Shiriki Facebook',
+   'Share on LinkedIn': 'Shiriki LinkedIn',
+   'Share on WhatsApp': 'Shiriki WhatsApp',
+   'Share book': 'Shiriki kitabu',
+   'Added to favorites': 'Imewekwa kwenye vipendwa',
+   'Removed from favorites': 'Imeondolewa kwenye vipendwa',
+   'Already in your cart': 'Tayari kipo kwenye kikapu chako',
+   'Thank you for your feedback': 'Asante kwa maoni yako',
+   'Book not found': 'Kitabu hakijapatikana',
+   'One digital copy': 'Nakala moja ya kidijitali',
+   Facebook: 'Facebook',
+   Stock: 'Hisa',
+   // Common site
+   'About us': 'Kuhusu sisi',
+   'About Us': 'Kuhusu Sisi',
+   'Contact us': 'Wasiliana nasi',
+   'Contact Us': 'Wasiliana Nasi',
+   Contact: 'Mawasiliano',
+   Courses: 'Kozi',
+   Blogs: 'Blogu',
+   Blog: 'Blogu',
+   'Get started': 'Anza sasa',
+   'Sign in': 'Ingia',
+   'Sign up': 'Jisajili',
+   Register: 'Jisajili',
+   Subscribe: 'Jiunge',
+   'Quick links': 'Viungo vya haraka',
+   'Quick Links': 'Viungo vya Haraka',
+   'Privacy Policy': 'Sera ya Faragha',
+   'Terms & Conditions': 'Vigezo na Masharti',
+   'Terms and Conditions': 'Vigezo na Masharti',
+   'Follow us': 'Tufuate',
+   'Read more': 'Soma zaidi',
+   'Learn more': 'Jifunze zaidi',
+   'View all': 'Tazama zote',
+   'See all': 'Tazama zote',
+   'Load more': 'Pakia zaidi',
+   Loading: 'Inapakia',
+   'Loading…': 'Inapakia…',
+   'Search…': 'Tafuta…',
+   Dashboard: 'Dashibodi',
+   Logout: 'Toka',
+   Profile: 'Wasifu',
+   Settings: 'Mipangilio',
+   Wishlist: 'Vipendwa',
+   Favorites: 'Vipendwa',
+   Free: 'Bure',
+   Price: 'Bei',
+   Rating: 'Ukadiriaji',
+   Students: 'Wanafunzi',
+   Lessons: 'Masomo',
+   Instructor: 'Mwalimu',
+   Category: 'Kundi',
+   Categories: 'Makundi',
+   'Email address': 'Barua pepe',
+   Email: 'Barua pepe',
+   Password: 'Nenosiri',
+   Name: 'Jina',
+   Message: 'Ujumbe',
+   Submit: 'Tuma',
+   Save: 'Hifadhi',
+   Close: 'Funga',
+   Back: 'Rudi',
+   Continue: 'Endelea',
+   Yes: 'Ndiyo',
+   No: 'Hapana',
+   Delete: 'Futa',
+   Edit: 'Hariri',
+   Light: 'Mwanga',
+   Dark: 'Giza',
+   'Toggle theme': 'Badilisha mwonekano',
+   'Select language': 'Chagua lugha',
+   'All rights reserved.': 'Haki zote zimehifadhiwa.',
+};
+
+export const swDictionary = sw;
+
+export function translate(
+   locale: string | undefined,
+   key: string,
+   vars?: Record<string, string | number>,
+): string {
+   let text = locale === 'sw' ? (sw[key] ?? key) : key;
+
+   if (vars) {
+      for (const [name, value] of Object.entries(vars)) {
+         text = text.split(`:${name}`).join(String(value));
+      }
+   }
+
+   return text;
+}
+
+export function useT() {
+   const { props } = usePage<SharedData>();
+   const locale = props.locale ?? 'en';
+
+   return (key: string, vars?: Record<string, string | number>) =>
+      translate(locale, key, vars);
+}

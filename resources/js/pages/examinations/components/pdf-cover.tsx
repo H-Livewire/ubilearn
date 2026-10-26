@@ -2,7 +2,7 @@ import { FileText, LoaderCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 /** Render only the first page; native PDF embeds do not show covers on many phones. */
-export default function PdfCover({ id, title }: { id: number; title: string }) {
+function RenderedCover({ id, title }: { id: number; title: string }) {
    const host = useRef<HTMLDivElement>(null);
    const canvas = useRef<HTMLCanvasElement>(null);
    const [status, setStatus] = useState<'loading' | 'ready' | 'error'>(
@@ -118,4 +118,34 @@ export default function PdfCover({ id, title }: { id: number; title: string }) {
          )}
       </div>
    );
+}
+
+/** Uses the pre-generated cover image (instant); renders from the PDF only if none exists yet. */
+export default function PdfCover({
+   id,
+   title,
+   coverV,
+}: {
+   id: number;
+   title: string;
+   coverV?: string | null;
+}) {
+   const [failed, setFailed] = useState(false);
+
+   if (coverV && !failed) {
+      return (
+         <div className="flex h-full w-full items-center justify-center bg-white p-2">
+            <img
+               src={`/examinations/${id}/cover?v=${coverV}`}
+               alt={`First page of ${title}`}
+               loading="lazy"
+               decoding="async"
+               className="max-h-full max-w-full object-contain"
+               onError={() => setFailed(true)}
+            />
+         </div>
+      );
+   }
+
+   return <RenderedCover id={id} title={title} />;
 }

@@ -1,4 +1,4 @@
-import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import {
    ChevronLeft,
    ChevronRight,
@@ -6,11 +6,14 @@ import {
    ChevronsRight,
    Eye,
    EllipsisVertical,
+   ExternalLink,
+   Globe,
+   LoaderCircle,
    Pencil,
+   Search,
 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import SearchInput from '@/components/search-input';
 import { Button } from '@/components/ui/button';
 import {
    Dialog,
@@ -37,6 +40,7 @@ import {
 } from '@/components/ui/table';
 import DashboardLayout from '@/layouts/dashboard/layout';
 import CircularProgress from './components/circular-progress';
+import CoverBackfill from './components/cover-backfill';
 import PreparePdfUpload from './components/prepare-pdf-upload';
 import type { Paper, Page, Options } from './types';
 const blank = {
@@ -57,11 +61,13 @@ const BASE = '/dashboard/examination-papers';
 
 export default function Manage({
    papers,
+   missingCovers = [],
    total,
    filters,
    options,
 }: {
    papers: Page<Paper>;
+   missingCovers?: number[];
    total: number;
    filters: { q: string; per_page: number };
    options: Options;
@@ -71,21 +77,72 @@ export default function Manage({
       kind: 'question' | 'marking';
    } | null>(null);
 
-   function go(next: { q?: string; per_page?: number; page?: number }) {
-      const query: Record<string, string | number> = {
-         q: filters.q,
-         per_page: filters.per_page,
-         page: papers.current_page,
-         ...next,
-      };
+   const [rows, setRows] = useState(papers);
+   const [q, setQ] = useState(filters.q);
+   const [perPage, setPerPage] = useState(filters.per_page);
+   const [loading, setLoading] = useState(false);
+   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+   const request = useRef<AbortController | null>(null);
 
-      router.get(
-         BASE,
-         Object.fromEntries(
-            Object.entries(query).filter(([, value]) => value !== ''),
-         ),
-         { preserveState: true, preserveScroll: true, replace: true },
-      );
+   useEffect(() => {
+      setRows(papers);
+   }, [papers]);
+
+   // Live search: small JSON request, no page reload, previous request cancelled.
+   function load(
+      next: { q: string; per_page: number; page: number },
+      delay = 0,
+   ) {
+      if (timer.current) {
+         clearTimeout(timer.current);
+      }
+
+      timer.current = setTimeout(async () => {
+         request.current?.abort();
+         const controller = new AbortController();
+         request.current = controller;
+         setLoading(true);
+         const query = new URLSearchParams();
+
+         if (next.q.trim()) {
+            query.set('q', next.q.trim());
+         }
+
+         query.set('per_page', String(next.per_page));
+
+         if (next.page > 1) {
+            query.set('page', String(next.page));
+         }
+
+         try {
+            const response = await fetch(`${BASE}?${query}`, {
+               headers: {
+                  Accept: 'application/json',
+                  'X-Requested-With': 'XMLHttpRequest',
+               },
+               credentials: 'same-origin',
+               signal: controller.signal,
+            });
+
+            if (response.ok) {
+               setRows(await response.json());
+               window.history.replaceState(
+                  window.history.state,
+                  '',
+                  `${BASE}?${query}`,
+               );
+            }
+         } catch {
+            // Aborted by a newer keystroke, or offline: keep the current rows.
+         } finally {
+            if (request.current === controller) {
+               setLoading(false);
+            }
+         }
+      }, delay);
+   }
+   function goto(page: number) {
+      load({ q, per_page: perPage, page });
    }
 
    const { system } = usePage<SharedData>().props;
@@ -134,12 +191,20 @@ export default function Manage({
       <>
          <Head title="Past Papers" />
          <div className="mx-auto max-w-5xl space-y-6 p-4">
-            <div className="flex justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
                <h1 className="text-2xl font-bold">Past Papers</h1>
-               <Link href="/examinations" className="underline">
-                  Ona catalogue ↗
-               </Link>
+               <a
+                  href="/examinations"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full bg-emerald-700 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-800 hover:shadow-md focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2 focus-visible:outline-none"
+               >
+                  <Globe className="h-4 w-4" />
+                  Ona catalogue
+                  <ExternalLink className="h-3.5 w-3.5 opacity-80" />
+               </a>
             </div>
+            <CoverBackfill ids={missingCovers} />
             <form
                ref={formRef}
                className="rounded-lg border bg-card p-5"
@@ -293,7 +358,7 @@ return;
                            id={key}
                            label={label}
                            existing={Boolean(
-                              papers.data.find((p) => p.id === id)?.[flag],
+                              rows.data.find((p) => p.id === id)?.[flag],
                            )}
                            required={key === 'question_file'}
                            logoUrl={logoUrl}
@@ -361,30 +426,52 @@ return;
                   )}
                </div>
             </form>
-            <div className="rounded-lg border bg-card">
-               <div className="flex flex-wrap items-center justify-between gap-3 p-3">
+            <div className="rounded-xl border bg-card shadow-sm">
+               <div className="flex flex-wrap items-center justify-between gap-4 p-5">
                   <p className="font-semibold">
                      Jumla ya mitihani: {total}
-                     {filters.q && (
+                     {q.trim() && (
                         <span className="ml-2 text-sm font-normal text-muted-foreground">
-                           · zilizopatikana {papers.total}
+                           · zilizopatikana {rows.total}
                         </span>
                      )}
                   </p>
-                  <div className="flex items-center gap-2">
-                     <SearchInput
-                        className="md:max-w-[240px]"
-                        placeholder="Tafuta mtihani…"
-                        searchKey="q"
-                        onChangeValue={(q) => go({ q, page: 1 })}
-                     />
+                  <div className="flex items-center gap-4">
+                     <div className="flex items-center gap-2 border-b">
+                        <input
+                           aria-label="Search past papers"
+                           placeholder="Search past papers"
+                           className="w-52 bg-transparent py-2 text-sm outline-none"
+                           value={q}
+                           onChange={(e) => {
+                              setQ(e.target.value);
+                              load(
+                                 {
+                                    q: e.target.value,
+                                    per_page: perPage,
+                                    page: 1,
+                                 },
+                                 120,
+                              );
+                           }}
+                        />
+                        <span className="p-2" aria-hidden="true">
+                           {loading ? (
+                              <LoaderCircle className="h-4 w-4 animate-spin motion-reduce:animate-none" />
+                           ) : (
+                              <Search className="h-4 w-4" />
+                           )}
+                        </span>
+                     </div>
                      <select
                         aria-label="Idadi kwa ukurasa"
                         className="h-10 rounded-lg border bg-background px-2 text-sm"
-                        value={filters.per_page}
-                        onChange={(e) =>
-                           go({ per_page: Number(e.target.value), page: 1 })
-                        }
+                        value={perPage}
+                        onChange={(e) => {
+                           const size = Number(e.target.value);
+                           setPerPage(size);
+                           load({ q, per_page: size, page: 1 });
+                        }}
                      >
                         {[10, 15, 20, 25].map((size) => (
                            <option key={size} value={size}>
@@ -396,30 +483,49 @@ return;
                </div>
                <Table className="border-y">
                   <TableHeader>
-                     <TableRow>
-                        <TableHead>Aina ya mtihani</TableHead>
-                        <TableHead>Jina</TableHead>
-                        <TableHead>Mkoa</TableHead>
-                        <TableHead>Mwaka</TableHead>
-                        <TableHead className="w-10" />
+                     <TableRow className="hover:bg-transparent">
+                        {['Aina ya mtihani', 'Jina', 'Mkoa', 'Mwaka'].map(
+                           (label) => (
+                              <TableHead
+                                 key={label}
+                                 className="h-12 px-5 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                              >
+                                 {label}
+                              </TableHead>
+                           ),
+                        )}
+                        <TableHead className="w-14 px-5" />
                      </TableRow>
                   </TableHeader>
                   <TableBody>
-                     {papers.data.length ? (
-                        papers.data.map((p) => (
-                           <TableRow key={p.id}>
-                              <TableCell className="py-2">
+                     {rows.data.length ? (
+                        rows.data.map((p) => (
+                           <TableRow key={p.id} className="transition-colors hover:bg-muted/50">
+                              <TableCell className="px-5 py-4 text-sm">
                                  {p.exam_type || '—'}
                               </TableCell>
-                              <TableCell className="py-2">
-                                 <p className="font-medium">{p.title}</p>
-                                 <p className="text-xs text-muted-foreground">
-                                    {!p.has_pdf
-                                       ? 'Inahitaji PDF'
-                                       : p.published
-                                         ? 'Published'
-                                         : 'Hidden'}{' '}
-                                    ·{' '}
+                              <TableCell className="px-5 py-4">
+                                 <div className="flex flex-wrap items-center gap-2">
+                                    <p className="text-[15px] font-medium">
+                                       {p.title}
+                                    </p>
+                                    <span
+                                       className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                                          !p.has_pdf
+                                             ? 'bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300'
+                                             : p.published
+                                               ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300'
+                                               : 'bg-slate-100 text-slate-600 dark:bg-slate-500/20 dark:text-slate-300'
+                                       }`}
+                                    >
+                                       {!p.has_pdf
+                                          ? 'Inahitaji PDF'
+                                          : p.published
+                                            ? 'Published'
+                                            : 'Hidden'}
+                                    </span>
+                                 </div>
+                                 <p className="mt-1 text-xs text-muted-foreground">
                                     {[
                                        options.education[p.education],
                                        p.class_name,
@@ -429,13 +535,13 @@ return;
                                        .join(' · ')}
                                  </p>
                               </TableCell>
-                              <TableCell className="py-2">
+                              <TableCell className="px-5 py-4 text-sm">
                                  {p.region || 'All regions'}
                               </TableCell>
-                              <TableCell className="py-2">
+                              <TableCell className="px-5 py-4 text-sm">
                                  {p.year || '—'}
                               </TableCell>
-                              <TableCell className="py-2 text-right">
+                              <TableCell className="px-5 py-4 text-right">
                                  <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                        <Button
@@ -485,7 +591,7 @@ return;
                         <TableRow>
                            <TableCell
                               colSpan={5}
-                              className="h-20 text-center text-muted-foreground"
+                              className="h-28 text-center text-muted-foreground"
                            >
                               Hakuna mtihani uliopatikana
                            </TableCell>
@@ -493,10 +599,10 @@ return;
                      )}
                   </TableBody>
                </Table>
-               <div className="flex flex-wrap items-center justify-between gap-3 p-3 text-sm">
+               <div className="flex flex-wrap items-center justify-between gap-3 p-5 text-sm">
                   <span className="text-muted-foreground">
-                     Showing {papers.from || 0} to {papers.to || 0} of{' '}
-                     {papers.total} entries
+                     Showing {rows.from || 0} to {rows.to || 0} of{' '}
+                     {rows.total} entries
                   </span>
                   <div className="flex items-center gap-1">
                      <Button
@@ -504,8 +610,8 @@ return;
                         size="icon"
                         variant="outline"
                         className="h-8 w-8"
-                        disabled={papers.current_page <= 1}
-                        onClick={() => go({ page: 1 })}
+                        disabled={rows.current_page <= 1}
+                        onClick={() => goto(1)}
                      >
                         <ChevronsLeft className="h-4 w-4" />
                      </Button>
@@ -514,21 +620,21 @@ return;
                         size="icon"
                         variant="outline"
                         className="h-8 w-8"
-                        disabled={papers.current_page <= 1}
-                        onClick={() => go({ page: papers.current_page - 1 })}
+                        disabled={rows.current_page <= 1}
+                        onClick={() => goto(rows.current_page - 1)}
                      >
                         <ChevronLeft className="h-4 w-4" />
                      </Button>
                      <span className="mx-2">
-                        Page {papers.current_page} of {papers.last_page}
+                        Page {rows.current_page} of {rows.last_page}
                      </span>
                      <Button
                         type="button"
                         size="icon"
                         variant="outline"
                         className="h-8 w-8"
-                        disabled={papers.current_page >= papers.last_page}
-                        onClick={() => go({ page: papers.current_page + 1 })}
+                        disabled={rows.current_page >= rows.last_page}
+                        onClick={() => goto(rows.current_page + 1)}
                      >
                         <ChevronRight className="h-4 w-4" />
                      </Button>
@@ -537,8 +643,8 @@ return;
                         size="icon"
                         variant="outline"
                         className="h-8 w-8"
-                        disabled={papers.current_page >= papers.last_page}
-                        onClick={() => go({ page: papers.last_page })}
+                        disabled={rows.current_page >= rows.last_page}
+                        onClick={() => goto(rows.last_page)}
                      >
                         <ChevronsRight className="h-4 w-4" />
                      </Button>

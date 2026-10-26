@@ -52,6 +52,25 @@ class ExamPaperController extends Controller
         return $disk->response($file['path'],$file['name'],['Content-Type'=>'application/pdf','X-Content-Type-Options'=>'nosniff','Cache-Control'=>'private, no-store'], $request->boolean('download')?'attachment':'inline');
     }
 
+    public function cover(Request $request, ExamPaper $paper) {
+        abort_unless($paper->published || $request->user()?->role==='admin',404);
+        $file=$paper->files['cover']??null; abort_unless($file,404);
+        $disk=Storage::disk($file['disk']); abort_unless($disk->exists($file['path']),404);
+        return $disk->response($file['path'],'cover.webp',['Content-Type'=>$file['mime']??'image/webp','Cache-Control'=>'public, max-age=31536000, immutable','X-Content-Type-Options'=>'nosniff']);
+    }
+    public function saveCover(Request $request, ExamPaper $paper) {
+        $request->validate(['cover'=>'required|file|mimes:webp,jpg,jpeg,png|max:512']);
+        abort_unless($paper->has_pdf,422);
+        $disk=config('filesystems.default'); $upload=$request->file('cover');
+        $path=$upload->store('examination-covers',$disk);
+        abort_unless($path,500);
+        $files=$paper->files??[]; $old=$files['cover']??null;
+        $files['cover']=['disk'=>$disk,'path'=>$path,'mime'=>$upload->getMimeType()];
+        $paper->files=$files; $paper->save();
+        if($old)Storage::disk($old['disk'])->delete($old['path']);
+        return response()->json(['cover_v'=>$paper->cover_v]);
+    }
+
     public function manage(Request $request){
         $f=$request->validate(['q'=>'nullable|string|max:120','per_page'=>'nullable|integer|in:10,15,20,25']);
         $perPage=(int)($f['per_page']??10);
@@ -60,8 +79,11 @@ class ExamPaperController extends Controller
             $term='%'.addcslashes($f['q'],'%_\\').'%';
             $query->where(function($q)use($term){foreach(['title','subject','region','organizer','exam_type','class_name','year'] as $field)$q->orWhere($field,'like',$term);});
         }
+        $papers=$query->select(['id','title','education','class_name','region','subject','year','exam_type','organizer','source_name','published','files'])->orderByDesc('id')->paginate($perPage)->withQueryString();
+        if($request->expectsJson()) return response()->json($papers);
         return Inertia::render('examinations/manage',[
-            'papers'=>$query->orderByDesc('id')->paginate($perPage)->withQueryString(),
+            'papers'=>$papers,
+            'missingCovers'=>ExamPaper::whereNotNull('files->question->path')->whereNull('files->cover->path')->orderByDesc('id')->limit(60)->pluck('id'),
             'total'=>ExamPaper::count(),
             'filters'=>['q'=>$f['q']??'','per_page'=>$perPage],
             'options'=>$this->options(),
@@ -96,6 +118,7 @@ class ExamPaperController extends Controller
                 if(!$path) throw new \RuntimeException('PDF upload failed. Check Object Storage configuration.');
                 $newPaths[]=[$disk,$path];
                 if(isset($files[$kind]))$oldPaths[]=$files[$kind];
+                if($kind==='question' && isset($files['cover'])){$oldPaths[]=$files['cover'];unset($files['cover']);}
                 $files[$kind]=['disk'=>$disk,'path'=>$path,'name'=>$upload->getClientOriginalName(),'size'=>$upload->getSize()];
             }
             $data['has_answers']=isset($files['marking']['path']);

@@ -13,16 +13,6 @@ return new class extends Migration {
             $t->boolean('has_answers')->default(false); $t->boolean('published')->default(true); $t->timestamps();
             $t->index(['published','education','region']);
         });
-        // Source-page references only. No third-party PDFs are copied or modified.
-        $groups = [
-            ['Dar es Salaam','https://www.msomibora.com/2026/09/dar-es-salaam-form-four-mock-exams-2026-download-all-subjects/',['Mathematics','English','Biology','Chemistry','Physics','Geography','History','Kiswahili','Civics']],
-            ['Pwani','https://www.msomibora.com/2026/07/pwani-coast-form-four-mock-exams-2026-download-all-subjects/',['Mathematics','English','Biology','Chemistry','Physics','Geography','History','Kiswahili','Civics']],
-            ['Kigoma','https://www.msomibora.com/2026/08/kigoma-form-four-mock-exams-2026-download-all-subjects/',['Physics','Geography']],
-        ];
-        foreach($groups as [$region,$source,$subjects]) foreach($subjects as $subject){
-            DB::table('exam_papers')->insert(['title'=>$region.' '.$subject.' Mock 2026','education'=>'olevel','class_name'=>'Form 4','region'=>$region,'subject'=>$subject,'year'=>2026,'exam_type'=>'Mock','source_name'=>'MsomiBora','source_url'=>$source,'created_at'=>now(),'updated_at'=>now()]);
-        }
-
     }
     public function down(): void { Schema::dropIfExists('exam_papers'); }
 };

@@ -2,6 +2,7 @@ export interface Paper {
    has_pdf: boolean;
    has_marking: boolean;
    has_instructions: boolean;
+   cover_v?: string | null;
    id: number;
    title: string;
    education: string;

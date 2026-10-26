@@ -62,10 +62,12 @@ Route::middleware(['web'])->group(function () {
     Route::get('online-examination', fn () => redirect('/examinations'))->name('online-examination');
     Route::get('examinations', [\App\Http\Controllers\ExamPaperController::class, 'index'])->name('examinations.index');
     Route::get('examinations/{paper}/files/{kind}', [\App\Http\Controllers\ExamPaperController::class, 'document'])->whereNumber('paper')->whereIn('kind',['question','marking','instructions']);
+    Route::get('examinations/{paper}/cover', [\App\Http\Controllers\ExamPaperController::class, 'cover'])->whereNumber('paper');
     Route::get('examinations/{paper}', [\App\Http\Controllers\ExamPaperController::class, 'show'])->whereNumber('paper')->name('examinations.show');
     Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::get('dashboard/examination-papers', [\App\Http\Controllers\ExamPaperController::class, 'manage']);
         Route::post('dashboard/examination-papers', [\App\Http\Controllers\ExamPaperController::class, 'save']);
+        Route::post('dashboard/examination-papers/{paper}/cover', [\App\Http\Controllers\ExamPaperController::class, 'saveCover'])->whereNumber('paper');
         Route::post('dashboard/examination-papers/{paper}', [\App\Http\Controllers\ExamPaperController::class, 'save'])->whereNumber('paper');
     });
 

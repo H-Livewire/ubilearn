@@ -366,7 +366,7 @@ export default function PaperSection({
                            className={`group flex w-full shrink-0 snap-start flex-col bg-background px-4 py-5 text-center`}
                         >
                            <div className="relative mx-auto h-72 w-full max-w-56 overflow-hidden bg-white shadow-sm transition-transform duration-300 group-hover:-translate-y-1 group-hover:shadow-lg motion-reduce:transform-none">
-                              <PdfCover id={p.id} title={p.title} />
+                              <PdfCover id={p.id} title={p.title} coverV={p.cover_v} />
                               <Link
                                  href={`/examinations/${p.id}`}
                                  className="absolute inset-0 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"

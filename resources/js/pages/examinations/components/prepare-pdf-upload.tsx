@@ -4,6 +4,8 @@ import type { PointerEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { findImages, findText, parseTerms } from '../lib/detect-branding';
+import type { DetectedArea } from '../lib/detect-branding';
 import type { BrandingArea } from '../lib/prepare-pdf';
 import CircularProgress from './circular-progress';
 
@@ -79,6 +81,13 @@ export default function PreparePdfUpload({
    const [output, setOutput] = useState<File | null>(null);
    const [downloadUrl, setDownloadUrl] = useState('');
    const [accepted, setAccepted] = useState(false);
+   const [terms, setTerms] = useState('');
+   const [loaded, setLoaded] = useState(0);
+   const [textHits, setTextHits] = useState<DetectedArea[]>([]);
+   const [images, setImages] = useState<DetectedArea[]>([]);
+   const [picked, setPicked] = useState<Set<string>>(new Set());
+   const [scanning, setScanning] = useState(false);
+   const [notes, setNotes] = useState<string[]>([]);
    const callbacks = useRef({ onChange, onPendingChange });
    useEffect(() => {
       callbacks.current = { onChange, onPendingChange };
@@ -90,6 +99,36 @@ export default function PreparePdfUpload({
       },
       [],
    );
+   useEffect(() => {
+      let cancelled = false;
+      const timer = setTimeout(() => {
+         const doc = original.current;
+         const needles = parseTerms(terms);
+
+         if (!doc || !needles.length) {
+            setTextHits([]);
+
+            return;
+         }
+
+         void findText(doc, needles, () => cancelled)
+            .then((hits) => {
+               if (!cancelled) {
+                  setTextHits(hits);
+               }
+            })
+            .catch(() => {
+               if (!cancelled) {
+                  setTextHits([]);
+               }
+            });
+      }, 400);
+
+      return () => {
+         cancelled = true;
+         clearTimeout(timer);
+      };
+   }, [terms, loaded]);
    useEffect(() => {
       if (!document || !canvas.current) {
          return;
@@ -145,6 +184,10 @@ export default function PreparePdfUpload({
       setStart(null);
       setEnd(null);
       setDocument(null);
+      setTextHits([]);
+      setImages([]);
+      setPicked(new Set());
+      setNotes([]);
       bytes.current = null;
       original.current = null;
       callbacks.current.onChange(null);
@@ -192,6 +235,7 @@ export default function PreparePdfUpload({
          bytes.current = data;
          original.current = loaded.document;
          setDocument(loaded.document);
+         setLoaded((value) => value + 1);
          setPercent(100);
          setStatus('Select branding areas, then Prepare');
       } catch (e) {
@@ -222,6 +266,44 @@ export default function PreparePdfUpload({
          x: Math.max(0, Math.min(1, (event.clientX - box.left) / box.width)),
          y: Math.max(0, Math.min(1, (event.clientY - box.top) / box.height)),
       };
+   }
+   async function scanImages() {
+      if (!original.current || busy || scanning) {
+         return;
+      }
+
+      setScanning(true);
+      setError('');
+
+      try {
+         const found = await findImages(original.current);
+         setImages(found);
+         setPicked(new Set(found.filter((item) => item.auto).map((item) => item.id)));
+         invalidate();
+         setStatus(
+            found.length
+               ? `Picha ${found.length} zimepatikana. Bonyeza kisanduku cha njano kuongeza.`
+               : 'Hakuna picha/logo iliyopatikana kwenye PDF hii.',
+         );
+      } catch {
+         setError('Kutambua picha kumeshindwa. Tumia "Add branding area".');
+      } finally {
+         setScanning(false);
+      }
+   }
+   function togglePicked(id: string) {
+      setPicked((current) => {
+         const next = new Set(current);
+
+         if (next.has(id)) {
+            next.delete(id);
+         } else {
+            next.add(id);
+         }
+
+         return next;
+      });
+      invalidate();
    }
    async function prepare() {
       if (!bytes.current || !original.current || busy) {
@@ -264,6 +346,27 @@ export default function PreparePdfUpload({
             }
          }
 
+         for (const area of [
+            ...textHits,
+            ...images.filter((item) => picked.has(item.id)),
+         ]) {
+            mapped.push({
+               page: area.page,
+               x: area.x,
+               y: area.y,
+               width: area.width,
+               height: area.height,
+               angle: area.angle,
+               logo: false,
+               kind: area.kind,
+               term: area.term,
+               size: area.size,
+               big: area.view.width * area.view.height > 0.2,
+            });
+         }
+
+         setNotes([]);
+         const collected: string[] = [];
          setPercent(10);
          setStatus('Loading UbiLearn logo…');
          const response = await fetch(logoUrl);
@@ -300,17 +403,19 @@ export default function PreparePdfUpload({
                }
             },
             () => token !== job.current,
+            collected,
          );
-         const loaded = await openPdf(result);
+         setNotes(collected);
+         const prepared_ = await openPdf(result);
 
          if (token !== job.current) {
-            loaded.destroy();
+            prepared_.destroy();
 
             return;
          }
 
-         cleanup.current.push(loaded.destroy);
-         setDocument(loaded.document);
+         cleanup.current.push(prepared_.destroy);
+         setDocument(prepared_.document);
          setPage(1);
          setStart(null);
          setEnd(null);
@@ -357,6 +462,30 @@ export default function PreparePdfUpload({
          )}
          {source && (
             <div className="space-y-4">
+               <div className="space-y-1">
+                  <Label htmlFor={`${id}-terms`}>
+                     Watermark ya kuondoa (maandishi)
+                  </Label>
+                  <Input
+                     id={`${id}-terms`}
+                     type="text"
+                     placeholder="mf. wazaelimu.com, Downloaded from…"
+                     value={terms}
+                     disabled={busy}
+                     onChange={(event) => {
+                        setTerms(event.target.value);
+                        invalidate();
+                     }}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                     Tenganisha kwa koma. Maandishi yatatafutwa kwenye kurasa
+                     zote
+                     {textHits.length > 0 && ` · yamepatikana ${textHits.length}`}
+                     {images.length > 0 &&
+                        ` · picha ${picked.size}/${images.length} zimechaguliwa`}
+                     .
+                  </p>
+               </div>
                <div className="flex flex-wrap items-center gap-3">
                   <Label htmlFor={`${id}-opacity`}>
                      Watermark opacity: {opacity}%
@@ -485,6 +614,46 @@ export default function PreparePdfUpload({
                                  }}
                               />
                            ))}
+                     {!output &&
+                        textHits
+                           .filter((hit) => hit.page === page)
+                           .map((hit) => (
+                              <div
+                                 key={hit.id}
+                                 className="pointer-events-none absolute border-2 border-red-600 bg-red-500/20"
+                                 style={{
+                                    left: `${hit.view.x * 100}%`,
+                                    top: `${hit.view.y * 100}%`,
+                                    width: `${hit.view.width * 100}%`,
+                                    height: `${hit.view.height * 100}%`,
+                                 }}
+                              />
+                           ))}
+                     {!output &&
+                        images
+                           .filter((item) => item.page === page)
+                           .map((item) => (
+                              <div
+                                 key={item.id}
+                                 role="button"
+                                 title="Bonyeza kuchagua/kuondoa uchaguzi"
+                                 className={`absolute cursor-pointer border-2 ${
+                                    picked.has(item.id)
+                                       ? 'border-red-600 bg-red-500/20'
+                                       : 'border-dashed border-amber-500 bg-amber-400/15'
+                                 }`}
+                                 style={{
+                                    left: `${item.view.x * 100}%`,
+                                    top: `${item.view.y * 100}%`,
+                                    width: `${item.view.width * 100}%`,
+                                    height: `${item.view.height * 100}%`,
+                                 }}
+                                 onPointerDown={(event) => {
+                                    event.stopPropagation();
+                                    togglePicked(item.id);
+                                 }}
+                              />
+                           ))}
                      {!output && selection && (
                         <div
                            className="pointer-events-none absolute border-2 border-dashed border-emerald-600 bg-emerald-500/10"
@@ -548,6 +717,17 @@ export default function PreparePdfUpload({
                      </Button>
                      <Button
                         type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={busy || scanning || !document}
+                        onClick={() => {
+                           void scanImages();
+                        }}
+                     >
+                        {scanning ? 'Inatafuta…' : 'Tambua picha/logo'}
+                     </Button>
+                     <Button
+                        type="button"
                         variant="ghost"
                         size="sm"
                         disabled={busy || !areas.length}
@@ -570,6 +750,11 @@ export default function PreparePdfUpload({
                      active={false}
                   />
                )}
+               {notes.map((note) => (
+                  <p key={note} className="text-xs text-amber-700">
+                     {note}
+                  </p>
+               ))}
                {error && (
                   <p role="alert" className="text-sm text-destructive">
                      {error}

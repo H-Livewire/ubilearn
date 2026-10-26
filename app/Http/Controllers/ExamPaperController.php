@@ -52,7 +52,21 @@ class ExamPaperController extends Controller
         return $disk->response($file['path'],$file['name'],['Content-Type'=>'application/pdf','X-Content-Type-Options'=>'nosniff','Cache-Control'=>'private, no-store'], $request->boolean('download')?'attachment':'inline');
     }
 
-    public function manage(){return Inertia::render('examinations/manage',['papers'=>ExamPaper::orderByDesc('id')->paginate(20),'options'=>$this->options()]);}
+    public function manage(Request $request){
+        $f=$request->validate(['q'=>'nullable|string|max:120','per_page'=>'nullable|integer|in:10,15,20,25']);
+        $perPage=(int)($f['per_page']??10);
+        $query=ExamPaper::query();
+        if(!empty($f['q'])) {
+            $term='%'.addcslashes($f['q'],'%_\\').'%';
+            $query->where(function($q)use($term){foreach(['title','subject','region','organizer','exam_type','class_name','year'] as $field)$q->orWhere($field,'like',$term);});
+        }
+        return Inertia::render('examinations/manage',[
+            'papers'=>$query->orderByDesc('id')->paginate($perPage)->withQueryString(),
+            'total'=>ExamPaper::count(),
+            'filters'=>['q'=>$f['q']??'','per_page'=>$perPage],
+            'options'=>$this->options(),
+        ]);
+    }
     public function save(Request $request, ?ExamPaper $paper=null){
         $data=$request->validate(['title'=>'required|string|max:255','education'=>'required|in:'.implode(',',array_keys(self::EDUCATION)),'class_name'=>'nullable|string|max:80','region'=>'nullable|in:'.implode(',',self::REGIONS),'subject'=>'nullable|string|max:80','year'=>'nullable|integer|between:1900,2100','exam_type'=>[!$paper && $request->input('education')!=='college'?'required':'nullable','in:'.implode(',',self::TYPES)],'organizer'=>'nullable|string|max:120','source_name'=>'nullable|string|max:120','published'=>'required|boolean']);
         $class=trim($data['class_name']??'');

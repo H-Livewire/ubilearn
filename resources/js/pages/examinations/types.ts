@@ -25,7 +25,11 @@ export interface Options {
    types: string[];
 }
 export interface Page<T> {
-   current_page?: number;
+   current_page: number;
+   last_page: number;
+   per_page: number;
+   from: number | null;
+   to: number | null;
    data: T[];
    total: number;
    links: { url: string | null; label: string; active: boolean }[];

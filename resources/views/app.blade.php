@@ -23,6 +23,16 @@
         </style>
      
         @if (app('system'))
+           @php
+              $shareImage = collect([
+                 $ogImage ?? null,
+                 app('system')->fields['banner'] ?? null,
+                 '/assets/icons/ubi-learn-share.png',
+              ])->first(fn ($value) => !empty($value));
+              if ($shareImage && !preg_match('#^https?://#i', $shareImage)) {
+                 $shareImage = url('/' . ltrim($shareImage, '/'));
+              }
+           @endphp
            <title inertia>
               {{ $metaTitle ?? app('system')->fields['name'] }}
            </title>
@@ -74,41 +84,18 @@
               content="{{ app('system')->fields['name'] }}"
            >
      
-           @if (!empty($ogImage))
-              <meta
-                 property="og:image"
-                 content="{{ $ogImage }}"
-              >
-              <meta
-                 property="og:image:width"
-                 content="1200"
-              >
-              <meta
-                 property="og:image:height"
-                 content="630"
-              >
-              <meta
-                 property="og:image:alt"
-                 content="{{ $ogTitle ?? app('system')->fields['name'] }}"
-              >
-           @elseif (!empty(app('system')->fields['banner']))
-              <meta
-                 property="og:image"
-                 content="{{ app('system')->fields['banner'] }}"
-              >
-              <meta
-                 property="og:image:width"
-                 content="1000"
-              >
-              <meta
-                 property="og:image:height"
-                 content="600"
-              >
-              <meta
-                 property="og:image:alt"
-                 content="{{ app('system')->fields['name'] }}"
-              >
+           <meta
+              property="og:image"
+              content="{{ $shareImage }}"
+           >
+           @if (str_ends_with($shareImage, 'ubi-learn-share.png'))
+              <meta property="og:image:width" content="1200">
+              <meta property="og:image:height" content="630">
            @endif
+           <meta
+              property="og:image:alt"
+              content="{{ $ogTitle ?? app('system')->fields['name'] }}"
+           >
      
            <meta
               name="twitter:card"
@@ -122,17 +109,10 @@
               name="twitter:description"
               content="{{ $twitterDescription ?? app('system')->fields['description'] }}"
            >
-           @if (!empty($twitterImage))
-              <meta
-                 name="twitter:image"
-                 content="{{ $twitterImage }}"
-              >
-           @elseif (!empty(app('system')->fields['banner']))
-              <meta
-                 name="twitter:image"
-                 content="{{ app('system')->fields['banner'] }}"
-              >
-           @endif
+           <meta
+              name="twitter:image"
+              content="{{ !empty($twitterImage) ? (preg_match('#^https?://#i', $twitterImage) ? $twitterImage : url('/' . ltrim($twitterImage, '/'))) : $shareImage }}"
+           >
         @endif
 
         @php

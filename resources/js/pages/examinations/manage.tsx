@@ -1,9 +1,40 @@
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import {
+   ChevronLeft,
+   ChevronRight,
+   ChevronsLeft,
+   ChevronsRight,
+   Eye,
+   EllipsisVertical,
+   Pencil,
+} from 'lucide-react';
 import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import SearchInput from '@/components/search-input';
 import { Button } from '@/components/ui/button';
+import {
+   Dialog,
+   DialogContent,
+   DialogDescription,
+   DialogHeader,
+   DialogTitle,
+} from '@/components/ui/dialog';
+import {
+   DropdownMenu,
+   DropdownMenuContent,
+   DropdownMenuItem,
+   DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+   Table,
+   TableBody,
+   TableCell,
+   TableHead,
+   TableHeader,
+   TableRow,
+} from '@/components/ui/table';
 import DashboardLayout from '@/layouts/dashboard/layout';
 import CircularProgress from './components/circular-progress';
 import PreparePdfUpload from './components/prepare-pdf-upload';
@@ -22,13 +53,41 @@ const blank = {
    marking_file: null as File | null,
    published: true,
 };
+const BASE = '/dashboard/examination-papers';
+
 export default function Manage({
    papers,
+   total,
+   filters,
    options,
 }: {
    papers: Page<Paper>;
+   total: number;
+   filters: { q: string; per_page: number };
    options: Options;
 }) {
+   const [preview, setPreview] = useState<{
+      paper: Paper;
+      kind: 'question' | 'marking';
+   } | null>(null);
+
+   function go(next: { q?: string; per_page?: number; page?: number }) {
+      const query: Record<string, string | number> = {
+         q: filters.q,
+         per_page: filters.per_page,
+         page: papers.current_page,
+         ...next,
+      };
+
+      router.get(
+         BASE,
+         Object.fromEntries(
+            Object.entries(query).filter(([, value]) => value !== ''),
+         ),
+         { preserveState: true, preserveScroll: true, replace: true },
+      );
+   }
+
    const { system } = usePage<SharedData>().props;
    const logoUrl =
       system?.fields?.logo_dark || '/assets/icons/ubi-learn-logo-v2.png';
@@ -302,80 +361,235 @@ return;
                   )}
                </div>
             </form>
-            <div className="space-y-2">
-               {papers.data.map((p) => (
-                  <div
-                     className="flex flex-wrap items-center justify-between gap-4 rounded-lg border p-3"
-                     key={p.id}
-                  >
-                     <div>
-                        <p className="font-medium">{p.title}</p>
-                        <p className="text-sm text-muted-foreground">
-                           {!p.has_pdf
-                              ? 'Inahitaji PDF'
-                              : p.published
-                                ? 'Published'
-                                : 'Hidden'}{' '}
-                           ·{' '}
-                           {[
-                              options.education[p.education],
-                              p.class_name,
-                              p.subject,
-                              p.year,
-                              p.exam_type,
-                              p.region || 'All regions',
-                           ]
-                              .filter(Boolean)
-                              .join(' · ')}
-                        </p>
-                     </div>
-                     <div className="flex shrink-0 flex-wrap gap-2">
-                        {p.has_pdf && (
-                           <Button asChild variant="outline">
-                              <a
-                                 href={`/examinations/${p.id}/files/question`}
-                                 target="_blank"
-                                 rel="noopener noreferrer"
-                              >
-                                 View PDF
-                              </a>
-                           </Button>
-                        )}
-                        {p.has_marking && (
-                           <Button asChild variant="outline">
-                              <a
-                                 href={`/examinations/${p.id}/files/marking`}
-                                 target="_blank"
-                                 rel="noopener noreferrer"
-                              >
-                                 Marking Scheme
-                              </a>
-                           </Button>
-                        )}
-                        <Button variant="outline" onClick={() => edit(p)}>
-                           Edit
-                        </Button>
-                     </div>
-                  </div>
-               ))}
-            </div>
-            <nav className="flex gap-2">
-               {papers.links.map((l, i) =>
-                  l.url ? (
-                     <Link
-                        key={i}
-                        href={l.url}
-                        className="rounded border px-3 py-2"
+            <div className="rounded-lg border bg-card">
+               <div className="flex flex-wrap items-center justify-between gap-3 p-3">
+                  <p className="font-semibold">
+                     Jumla ya mitihani: {total}
+                     {filters.q && (
+                        <span className="ml-2 text-sm font-normal text-muted-foreground">
+                           · zilizopatikana {papers.total}
+                        </span>
+                     )}
+                  </p>
+                  <div className="flex items-center gap-2">
+                     <SearchInput
+                        className="md:max-w-[240px]"
+                        placeholder="Tafuta mtihani…"
+                        searchKey="q"
+                        onChangeValue={(q) => go({ q, page: 1 })}
+                     />
+                     <select
+                        aria-label="Idadi kwa ukurasa"
+                        className="h-10 rounded-lg border bg-background px-2 text-sm"
+                        value={filters.per_page}
+                        onChange={(e) =>
+                           go({ per_page: Number(e.target.value), page: 1 })
+                        }
                      >
-                        {l.label.includes('Previous')
-                           ? '←'
-                           : l.label.includes('Next')
-                             ? '→'
-                             : l.label}
-                     </Link>
-                  ) : null,
-               )}
-            </nav>
+                        {[10, 15, 20, 25].map((size) => (
+                           <option key={size} value={size}>
+                              {size}
+                           </option>
+                        ))}
+                     </select>
+                  </div>
+               </div>
+               <Table className="border-y">
+                  <TableHeader>
+                     <TableRow>
+                        <TableHead>Aina ya mtihani</TableHead>
+                        <TableHead>Jina</TableHead>
+                        <TableHead>Mkoa</TableHead>
+                        <TableHead>Mwaka</TableHead>
+                        <TableHead className="w-10" />
+                     </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                     {papers.data.length ? (
+                        papers.data.map((p) => (
+                           <TableRow key={p.id}>
+                              <TableCell className="py-2">
+                                 {p.exam_type || '—'}
+                              </TableCell>
+                              <TableCell className="py-2">
+                                 <p className="font-medium">{p.title}</p>
+                                 <p className="text-xs text-muted-foreground">
+                                    {!p.has_pdf
+                                       ? 'Inahitaji PDF'
+                                       : p.published
+                                         ? 'Published'
+                                         : 'Hidden'}{' '}
+                                    ·{' '}
+                                    {[
+                                       options.education[p.education],
+                                       p.class_name,
+                                       p.subject,
+                                    ]
+                                       .filter(Boolean)
+                                       .join(' · ')}
+                                 </p>
+                              </TableCell>
+                              <TableCell className="py-2">
+                                 {p.region || 'All regions'}
+                              </TableCell>
+                              <TableCell className="py-2">
+                                 {p.year || '—'}
+                              </TableCell>
+                              <TableCell className="py-2 text-right">
+                                 <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                       <Button
+                                          type="button"
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8"
+                                          aria-label="Chaguo"
+                                       >
+                                          <EllipsisVertical className="h-4 w-4" />
+                                       </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                       {p.has_pdf && (
+                                          <DropdownMenuItem
+                                             onClick={() =>
+                                                setPreview({
+                                                   paper: p,
+                                                   kind: 'question',
+                                                })
+                                             }
+                                          >
+                                             <Eye /> Preview
+                                          </DropdownMenuItem>
+                                       )}
+                                       {p.has_marking && (
+                                          <DropdownMenuItem
+                                             onClick={() =>
+                                                setPreview({
+                                                   paper: p,
+                                                   kind: 'marking',
+                                                })
+                                             }
+                                          >
+                                             <Eye /> Marking Scheme
+                                          </DropdownMenuItem>
+                                       )}
+                                       <DropdownMenuItem onClick={() => edit(p)}>
+                                          <Pencil /> Edit
+                                       </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                 </DropdownMenu>
+                              </TableCell>
+                           </TableRow>
+                        ))
+                     ) : (
+                        <TableRow>
+                           <TableCell
+                              colSpan={5}
+                              className="h-20 text-center text-muted-foreground"
+                           >
+                              Hakuna mtihani uliopatikana
+                           </TableCell>
+                        </TableRow>
+                     )}
+                  </TableBody>
+               </Table>
+               <div className="flex flex-wrap items-center justify-between gap-3 p-3 text-sm">
+                  <span className="text-muted-foreground">
+                     Showing {papers.from || 0} to {papers.to || 0} of{' '}
+                     {papers.total} entries
+                  </span>
+                  <div className="flex items-center gap-1">
+                     <Button
+                        type="button"
+                        size="icon"
+                        variant="outline"
+                        className="h-8 w-8"
+                        disabled={papers.current_page <= 1}
+                        onClick={() => go({ page: 1 })}
+                     >
+                        <ChevronsLeft className="h-4 w-4" />
+                     </Button>
+                     <Button
+                        type="button"
+                        size="icon"
+                        variant="outline"
+                        className="h-8 w-8"
+                        disabled={papers.current_page <= 1}
+                        onClick={() => go({ page: papers.current_page - 1 })}
+                     >
+                        <ChevronLeft className="h-4 w-4" />
+                     </Button>
+                     <span className="mx-2">
+                        Page {papers.current_page} of {papers.last_page}
+                     </span>
+                     <Button
+                        type="button"
+                        size="icon"
+                        variant="outline"
+                        className="h-8 w-8"
+                        disabled={papers.current_page >= papers.last_page}
+                        onClick={() => go({ page: papers.current_page + 1 })}
+                     >
+                        <ChevronRight className="h-4 w-4" />
+                     </Button>
+                     <Button
+                        type="button"
+                        size="icon"
+                        variant="outline"
+                        className="h-8 w-8"
+                        disabled={papers.current_page >= papers.last_page}
+                        onClick={() => go({ page: papers.last_page })}
+                     >
+                        <ChevronsRight className="h-4 w-4" />
+                     </Button>
+                  </div>
+               </div>
+            </div>
+            <Dialog
+               open={Boolean(preview)}
+               onOpenChange={(open) => !open && setPreview(null)}
+            >
+               <DialogContent className="h-[88vh] grid-rows-[auto_auto_1fr] gap-3 p-4 sm:max-w-5xl">
+                  <DialogHeader>
+                     <DialogTitle className="pr-6 text-base">
+                        {preview?.paper.title}
+                     </DialogTitle>
+                     <DialogDescription className="sr-only">
+                        PDF preview
+                     </DialogDescription>
+                  </DialogHeader>
+                  <div className="flex gap-2">
+                     {(['question', 'marking'] as const).map((kind) =>
+                        kind === 'question' ||
+                        preview?.paper.has_marking ? (
+                           <Button
+                              key={kind}
+                              type="button"
+                              size="sm"
+                              variant={
+                                 preview?.kind === kind ? 'default' : 'outline'
+                              }
+                              onClick={() =>
+                                 preview && setPreview({ ...preview, kind })
+                              }
+                           >
+                              {kind === 'question'
+                                 ? 'Maswali'
+                                 : 'Marking Scheme'}
+                           </Button>
+                        ) : null,
+                     )}
+                  </div>
+                  {preview && (
+                     <iframe
+                        key={`${preview.paper.id}-${preview.kind}`}
+                        title="PDF preview"
+                        src={`/examinations/${preview.paper.id}/files/${preview.kind}`}
+                        className="h-full w-full rounded border"
+                     />
+                  )}
+               </DialogContent>
+            </Dialog>
          </div>
       </>
    );
